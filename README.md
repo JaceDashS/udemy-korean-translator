@@ -1,4 +1,4 @@
-# Udemy Local Quiz Translator (Chrome)
+# Udemy Quiz Translator (Chrome)
 
 Chrome 내장 Translator API (영어 → 한국어)를 사용해 Udemy 시험 문제, 선택지, 정답/오답 및 해설을 자동 번역합니다.
 
