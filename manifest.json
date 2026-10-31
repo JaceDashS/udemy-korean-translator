@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Udemy Local Quiz Translator",
+  "short_name": "Udemy 번역",
+  "version": "1.0.0",
+  "description": "Udemy 퀴즈를 Chrome 내장 Translator API로 로컬 번역하고 크기 조절 패널에 표시합니다.",
+  "minimum_chrome_version": "138",
+  "content_scripts": [
+    {
+      "matches": ["https://www.udemy.com/*", "https://udemy.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "world": "MAIN",
+      "all_frames": false
+    }
+  ]
+}
