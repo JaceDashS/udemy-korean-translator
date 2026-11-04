@@ -19,6 +19,16 @@
 - Steps: `shiftForSide()` moves the column to a 24px margin → `sideColumn()` succeeds
 - Result: Side layout instead of below
 
+### Late Centering Is Detected
+- Input: Translation rendered before Udemy finished centering the column (reported on a real page: original stayed centered, translation squeezed on the right)
+- Steps: Udemy DOM change → `positionSide()` → `shiftIsStale()` finds a centered column that should be shifted → rebuild
+- Result: Column shifts; mock check: class change to centered → margin-left applied after the debounce
+
+### Dropped Override Is Reapplied
+- Input: Udemy re-renders the column and removes the inline margin
+- Steps: `shiftIsStale()` sees margin-left differs from the applied value → rebuild
+- Result: Shift applied again
+
 ### Shift Is Restored
 - Input: Side layout shown, then the column becomes too narrow, or `destroy()` is called
 - Steps: `clearInlineTranslations()` or below fallback → `restoreShift()`

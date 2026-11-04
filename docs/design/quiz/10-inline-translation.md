@@ -26,10 +26,11 @@ Representative scenario:
 
 ## Column Shift
 Udemy centers the quiz column, which leaves the left half of the free space unused.
-- Code: `centeredColumn()`, `shiftForSide()`, `applyShift()`, `restoreShift()`
+- Code: `centeredColumn()`, `shiftTarget()`, `shiftForSide()`, `shiftIsStale()`, `applyShift()`, `restoreShift()`
 - `centeredColumn()` walks up from the first card to the scroll container and picks the innermost ancestor that contains the header and all cards and whose left and right gaps inside its parent are equal (within 4px) and larger than 40px. This covers margin auto, flex, and grid centering
 - `shiftForSide()` sets only `margin-left` and `margin-right: auto` (inline, `!important`) so the original plus its translation are centered as a pair, with at least 24px left margin
 - The previous inline values are saved and restored by `clearInlineTranslations()`, the below fallback, and `destroy()`
+- `positionSide()` calls `shiftIsStale()` on every reposition and rebuilds the layout when the shift is missing or lost: Udemy may finish centering the column after the first render, or re-render the column and drop the override
 
 Observed on Udemy (2026-11-04): `div.quiz-page-layout--scroll-container` is the scroll container; its child (860px) is centered with `margin: 24px auto`. With the curriculum sidebar closed (1751px area) the pair needs 1752px, so the column moves to the 24px minimum margin.
 

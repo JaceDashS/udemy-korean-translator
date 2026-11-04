@@ -1,6 +1,6 @@
 
 /*
- * Udemy Local Quiz Translator v1.4.0
+ * Udemy Local Quiz Translator v1.4.1
  * Chrome 138+ / English -> Korean
  * On-device Translator API
  */
@@ -222,13 +222,14 @@
   function applyShift(el, marginLeft) {
     shift = {
       el,
+      applied: `${Math.round(marginLeft)}px`,
       previous: ["margin-left", "margin-right"].map(name => ({
         name,
         value: el.style.getPropertyValue(name),
         priority: el.style.getPropertyPriority(name)
       }))
     };
-    el.style.setProperty("margin-left", `${Math.round(marginLeft)}px`, "important");
+    el.style.setProperty("margin-left", shift.applied, "important");
     el.style.setProperty("margin-right", "auto", "important");
   }
 
@@ -241,17 +242,34 @@
     shift = null;
   }
 
+  // Left margin that centers original + translation as a pair, or null when
+  // the column is already at least that far left.
+  function shiftTarget(column, scroller) {
+    const room = visibleRect(scroller).right - column.contentLeft;
+    const translationWidth = Math.max(SIDE_MAX_WIDTH, column.width);
+    const pair = column.width + SIDE_GAP * 2 + translationWidth;
+    const target = Math.max(SHIFT_MIN_MARGIN, (room - pair) / 2);
+    return target < column.left - 1 ? target : null;
+  }
+
   // Move the centered column left so original + translation are centered together.
   function shiftForSide(quiz, scroller) {
     const column = centeredColumn(quiz, scroller);
     if (!column) return;
 
-    const room = visibleRect(scroller).right - column.contentLeft;
-    const translationWidth = Math.max(SIDE_MAX_WIDTH, column.width);
-    const pair = column.width + SIDE_GAP * 2 + translationWidth;
-    const target = Math.max(SHIFT_MIN_MARGIN, (room - pair) / 2);
+    const target = shiftTarget(column, scroller);
+    if (target !== null) applyShift(column.el, target);
+  }
 
-    if (target < column.left - 1) applyShift(column.el, target);
+  // Udemy can finish centering the column after the first render, or re-render
+  // the column and drop the override. Either way the layout must be rebuilt.
+  function shiftIsStale(quiz, scroller) {
+    if (shift) {
+      return !shift.el.isConnected ||
+        shift.el.style.getPropertyValue("margin-left") !== shift.applied;
+    }
+    const column = centeredColumn(quiz, scroller);
+    return !!column && shiftTarget(column, scroller) !== null;
   }
 
   function showSideTranslations(quiz, questionKo, answersKo, scroller) {
@@ -292,13 +310,15 @@
     last.after(spacer);
 
     document.body.append(layer);
-    sideLayout = { layer, items, cards, scroller, spacer };
+    sideLayout = { quiz, layer, items, cards, scroller, spacer };
     positionSide();
   }
 
   function positionSide() {
     if (!sideLayout) return true;
-    const { layer, items, cards, scroller, spacer } = sideLayout;
+    const { quiz, layer, items, cards, scroller, spacer } = sideLayout;
+
+    if (shiftIsStale(quiz, scroller)) return false;
 
     const column = sideColumn(cards, scroller);
     if (!column) return false;
