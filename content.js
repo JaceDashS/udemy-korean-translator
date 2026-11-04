@@ -681,20 +681,20 @@
 
   function extractQuiz() {
     const headerNode = findText(
-      /^Question\s*(\d+)\s*:/i
+      /^(?:Question|질문)\s*(\d+)\s*:/i
     );
 
     if (!headerNode) return null;
 
     const number = headerNode.nodeValue.match(
-      /Question\s*(\d+)\s*:/i
+      /(?:Question|질문)\s*(\d+)\s*:/i
     )?.[1];
 
     if (!number) return null;
-
+    
     const footerNode = findText(
       new RegExp(
-        `^Question\\s*${number}\\s*of\\s*\\d+`,
+        `^(?:Question\\s*${number}\\s*of\\s*\\d+|\\d+\\s*의\\s*질문\\s*${number})$`,
         "i"
       )
     );
