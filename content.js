@@ -1,6 +1,6 @@
 
 /*
- * Udemy Local Quiz Translator v1.2.0
+ * Udemy Local Quiz Translator v1.3.0
  * Chrome 138+ / English -> Korean
  * On-device Translator API
  */
@@ -74,6 +74,19 @@
       padding-top: 7px;
       border-top: 1px solid rgba(82, 137, 232, .25);
     }
+
+    .uqt-side-layer {
+      position: fixed;
+      z-index: 1000;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .uqt-side-layer .udemy-quiz-inline-translation.uqt-side {
+      position: absolute !important;
+      margin: 0 !important;
+      pointer-events: auto;
+    }
   `;
   (document.head || document.documentElement).append(inlineStyles);
 
@@ -82,6 +95,7 @@
       node.remove();
     }
     inlineNodes = [];
+    sideLayout = null;
   }
 
   function makeInlineTranslation(text, kind, explanation = "", anchor = null) {
@@ -115,10 +129,150 @@
     return box;
   }
 
+  /*
+   * Side layout: when the quiz column has enough empty space to the right of
+   * the answer cards, translations float there in a fixed layer and follow
+   * their originals on scroll. Otherwise they are inserted below (fallback).
+   * The Udemy DOM structure is never changed in side mode.
+   */
+  const SIDE_MIN_WIDTH = 240;
+  const SIDE_MAX_WIDTH = 560;
+  const SIDE_GAP = 16;
+  const SIDE_STACK_GAP = 8;
+  let sideLayout = null;
+  let relayoutFrame = 0;
+
+  // Overflowing or not, a scroll container is the quiz column's boundary.
+  function isScrollable(element) {
+    return /(auto|scroll|overlay)/.test(getComputedStyle(element).overflowY);
+  }
+
+  // The nearest scroll container bounds both the free space and the clip area,
+  // so translations never cover a sidebar next to the quiz column.
+  function scrollParentOf(element) {
+    for (let el = element.parentElement; el && el !== document.body; el = el.parentElement) {
+      if (isScrollable(el)) return el;
+    }
+    return null;
+  }
+
+  function visibleRect(scroller) {
+    const view = { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
+    if (!scroller) return view;
+
+    const r = scroller.getBoundingClientRect();
+    return {
+      left: Math.max(view.left, r.left),
+      top: Math.max(view.top, r.top),
+      right: Math.min(view.right, r.right),
+      bottom: Math.min(view.bottom, r.bottom)
+    };
+  }
+
+  // Returns where the side column starts and how wide it can be, or null.
+  function sideColumn(cards, scroller) {
+    const cardsRight = Math.max(...cards.map(c => c.getBoundingClientRect().right));
+    const limit = visibleRect(scroller).right;
+    const space = limit - cardsRight - SIDE_GAP * 2;
+
+    if (space < SIDE_MIN_WIDTH) return null;
+    return { left: cardsRight + SIDE_GAP, width: Math.min(space, SIDE_MAX_WIDTH) };
+  }
+
+  function showSideTranslations(quiz, questionKo, answersKo, scroller) {
+    const cards = quiz.nodes.cards;
+    const reference = getComputedStyle(cards[0]);
+
+    const layer = document.createElement("div");
+    layer.className = "uqt-side-layer";
+    layer.setAttribute(INLINE_ATTRIBUTE, "layer");
+    layer.style.color = reference.color;
+    layer.style.fontFamily = reference.fontFamily;
+    layer.style.fontSize = reference.fontSize;
+
+    const items = [{
+      anchor: quiz.nodes.header?.isConnected ? quiz.nodes.header : cards[0],
+      box: makeInlineTranslation(questionKo, "question")
+    }];
+
+    cards.forEach((card, i) => {
+      items.push({
+        anchor: card,
+        box: makeInlineTranslation(answersKo[i].ko, "answer", answersKo[i].explanationKo)
+      });
+    });
+
+    for (const { box } of items) {
+      box.classList.add("uqt-side");
+      layer.append(box);
+      inlineNodes.push(box);
+    }
+
+    document.body.append(layer);
+    sideLayout = { layer, items, cards, scroller };
+    positionSide();
+  }
+
+  function positionSide() {
+    if (!sideLayout) return true;
+    const { layer, items, cards, scroller } = sideLayout;
+
+    const column = sideColumn(cards, scroller);
+    if (!column) return false;
+
+    const clip = visibleRect(scroller);
+    Object.assign(layer.style, {
+      left: `${clip.left}px`,
+      top: `${clip.top}px`,
+      width: `${Math.max(0, clip.right - clip.left)}px`,
+      height: `${Math.max(0, clip.bottom - clip.top)}px`
+    });
+
+    // Align each box with its original; push down when the previous box is taller.
+    let previousBottom = -Infinity;
+    for (const { anchor, box } of items) {
+      const top = Math.max(anchor.getBoundingClientRect().top, previousBottom + SIDE_STACK_GAP);
+      box.style.left = `${column.left - clip.left}px`;
+      box.style.top = `${top - clip.top}px`;
+      box.style.width = `${column.width}px`;
+      previousBottom = top + box.offsetHeight;
+    }
+
+    return true;
+  }
+
+  // Reposition on scroll/resize; switch between side and below when space changes.
+  function relayout() {
+    relayoutFrame = 0;
+    if (!lastRendered) return;
+
+    const { quiz, questionKo, answersKo } = lastRendered;
+    if (quiz.nodes.cards.some(card => !card.isConnected)) return;
+
+    const scroller = scrollParentOf(quiz.nodes.cards[0]);
+    const wantSide = !!sideColumn(quiz.nodes.cards, scroller);
+
+    if (wantSide === !!sideLayout && positionSide()) return;
+    showInlineTranslations(quiz, questionKo, answersKo);
+  }
+
+  function requestRelayout() {
+    if (!relayoutFrame) relayoutFrame = requestAnimationFrame(relayout);
+  }
+
+  addEventListener("scroll", requestRelayout, { capture: true, passive: true });
+  addEventListener("resize", requestRelayout, { passive: true });
+
   function showInlineTranslations(quiz, questionKo, answersKo) {
     clearInlineTranslations();
     const cards = quiz.nodes.cards;
     if (!cards.length || cards.some(card => !card.isConnected)) return;
+
+    const scroller = scrollParentOf(cards[0]);
+    if (sideColumn(cards, scroller)) {
+      showSideTranslations(quiz, questionKo, answersKo, scroller);
+      return;
+    }
 
     // The translated question goes between the original question and first answer.
     const questionBox = makeInlineTranslation(
@@ -437,7 +591,12 @@
       ""
     ).trim();
 
-    return { number, question, answers, nodes: { cards } };
+    return {
+      number,
+      question,
+      answers,
+      nodes: { cards, header: headerNode.parentElement }
+    };
   }
 
   const dictionary = window.__udemyQuizTranslatorDictionary;
@@ -506,6 +665,10 @@
           quiz, lastRendered.questionKo, lastRendered.answersKo
         );
         lastRendered.cards = [...quiz.nodes.cards];
+        lastRendered.quiz = quiz;
+      } else {
+        // Feedback or explanations can change the card heights.
+        requestRelayout();
       }
       return;
     }
@@ -532,6 +695,7 @@
       showInlineTranslations(quiz, questionKo, answersKo);
       lastRendered = {
         key,
+        quiz,
         questionKo,
         answersKo,
         cards: [...quiz.nodes.cards]
@@ -610,6 +774,9 @@
       observer.disconnect();
       clearTimeout(debounceTimer);
       clearInterval(interval);
+      cancelAnimationFrame(relayoutFrame);
+      removeEventListener("scroll", requestRelayout, { capture: true });
+      removeEventListener("resize", requestRelayout);
 
       ++seq;
       clearInlineTranslations();

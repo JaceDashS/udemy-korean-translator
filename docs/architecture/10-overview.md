@@ -9,7 +9,7 @@
 ## Translation Flow
 A `MutationObserver` watches the Udemy page. On change, `update()` extracts the
 current quiz, translates the question and each answer, and inserts the Korean text
-inline under the original elements. There is no panel or button on the page.
+next to the original elements: to the right when there is room, otherwise below. There is no panel or button on the page.
 
 ```mermaid
 flowchart LR
@@ -26,6 +26,6 @@ Scenario:
 
 ## Modules Inside content.js
 - Startup — `autoStart()`, `startOnFirstGesture()`, `initialize()`; see [Startup](../design/translation/10-startup.md)
-- Inline rendering — `showInlineTranslations()`, `clearInlineTranslations()`; see [Inline Translation](../design/quiz/10-inline-translation.md)
+- Inline rendering — `showInlineTranslations()`, `showSideTranslations()`, `positionSide()`, `clearInlineTranslations()`; see [Inline Translation](../design/quiz/10-inline-translation.md)
 - Extraction — `extractQuiz()`, `cardOf()`, `originalInnerText()`
 - Translation — `translateCached()`, `translateWithDictionary()`; see [Dictionary](../design/translation/20-dictionary.md)

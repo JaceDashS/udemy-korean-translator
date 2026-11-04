@@ -23,6 +23,11 @@
 - Definition: A `[[n]]` token that replaces a dictionary term during translation
 - Code: `PLACEHOLDER` in `dictionary.js`
 
+## Side Layout
+- Definition: Inline translations floating in the empty space to the right of the quiz
+- Code: `showSideTranslations()`, `.uqt-side-layer`
+- Avoid: "sidebar" (that is Udemy's curriculum panel)
+
 ## Inline Translation
 - Definition: Korean text inserted into the Udemy page directly under the original question or answer
 - Code: `showInlineTranslations()`, `data-udemy-quiz-inline`
