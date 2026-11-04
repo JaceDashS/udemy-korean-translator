@@ -1,0 +1,15 @@
+# Glossary
+
+## Quiz
+- Definition: One Udemy practice test question with its answer choices, as found on the page
+- Code: `extractQuiz()` returns `{ number, question, answers, nodes }`
+- Avoid: "test", "exam" when referring to a single question
+
+## Card
+- Definition: The Udemy DOM element that wraps one answer choice, including its radio/checkbox control and feedback text
+- Code: `cardOf()`, `quiz.nodes.cards`
+- Avoid: "option element"
+
+## Translator
+- Definition: The Chrome built-in on-device Translator API instance (English to Korean)
+- Code: `translator`, `Translator.create()`, `translateCached()`

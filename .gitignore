@@ -1,0 +1,9 @@
+# --- Agent work rules ---
+# Private files
+*.private.*
+# Temporary files
+tmp/
+# Debugging scripts
+scripts/debug/
+# Agent workspace
+docs/.agent/
