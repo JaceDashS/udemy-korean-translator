@@ -9,6 +9,31 @@
 - Steps: Translation finishes → `showInlineTranslations()`
 - Result: Question and answer translations float to the right, the first answer translation aligned with its card
 
+### Centered Column Is Shifted
+- Input: Quiz column centered by Udemy with wide empty space on both sides
+- Steps: `shiftForSide()` → `centeredColumn()` → `applyShift()`
+- Result: Original and translation are centered as a pair instead of the translation being squeezed against the right edge
+
+### Shift Makes Side Layout Fit
+- Input: Centered column whose right gap alone is under 272px, but left plus right gaps are enough
+- Steps: `shiftForSide()` moves the column to a 24px margin → `sideColumn()` succeeds
+- Result: Side layout instead of below
+
+### Shift Is Restored
+- Input: Side layout shown, then the column becomes too narrow, or `destroy()` is called
+- Steps: `clearInlineTranslations()` or below fallback → `restoreShift()`
+- Result: The column's inline margin values are back to what Udemy had
+
+### Sidebar Toggle Recalculates the Shift
+- Input: Side layout shown, user opens or closes Udemy's curriculum sidebar (no window resize)
+- Steps: Udemy DOM changes → `requestRelayout()` → `positionSide()` sees a different container width → rebuild
+- Result: Column margin is recalculated (mock: 443px → 24px → 443px)
+
+### Boxes Taller Than the Quiz
+- Input: Narrow side column, so the translations are taller than the original question and answers
+- Steps: `positionSide()` sets the spacer height to the overflow below the last answer
+- Result: The quiz container scrolls far enough to show every translation box
+
 ### Sidebar Is Not Covered
 - Input: Main scroll container next to a curriculum sidebar
 - Steps: `sideColumn()` uses the scroll container's right edge, even if it is not overflowing
@@ -21,7 +46,7 @@
 
 ### Switch on Resize
 - Input: Window or sidebar width changes while a quiz is shown
-- Steps: resize → `relayout()` → mode no longer fits → `showInlineTranslations()` with cached translations
+- Steps: resize → `requestFullRelayout()` → `showInlineTranslations()` with cached translations
 - Result: Layout switches between side and below without a new translation call
 
 ### Follow Scroll

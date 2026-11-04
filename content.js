@@ -1,6 +1,6 @@
 
 /*
- * Udemy Local Quiz Translator v1.3.0
+ * Udemy Local Quiz Translator v1.4.0
  * Chrome 138+ / English -> Korean
  * On-device Translator API
  */
@@ -96,6 +96,7 @@
     }
     inlineNodes = [];
     sideLayout = null;
+    restoreShift();
   }
 
   function makeInlineTranslation(text, kind, explanation = "", anchor = null) {
@@ -133,14 +134,20 @@
    * Side layout: when the quiz column has enough empty space to the right of
    * the answer cards, translations float there in a fixed layer and follow
    * their originals on scroll. Otherwise they are inserted below (fallback).
-   * The Udemy DOM structure is never changed in side mode.
+   * Udemy centers the quiz column; in side mode only its horizontal margins
+   * are overridden so the original and the translation are centered as a pair.
+   * Udemy elements are never moved; only our own nodes are added.
    */
   const SIDE_MIN_WIDTH = 240;
   const SIDE_MAX_WIDTH = 560;
   const SIDE_GAP = 16;
   const SIDE_STACK_GAP = 8;
+  const SHIFT_MIN_MARGIN = 24;
+  const CENTERED_MIN_GAP = 40;
   let sideLayout = null;
+  let shift = null;
   let relayoutFrame = 0;
+  let relayoutFull = false;
 
   // Overflowing or not, a scroll container is the quiz column's boundary.
   function isScrollable(element) {
@@ -170,13 +177,81 @@
   }
 
   // Returns where the side column starts and how wide it can be, or null.
+  // A box may be as wide as the original column, but at least SIDE_MAX_WIDTH.
   function sideColumn(cards, scroller) {
-    const cardsRight = Math.max(...cards.map(c => c.getBoundingClientRect().right));
+    const rects = cards.map(c => c.getBoundingClientRect());
+    const cardsRight = Math.max(...rects.map(r => r.right));
+    const cardsWidth = cardsRight - Math.min(...rects.map(r => r.left));
     const limit = visibleRect(scroller).right;
     const space = limit - cardsRight - SIDE_GAP * 2;
 
     if (space < SIDE_MIN_WIDTH) return null;
-    return { left: cardsRight + SIDE_GAP, width: Math.min(space, SIDE_MAX_WIDTH) };
+    return {
+      left: cardsRight + SIDE_GAP,
+      width: Math.min(space, Math.max(SIDE_MAX_WIDTH, cardsWidth))
+    };
+  }
+
+  function horizontalGaps(el) {
+    const parent = el.parentElement;
+    const ps = getComputedStyle(parent);
+    const p = parent.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    const contentLeft = p.left + parseFloat(ps.paddingLeft) + parseFloat(ps.borderLeftWidth);
+    const contentRight = p.right - parseFloat(ps.paddingRight) - parseFloat(ps.borderRightWidth);
+    return { left: r.left - contentLeft, right: contentRight - r.right, contentLeft, width: r.width };
+  }
+
+  // Innermost ancestor holding the whole quiz that is centered in its parent
+  // (margin auto, flex, or grid centering all look the same geometrically).
+  function centeredColumn(quiz, scroller) {
+    const { cards, header } = quiz.nodes;
+    for (let el = cards[0].parentElement; el && el.parentElement; el = el.parentElement) {
+      if (el === scroller || el === document.body) break;
+      if (header && !el.contains(header)) continue;
+      if (!cards.every(card => el.contains(card))) continue;
+
+      const gaps = horizontalGaps(el);
+      if (gaps.left > CENTERED_MIN_GAP && Math.abs(gaps.left - gaps.right) <= 4) {
+        return { el, ...gaps };
+      }
+    }
+    return null;
+  }
+
+  function applyShift(el, marginLeft) {
+    shift = {
+      el,
+      previous: ["margin-left", "margin-right"].map(name => ({
+        name,
+        value: el.style.getPropertyValue(name),
+        priority: el.style.getPropertyPriority(name)
+      }))
+    };
+    el.style.setProperty("margin-left", `${Math.round(marginLeft)}px`, "important");
+    el.style.setProperty("margin-right", "auto", "important");
+  }
+
+  function restoreShift() {
+    if (!shift) return;
+    for (const { name, value, priority } of shift.previous) {
+      if (value) shift.el.style.setProperty(name, value, priority);
+      else shift.el.style.removeProperty(name);
+    }
+    shift = null;
+  }
+
+  // Move the centered column left so original + translation are centered together.
+  function shiftForSide(quiz, scroller) {
+    const column = centeredColumn(quiz, scroller);
+    if (!column) return;
+
+    const room = visibleRect(scroller).right - column.contentLeft;
+    const translationWidth = Math.max(SIDE_MAX_WIDTH, column.width);
+    const pair = column.width + SIDE_GAP * 2 + translationWidth;
+    const target = Math.max(SHIFT_MIN_MARGIN, (room - pair) / 2);
+
+    if (target < column.left - 1) applyShift(column.el, target);
   }
 
   function showSideTranslations(quiz, questionKo, answersKo, scroller) {
@@ -208,19 +283,33 @@
       inlineNodes.push(box);
     }
 
+    // Side boxes can be taller than the quiz. The spacer extends the page
+    // after the last answer so the scroll container can reach every box.
+    const last = cards[cards.length - 1];
+    const spacer = document.createElement(last.tagName === "LI" ? "li" : "div");
+    spacer.setAttribute(INLINE_ATTRIBUTE, "spacer");
+    spacer.style.cssText = "display:block;height:0;margin:0;padding:0;list-style:none;";
+    last.after(spacer);
+
     document.body.append(layer);
-    sideLayout = { layer, items, cards, scroller };
+    sideLayout = { layer, items, cards, scroller, spacer };
     positionSide();
   }
 
   function positionSide() {
     if (!sideLayout) return true;
-    const { layer, items, cards, scroller } = sideLayout;
+    const { layer, items, cards, scroller, spacer } = sideLayout;
 
     const column = sideColumn(cards, scroller);
     if (!column) return false;
 
+    // A sidebar opening or closing changes the width without a resize event;
+    // the column shift must then be recalculated.
     const clip = visibleRect(scroller);
+    const clipWidth = clip.right - clip.left;
+    if (sideLayout.clipWidth === undefined) sideLayout.clipWidth = clipWidth;
+    else if (Math.abs(sideLayout.clipWidth - clipWidth) > 1) return false;
+
     Object.assign(layer.style, {
       left: `${clip.left}px`,
       top: `${clip.top}px`,
@@ -238,21 +327,25 @@
       previousBottom = top + box.offsetHeight;
     }
 
+    // Grow only by what the boxes overflow below the last answer.
+    const overflow = previousBottom - cards[cards.length - 1].getBoundingClientRect().bottom;
+    spacer.style.height = `${Math.max(0, Math.ceil(overflow) + SIDE_STACK_GAP)}px`;
+
     return true;
   }
 
-  // Reposition on scroll/resize; switch between side and below when space changes.
+  // Scroll and content changes only reposition. A resize changes the free
+  // width, so the layout is rebuilt from the cached translations.
   function relayout() {
+    const full = relayoutFull;
     relayoutFrame = 0;
+    relayoutFull = false;
     if (!lastRendered) return;
 
     const { quiz, questionKo, answersKo } = lastRendered;
     if (quiz.nodes.cards.some(card => !card.isConnected)) return;
 
-    const scroller = scrollParentOf(quiz.nodes.cards[0]);
-    const wantSide = !!sideColumn(quiz.nodes.cards, scroller);
-
-    if (wantSide === !!sideLayout && positionSide()) return;
+    if (!full && positionSide()) return;
     showInlineTranslations(quiz, questionKo, answersKo);
   }
 
@@ -260,8 +353,13 @@
     if (!relayoutFrame) relayoutFrame = requestAnimationFrame(relayout);
   }
 
+  function requestFullRelayout() {
+    relayoutFull = true;
+    requestRelayout();
+  }
+
   addEventListener("scroll", requestRelayout, { capture: true, passive: true });
-  addEventListener("resize", requestRelayout, { passive: true });
+  addEventListener("resize", requestFullRelayout, { passive: true });
 
   function showInlineTranslations(quiz, questionKo, answersKo) {
     clearInlineTranslations();
@@ -269,10 +367,12 @@
     if (!cards.length || cards.some(card => !card.isConnected)) return;
 
     const scroller = scrollParentOf(cards[0]);
+    shiftForSide(quiz, scroller);
     if (sideColumn(cards, scroller)) {
       showSideTranslations(quiz, questionKo, answersKo, scroller);
       return;
     }
+    restoreShift();
 
     // The translated question goes between the original question and first answer.
     const questionBox = makeInlineTranslation(
@@ -763,9 +863,47 @@
     }
   }, 1200);
 
+  // Describes the quiz layout so a wrong side placement can be diagnosed.
+  function layoutInfo() {
+    const quiz = lastRendered?.quiz || extractQuiz();
+    if (!quiz) return "No quiz found.";
+
+    const scroller = scrollParentOf(quiz.nodes.cards[0]);
+    const name = el => el
+      ? el.tagName.toLowerCase() +
+        (el.id ? `#${el.id}` : "") +
+        [...el.classList].slice(0, 2).map(c => `.${c}`).join("")
+      : "window";
+
+    const chain = [];
+    for (let el = quiz.nodes.cards[0]; el && el !== document.body; el = el.parentElement) {
+      const cs = getComputedStyle(el);
+      const g = el.parentElement ? horizontalGaps(el) : {};
+      chain.push({
+        el: name(el),
+        width: Math.round(el.getBoundingClientRect().width),
+        gapLeft: Math.round(g.left),
+        gapRight: Math.round(g.right),
+        display: cs.display,
+        justify: cs.justifyContent,
+        margin: `${cs.marginLeft} ${cs.marginRight}`,
+        overflowY: cs.overflowY
+      });
+    }
+
+    return {
+      mode: sideLayout ? "side" : inlineNodes.length ? "below" : "none",
+      shifted: shift ? name(shift.el) : null,
+      scroller: name(scroller),
+      viewport: innerWidth,
+      chain
+    };
+  }
+
   // Development helpers.
   window.udemyLocalTranslator = {
     start: () => initialize(),
+    layoutInfo,
     refresh: () => {
       lastKey = "";
       schedule(true);
@@ -776,7 +914,7 @@
       clearInterval(interval);
       cancelAnimationFrame(relayoutFrame);
       removeEventListener("scroll", requestRelayout, { capture: true });
-      removeEventListener("resize", requestRelayout);
+      removeEventListener("resize", requestFullRelayout);
 
       ++seq;
       clearInlineTranslations();

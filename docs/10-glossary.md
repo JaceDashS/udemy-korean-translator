@@ -28,6 +28,10 @@
 - Code: `showSideTranslations()`, `.uqt-side-layer`
 - Avoid: "sidebar" (that is Udemy's curriculum panel)
 
+## Column Shift
+- Definition: Overriding the horizontal margins of Udemy's centered quiz column so the original and its side translation are centered together
+- Code: `shiftForSide()`, `centeredColumn()`, `restoreShift()`
+
 ## Inline Translation
 - Definition: Korean text inserted into the Udemy page directly under the original question or answer
 - Code: `showInlineTranslations()`, `data-udemy-quiz-inline`

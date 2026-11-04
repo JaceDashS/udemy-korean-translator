@@ -13,7 +13,8 @@ Chrome 내장 Translator API (영어 → 한국어)를 사용해 Udemy 시험 �
 
 ## 동작
 
-- 화면에 별도 패널이나 버튼이 없습니다. 번역은 원래 문제와 각 선택지 오른쪽 빈 공간에 표시되며, 공간이 부족하면(좁은 창) 바로 아래에 표시됩니다.
+- 화면에 별도 패널이나 버튼이 없습니다. 번역은 원래 문제와 각 선택지 오른쪽에 표시되며, 공간이 부족하면(좁은 창) 바로 아래에 표시됩니다.
+- 오른쪽 배치 시 가운데 정렬된 원문을 왼쪽으로 옮겨, 원문과 번역이 한 쌍으로 가운데 오도록 합니다.
 - 퀴즈가 변경되면 MutationObserver로 자동 갱신합니다.
 - 오류와 상태는 DevTools 콘솔에 `[Udemy Local Translator]`로 출력됩니다.
 
@@ -50,6 +51,7 @@ Udemy 페이지 DevTools 콘솔에서:
 ```js
 window.udemyLocalTranslator.start()
 window.udemyLocalTranslator.refresh()
+window.udemyLocalTranslator.layoutInfo()
 window.udemyLocalTranslator.destroy()
 ```
 
