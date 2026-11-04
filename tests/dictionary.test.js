@@ -22,7 +22,7 @@ test("replaces terms with placeholders and restores the original text", () => {
 });
 
 test("prefers the longest matching term", () => {
-  assert.deepEqual(protect("Use AWS Lambda function URLs.").terms, ["AWS Lambda function"]);
+  assert.deepEqual(protect("Use AWS Lambda function URLs.").terms, ["AWS Lambda function", "URLs"]);
   assert.deepEqual(protect("Use AWS Lambda with an IAM role.").terms, ["AWS Lambda", "IAM role"]);
 });
 
@@ -70,4 +70,17 @@ test("restore returns text unchanged when there are no terms", () => {
 
 test("restore absorbs extra brackets added by the translator", () => {
   assert.equal(restore("[[[0]]에서 [[1]]]", ["Auto Scaling group", "EC2"]), "Auto Scaling group에서 EC2");
+});
+
+test("keeps CCAR-F exam terms in English", () => {
+  const source = "Claude Code must block any Bash command during an agentic session. " +
+    "The enforcement must be deterministic; CLAUDE.md is applied deterministically at every session.";
+  assert.deepEqual(protect(source).terms, [
+    "Claude Code", "Bash command", "agentic session", "deterministic",
+    "CLAUDE.md", "deterministically", "session"
+  ]);
+});
+
+test("ordinary English verbs and nouns are still translated", () => {
+  assert.deepEqual(protect("Read the file and continue with the next step. Pay attention to the summary.").terms, []);
 });

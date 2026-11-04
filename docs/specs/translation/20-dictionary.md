@@ -2,7 +2,8 @@
 
 ## Requirements
 - Developer terms listed in the dictionary stay in English in the Korean translation, exactly as written in the source (casing and plural kept)
-- Scope: Claude / Anthropic, AWS services, AWS concepts, and general development terms
+- Scope: Claude / Anthropic, the CCAR-F exam domains (agentic architecture, tool design and MCP, Claude Code, prompt engineering, context management), AWS services, AWS concepts, and general development terms
+- Technical words that appear in exam text, such as "deterministic" and "session", stay in English; ordinary English words ("continue", "summary", "attention") are still translated
 - The longest matching term wins ("AWS Lambda function" over "AWS Lambda")
 - Acronyms (no lowercase letters) and names listed as case-sensitive match only with exact casing, so ordinary words are still translated ("Sam", "lag", "haiku")
 - A term inside another word is not matched ("subnetwork" is not "subnet")

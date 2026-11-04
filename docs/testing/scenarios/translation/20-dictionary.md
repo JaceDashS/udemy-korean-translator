@@ -12,7 +12,7 @@
 ### Longest Match
 - Input: "Use AWS Lambda function URLs." / "Use AWS Lambda with an IAM role."
 - Steps: `protect()`
-- Result: `AWS Lambda function` in the first; `AWS Lambda` and `IAM role` in the second
+- Result: `AWS Lambda function` and `URLs` in the first; `AWS Lambda` and `IAM role` in the second
 - Test: "prefers the longest matching term"
 
 ### Plural and Casing
@@ -44,6 +44,18 @@
 - Steps: `protect()`
 - Result: The two-line `private subnet` is protected as one term
 - Test: "matches terms across line breaks and extra spaces"
+
+### CCAR-F Exam Terms
+- Input: "Claude Code must block any Bash command during an agentic session. The enforcement must be deterministic; CLAUDE.md is applied deterministically at every session."
+- Steps: `protect()`
+- Result: `Claude Code`, `Bash command`, `agentic session`, `deterministic`, `CLAUDE.md`, `deterministically`, `session` stay English
+- Test: "keeps CCAR-F exam terms in English"
+
+### Ordinary Words Are Translated
+- Input: "Read the file and continue with the next step. Pay attention to the summary."
+- Steps: `protect()`
+- Result: Nothing protected
+- Test: "ordinary English verbs and nouns are still translated"
 
 ### Existing Placeholder Syntax
 - Input: "Value [[0]] with an EC2 instance"

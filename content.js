@@ -1,6 +1,6 @@
 
 /*
- * Udemy Local Quiz Translator v1.4.1
+ * Udemy Local Quiz Translator v1.5.0
  * Chrome 138+ / English -> Korean
  * On-device Translator API
  */

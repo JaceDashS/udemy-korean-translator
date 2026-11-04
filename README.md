@@ -20,12 +20,13 @@ Chrome 내장 Translator API (영어 → 한국어)를 사용해 Udemy 시험 �
 
 ## 개발자 용어 사전
 
-`dictionary-terms.js`에 등록된 용어(Claude, AWS, 일반 개발 용어 약 1,000개)는 번역 결과에서 영어 원문 그대로 유지됩니다.
+`dictionary-terms.js`에 등록된 용어(Claude, CCAR-F 시험 영역, AWS, 일반 개발 용어 약 1,600개)는 번역 결과에서 영어 원문 그대로 유지됩니다.
 
 - 예: "Launch an EC2 instance in a private subnet" → "private subnet에서 EC2 instance를 시작합니다"
 - 용어 추가: `dictionary-terms.js`의 해당 그룹 배열에 문자열을 추가하고 확장 프로그램을 새로고침합니다.
 - 대문자만으로 된 약어(SAM, LAG 등)는 대소문자가 정확히 같아야 매칭됩니다. 소문자일 때 일반 단어인 이름(Projects, Haiku 등)은 `caseSensitive`에 넣습니다.
-- "object", "request" 같은 일상 단어는 넣지 마세요. 모든 문장에서 번역되지 않게 됩니다.
+- "object", "request", "continue" 같은 일상 단어는 넣지 마세요. 모든 문장에서 번역되지 않게 됩니다.
+- 복수형(s/es)은 자동으로 매칭되지만, "deterministically" 같은 다른 변형은 따로 추가해야 합니다.
 - 테스트: `node --test tests/dictionary.test.js`
 
 ## 특성

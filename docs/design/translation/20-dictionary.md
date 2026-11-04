@@ -40,7 +40,7 @@ Representative scenario:
 - A trailing `s`/`es` is matched after a term ending in a letter
 
 ## Term File Layout
-`dictionary-terms.js` has `caseSensitive` (product names that are ordinary words in lowercase) and `groups` (`claude`, `awsServices`, `awsConcepts`, `general`). Adding a term means adding a string to a group. Avoid everyday English words such as "object" or "request", which would stay untranslated everywhere.
+`dictionary-terms.js` has `caseSensitive` (product names that are ordinary words in lowercase) and `groups` (`claude`, `awsServices`, `awsConcepts`, `ccarF`, `general`). `ccarF` is organized by the five CCAR-F exam domains. Adding a term means adding a string to a group. Avoid everyday English words such as "object", "request", "continue", or "summary", which would stay untranslated everywhere. Add inflected forms that are not plurals explicitly ("deterministically").
 
 ## Known Limits
 Korean particles are chosen by the translator for the placeholder, so after restoring they may not match the English word's pronunciation (e.g. "Claude extended thinking를").
