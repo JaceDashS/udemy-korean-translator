@@ -1,6 +1,6 @@
 
 /*
- * Udemy Local Quiz Translator v1.0.2
+ * Udemy Local Quiz Translator v1.0.3
  * Chrome 138+ / English -> Korean
  * On-device Translator API
  */
@@ -361,6 +361,130 @@
   let lastUrl = location.href;
 
   const cache = new Map();
+  const INLINE_ATTRIBUTE = "data-udemy-quiz-inline";
+  const INLINE_SELECTOR = `[${INLINE_ATTRIBUTE}]`;
+  let inlineNodes = [];
+  let lastRendered = null;
+
+  // Inline translations appear on the Udemy page, not inside the panel's shadow DOM.
+  const inlineStyles = document.createElement("style");
+  inlineStyles.id = "udemy-quiz-inline-translator-styles";
+  inlineStyles.textContent = `
+    .udemy-quiz-inline-translation {
+      box-sizing: border-box !important;
+      display: block !important;
+      flex-basis: 100%;
+      grid-column: 1 / -1;
+      min-width: 0;
+      margin: 8px 0 12px !important;
+      padding: 8px 11px !important;
+      border-left: 3px solid #5289e8 !important;
+      border-radius: 4px;
+      background: rgba(82, 137, 232, .09) !important;
+      color: inherit !important;
+      font: inherit !important;
+      line-height: 1.6 !important;
+      list-style: none !important;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .udemy-quiz-inline-translation .uqt-label {
+      display: block;
+      margin-bottom: 3px;
+      color: #5289e8;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .udemy-quiz-inline-translation .uqt-text,
+    .udemy-quiz-inline-translation .uqt-explanation {
+      display: block;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .udemy-quiz-inline-translation .uqt-explanation {
+      margin-top: 7px;
+      padding-top: 7px;
+      border-top: 1px solid rgba(82, 137, 232, .25);
+    }
+  `;
+  (document.head || document.documentElement).append(inlineStyles);
+
+  function clearInlineTranslations() {
+    for (const node of document.querySelectorAll(INLINE_SELECTOR)) {
+      node.remove();
+    }
+    inlineNodes = [];
+  }
+
+  function makeInlineTranslation(text, kind, explanation = "", anchor = null) {
+    // Keep <ul>/<ol> children valid when an option is an <li>.
+    const tag = anchor?.tagName === "LI" &&
+      /^(UL|OL)$/.test(anchor.parentElement?.tagName || "")
+      ? "li"
+      : "div";
+
+    const box = document.createElement(tag);
+    box.className = "udemy-quiz-inline-translation";
+    box.setAttribute(INLINE_ATTRIBUTE, kind);
+
+    const label = document.createElement("span");
+    label.className = "uqt-label";
+    label.textContent = kind === "question" ? "문제 번역" : "선택지 번역";
+
+    const translated = document.createElement("span");
+    translated.className = "uqt-text";
+    translated.textContent = text;
+
+    box.append(label, translated);
+
+    if (explanation) {
+      const detail = document.createElement("span");
+      detail.className = "uqt-explanation";
+      detail.textContent = `해설\n${explanation}`;
+      box.append(detail);
+    }
+
+    return box;
+  }
+
+  function showInlineTranslations(quiz, questionKo, answersKo) {
+    clearInlineTranslations();
+    const cards = quiz.nodes.cards;
+    if (!cards.length || cards.some(card => !card.isConnected)) return;
+
+    // The translated question goes between the original question and first answer.
+    const questionBox = makeInlineTranslation(
+      questionKo, "question", "", cards[0]
+    );
+    cards[0].before(questionBox);
+    inlineNodes.push(questionBox);
+
+    // Each translated choice follows its original choice without changing the input.
+    cards.forEach((card, i) => {
+      const translated = answersKo[i];
+      const answerBox = makeInlineTranslation(
+        translated.ko,
+        "answer",
+        translated.explanationKo,
+        card
+      );
+      card.after(answerBox);
+      inlineNodes.push(answerBox);
+    });
+  }
+
+  function inlineIsCurrent(quiz) {
+    return !!lastRendered &&
+      lastRendered.cards.length === quiz.nodes.cards.length &&
+      lastRendered.cards.every((card, i) =>
+        card === quiz.nodes.cards[i] && card.isConnected
+      ) &&
+      inlineNodes.length === quiz.nodes.cards.length + 1 &&
+      inlineNodes.every(node => node.isConnected);
+  }
 
   function notice(message, showStart = false) {
     body.replaceChildren();
@@ -486,6 +610,9 @@
 
     visible = false;
     ++seq;
+    lastKey = "";
+    lastRendered = null;
+    clearInlineTranslations();
 
     shell.style.display = "none";
     launcher.style.display = "block";
@@ -643,7 +770,9 @@
     let n;
 
     while ((n = walk.nextNode())) {
-      if (host.contains(n)) continue;
+      if (host.contains(n) || n.parentElement?.closest(INLINE_SELECTOR)) {
+        continue;
+      }
 
       if (pattern.test((n.nodeValue || "").trim())) {
         return n;
@@ -651,6 +780,29 @@
     }
 
     return null;
+  }
+
+  // innerText includes the visible injected translations. Temporarily hide
+  // only our nodes while reading the original answer and feedback text.
+  function originalInnerText(element) {
+    const nodes = [...element.querySelectorAll(INLINE_SELECTOR)];
+    if (!nodes.length) return element.innerText || "";
+
+    const previous = nodes.map(node => ({
+      node,
+      value: node.style.getPropertyValue("display"),
+      priority: node.style.getPropertyPriority("display")
+    }));
+
+    try {
+      nodes.forEach(node => node.style.setProperty("display", "none", "important"));
+      return element.innerText || "";
+    } finally {
+      for (const { node, value, priority } of previous) {
+        if (value) node.style.setProperty("display", value, priority);
+        else node.style.removeProperty("display");
+      }
+    }
   }
 
   function cardOf(control) {
@@ -667,7 +819,7 @@
         break;
       }
 
-      const text = (p.innerText || "").trim();
+      const text = originalInnerText(p).trim();
 
       if (text.length >= 8 && text.length < 6000) {
         best = p;
@@ -691,7 +843,7 @@
     )?.[1];
 
     if (!number) return null;
-    
+
     const footerNode = findText(
       new RegExp(
         `^(?:Question\\s*${number}\\s*of\\s*\\d+|\\d+\\s*의\\s*질문\\s*${number})$`,
@@ -724,7 +876,7 @@
     const cards = controls.map(cardOf);
 
     const answers = cards.map((card, i) => {
-      const lines = (card.innerText || "")
+      const lines = originalInnerText(card)
         .split(/\n+/)
         .map(s => s.trim())
         .filter(Boolean);
@@ -776,14 +928,17 @@
       range.setStartAfter(headerNode);
       range.setEndBefore(cards[0]);
 
-      question = range.toString().trim();
+      // Ignore previously injected translations in the question range.
+      const fragment = range.cloneContents();
+      fragment.querySelectorAll(INLINE_SELECTOR).forEach(node => node.remove());
+      question = (fragment.textContent || "").trim();
     } catch (_) {}
 
     if (!question) {
       const all = document.body.innerText;
 
       const prefix = new RegExp(
-        `Question\\s*${number}\\s*:\\s*`,
+        `(?:Question|질문)\\s*${number}\\s*:\\s*`,
         "i"
       );
 
@@ -807,11 +962,11 @@
     if (!question) return null;
 
     question = question.replace(
-      /^\s*Question\s*\d+\s*:/i,
+      /^\s*(?:Question|질문)\s*\d+\s*:/i,
       ""
     ).trim();
 
-    return { number, question, answers };
+    return { number, question, answers, nodes: { cards } };
   }
 
   function translateCached(source) {
@@ -902,7 +1057,10 @@
     const quiz = extractQuiz();
 
     if (!quiz) {
+      ++seq; // An in-flight translation must not render an obsolete question.
       lastKey = "";
+      lastRendered = null;
+      clearInlineTranslations();
       status.textContent = "퀴즈 대기";
 
       notice(
@@ -913,41 +1071,61 @@
       return;
     }
 
-    const key = JSON.stringify(quiz);
+    // DOM references must not be serialized as part of the content key.
+    const key = JSON.stringify({
+      number: quiz.number,
+      question: quiz.question,
+      answers: quiz.answers
+    });
 
-    if (key === lastKey) return;
+    if (key === lastKey) {
+      // Udemy can replace its answer elements with identical text.
+      if (lastRendered?.key === key && !inlineIsCurrent(quiz)) {
+        showInlineTranslations(
+          quiz, lastRendered.questionKo, lastRendered.answersKo
+        );
+        lastRendered.cards = [...quiz.nodes.cards];
+      }
+      return;
+    }
 
     lastKey = key;
-
     const mySeq = ++seq;
+    lastRendered = null;
+    clearInlineTranslations();
 
     status.textContent = "번역 중";
     notice(`문제 ${quiz.number} 번역 중…`);
 
     try {
-      const questionKo = await translateCached(
-        quiz.question
-      );
-
+      const questionKo = await translateCached(quiz.question);
       const answersKo = [];
 
       for (const a of quiz.answers) {
         answersKo.push({
           ...a,
           ko: await translateCached(a.source),
-          explanationKo: await translateCached(
-            a.explanation
-          )
+          explanationKo: await translateCached(a.explanation)
         });
       }
 
       if (mySeq !== seq || !visible) return;
 
+      // Keep the original panel, and ALSO insert translations in the quiz DOM.
       render(quiz, questionKo, answersKo);
+      showInlineTranslations(quiz, questionKo, answersKo);
+      lastRendered = {
+        key,
+        questionKo,
+        answersKo,
+        cards: [...quiz.nodes.cards]
+      };
     } catch (error) {
       if (mySeq !== seq || !visible) return;
 
       lastKey = "";
+      lastRendered = null;
+      clearInlineTranslations();
       status.textContent = "번역 오류";
 
       notice(
@@ -956,10 +1134,7 @@
         "\n\n↻ 버튼을 눌러 다시 시도하세요."
       );
 
-      console.error(
-        "[Udemy Local Translator]",
-        error
-      );
+      console.error("[Udemy Local Translator]", error);
     }
   }
 
@@ -972,14 +1147,26 @@
     );
   }
 
-  // Automatically detect dynamic page changes.
+  // Automatically detect dynamic page changes, excluding our own inline DOM.
+  function isOwnMutation(mutation) {
+    const target = mutation.target;
+    if (host.contains(target)) return true;
+    if (target.parentElement?.closest(INLINE_SELECTOR)) return true;
+    if (target.nodeType === Node.ELEMENT_NODE &&
+        target.closest(INLINE_SELECTOR)) return true;
+
+    if (mutation.type === "childList") {
+      const changed = [...mutation.addedNodes, ...mutation.removedNodes];
+      return changed.length > 0 && changed.every(node =>
+        node.nodeType === Node.ELEMENT_NODE && node.matches(INLINE_SELECTOR)
+      );
+    }
+    return false;
+  }
+
   const observer = new MutationObserver(mutations => {
     if (!visible || !translator) return;
-
-    if (
-      mutations.every(m => host.contains(m.target))
-    ) return;
-
+    if (mutations.every(isOwnMutation)) return;
     schedule();
   });
 
@@ -1019,6 +1206,9 @@
       clearInterval(interval);
 
       ++seq;
+      clearInlineTranslations();
+      inlineStyles.remove();
+      lastRendered = null;
 
       try {
         translator?.destroy();
