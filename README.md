@@ -4,7 +4,7 @@ Chrome 내장 Translator API (영어 → 한국어)를 사용해 Udemy 시험 �
 
 ## 새 PC에 설치
 
-1. ZIP을 압축 해제합니다. `manifest.json`과 `content.js`가 한 폴더에 있어야 합니다.
+1. ZIP을 압축 해제합니다. `manifest.json`, `dictionary-terms.js`, `dictionary.js`, `content.js`가 한 폴더에 있어야 합니다.
 2. 데스크톱 Chrome 138 이상에서 `chrome://extensions`를 엽니다.
 3. 오른쪽 위 **개발자 모드**를 켭니다.
 4. **압축해제된 확장 프로그램을 로드합니다**를 눌러 `udemy_local_translator` 폴더를 선택합니다.
@@ -16,6 +16,16 @@ Chrome 내장 Translator API (영어 → 한국어)를 사용해 Udemy 시험 �
 - 화면에 별도 패널이나 버튼이 없습니다. 번역은 원래 문제와 각 선택지 바로 아래에 인라인으로 표시됩니다.
 - 퀴즈가 변경되면 MutationObserver로 자동 갱신합니다.
 - 오류와 상태는 DevTools 콘솔에 `[Udemy Local Translator]`로 출력됩니다.
+
+## 개발자 용어 사전
+
+`dictionary-terms.js`에 등록된 용어(Claude, AWS, 일반 개발 용어 약 1,000개)는 번역 결과에서 영어 원문 그대로 유지됩니다.
+
+- 예: "Launch an EC2 instance in a private subnet" → "private subnet에서 EC2 instance를 시작합니다"
+- 용어 추가: `dictionary-terms.js`의 해당 그룹 배열에 문자열을 추가하고 확장 프로그램을 새로고침합니다.
+- 대문자만으로 된 약어(SAM, LAG 등)는 대소문자가 정확히 같아야 매칭됩니다. 소문자일 때 일반 단어인 이름(Projects, Haiku 등)은 `caseSensitive`에 넣습니다.
+- "object", "request" 같은 일상 단어는 넣지 마세요. 모든 문장에서 번역되지 않게 됩니다.
+- 테스트: `node --test tests/dictionary.test.js`
 
 ## 특성
 

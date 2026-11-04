@@ -14,6 +14,15 @@
 - Definition: The Chrome built-in on-device Translator API instance (English to Korean)
 - Code: `translator`, `Translator.create()`, `translateCached()`
 
+## Dictionary
+- Definition: The list of developer terms kept in English in translations
+- Code: `dictionary-terms.js`, `dictionary.js` → `protect()`, `restore()`
+- Avoid: "glossary" for this feature (the glossary is this document)
+
+## Placeholder
+- Definition: A `[[n]]` token that replaces a dictionary term during translation
+- Code: `PLACEHOLDER` in `dictionary.js`
+
 ## Inline Translation
 - Definition: Korean text inserted into the Udemy page directly under the original question or answer
 - Code: `showInlineTranslations()`, `data-udemy-quiz-inline`

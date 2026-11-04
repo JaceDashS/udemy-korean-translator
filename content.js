@@ -1,6 +1,6 @@
 
 /*
- * Udemy Local Quiz Translator v1.1.0
+ * Udemy Local Quiz Translator v1.2.0
  * Chrome 138+ / English -> Korean
  * On-device Translator API
  */
@@ -440,6 +440,23 @@
     return { number, question, answers, nodes: { cards } };
   }
 
+  const dictionary = window.__udemyQuizTranslatorDictionary;
+
+  // Keep dictionary terms in English. If the translator drops a placeholder,
+  // fall back to a plain translation instead of showing a broken sentence.
+  async function translateWithDictionary(source) {
+    if (!dictionary) return translator.translate(source);
+
+    const { text, terms } = dictionary.protect(source);
+    if (!terms.length) return translator.translate(source);
+
+    const restored = dictionary.restore(await translator.translate(text), terms);
+    if (restored !== null) return restored;
+
+    console.debug(LOG, "Dictionary placeholder lost; using plain translation.", source);
+    return translator.translate(source);
+  }
+
   function translateCached(source) {
     if (!source) return Promise.resolve("");
 
@@ -447,7 +464,7 @@
       return cache.get(source);
     }
 
-    const p = translator.translate(source)
+    const p = translateWithDictionary(source)
       .catch(err => {
         cache.delete(source);
         throw err;

@@ -2,6 +2,8 @@
 
 ## Files
 - `manifest.json` — Manifest V3. Injects the content script into Udemy pages in the `MAIN` world.
+- `dictionary-terms.js` — Developer term list, loaded first. Sets `window.__udemyQuizTranslatorTerms`.
+- `dictionary.js` — Builds the term matcher. Sets `window.__udemyQuizTranslatorDictionary` (`protect`, `restore`).
 - `content.js` — Single IIFE. Detects the quiz, translates it with the Chrome Translator API, and renders the result.
 
 ## Translation Flow
@@ -13,7 +15,7 @@ inline under the original elements. There is no panel or button on the page.
 flowchart LR
     A[Udemy DOM change] --> B[schedule]
     B --> C[extractQuiz]
-    C --> D[translateCached]
+    C --> D[translateCached with dictionary]
     D --> E[showInlineTranslations]
 ```
 
@@ -26,4 +28,4 @@ Scenario:
 - Startup — `autoStart()`, `startOnFirstGesture()`, `initialize()`; see [Startup](../design/translation/10-startup.md)
 - Inline rendering — `showInlineTranslations()`, `clearInlineTranslations()`; see [Inline Translation](../design/quiz/10-inline-translation.md)
 - Extraction — `extractQuiz()`, `cardOf()`, `originalInnerText()`
-- Translation — `translateCached()`
+- Translation — `translateCached()`, `translateWithDictionary()`; see [Dictionary](../design/translation/20-dictionary.md)

@@ -2,7 +2,7 @@
     "manifest_version":  3,
     "name":  "Udemy Quiz Translator",
     "short_name":  "Udemy Quiz",
-    "version":  "1.1.0",
+    "version":  "1.2.0",
     "description":  "Udemy 퀴즈를 Chrome 내장 Translator API로 로컬 번역하고 문제 아래에 인라인으로 표시합니다.",
     "minimum_chrome_version":  "138",
     "content_scripts":  [
@@ -12,6 +12,8 @@
                                                 "https://udemy.com/*"
                                             ],
                                 "js":  [
+                                           "dictionary-terms.js",
+                                           "dictionary.js",
                                            "content.js"
                                        ],
                                 "run_at":  "document_idle",
