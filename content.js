@@ -1,6 +1,6 @@
 
 /*
- * Udemy Local Quiz Translator v1.5.0
+ * Udemy Local Quiz Translator v1.5.1
  * Chrome 138+ / English -> Korean
  * On-device Translator API
  */
@@ -54,14 +54,6 @@
       white-space: normal;
     }
 
-    .udemy-quiz-inline-translation .uqt-label {
-      display: block;
-      margin-bottom: 3px;
-      color: #5289e8;
-      font-size: 11px;
-      font-weight: 700;
-    }
-
     .udemy-quiz-inline-translation .uqt-text,
     .udemy-quiz-inline-translation .uqt-explanation {
       display: block;
@@ -110,15 +102,11 @@
     box.className = "udemy-quiz-inline-translation";
     box.setAttribute(INLINE_ATTRIBUTE, kind);
 
-    const label = document.createElement("span");
-    label.className = "uqt-label";
-    label.textContent = kind === "question" ? "문제 번역" : "선택지 번역";
-
     const translated = document.createElement("span");
     translated.className = "uqt-text";
     translated.textContent = text;
 
-    box.append(label, translated);
+    box.append(translated);
 
     if (explanation) {
       const detail = document.createElement("span");
