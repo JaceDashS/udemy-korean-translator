@@ -7,7 +7,7 @@
 ## Translation Flow
 A `MutationObserver` watches the Udemy page. On change, `update()` extracts the
 current quiz, translates the question and each answer, and inserts the Korean text
-inline under the original elements. A floating panel also shows the same result.
+inline under the original elements. There is no panel or button on the page.
 
 ```mermaid
 flowchart LR
@@ -15,7 +15,6 @@ flowchart LR
     B --> C[extractQuiz]
     C --> D[translateCached]
     D --> E[showInlineTranslations]
-    D --> F[render panel]
 ```
 
 Scenario:
@@ -24,7 +23,7 @@ Scenario:
 - Result: Korean text for question 4 appears under the original question and each answer
 
 ## Modules Inside content.js
-- Panel UI — Shadow DOM launcher and resizable panel
+- Startup — `autoStart()`, `startOnFirstGesture()`, `initialize()`; see [Startup](../design/translation/10-startup.md)
 - Inline rendering — `showInlineTranslations()`, `clearInlineTranslations()`; see [Inline Translation](../design/quiz/10-inline-translation.md)
 - Extraction — `extractQuiz()`, `cardOf()`, `originalInnerText()`
-- Translation — `initialize()`, `translateCached()`
+- Translation — `translateCached()`

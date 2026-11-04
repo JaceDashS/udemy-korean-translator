@@ -1,6 +1,6 @@
 
 /*
- * Udemy Local Quiz Translator v1.0.3
+ * Udemy Local Quiz Translator v1.1.0
  * Chrome 138+ / English -> Korean
  * On-device Translator API
  */
@@ -15,346 +15,11 @@
     window.stopQuizTranslation?.();
   } catch (_) {}
 
-  const SETTINGS = "udemy-local-quiz-translator-settings-v1";
-  const defaults = {
-    left: null,
-    top: null,
-    width: 450,
-    height: 520,
-    autoOpen: false
-  };
-
-  let saved = { ...defaults };
-
-  try {
-    saved = {
-      ...defaults,
-      ...JSON.parse(localStorage.getItem(SETTINGS) || "{}")
-    };
-  } catch (_) {}
-
-  const host = document.createElement("div");
-  host.id = "udemy-local-quiz-translator-host";
-  host.style.cssText =
-    "position:fixed;inset:0;pointer-events:none;z-index:2147483647;";
-
-  const shadow = host.attachShadow({ mode: "open" });
-  const styles = document.createElement("style");
-
-  styles.textContent = `
-    * { box-sizing: border-box; }
-
-    button {
-      font: inherit;
-      cursor: pointer;
-    }
-
-    #launcher {
-      position: fixed;
-      right: 16px;
-      bottom: 16px;
-      pointer-events: auto;
-      padding: 11px 16px;
-      border: 1px solid #899cff;
-      border-radius: 999px;
-      background: #212d49;
-      color: #fff;
-      box-shadow: 0 4px 18px #0006;
-      font: 600 13px/1.2 system-ui, sans-serif;
-      white-space: nowrap;
-    }
-
-    #shell {
-      position: fixed;
-      pointer-events: auto;
-      display: none;
-      overflow: hidden;
-      resize: both;
-      min-width: 245px;
-      min-height: 155px;
-      max-width: calc(100vw - 12px);
-      max-height: calc(100vh - 12px);
-      background: #17202d;
-      color: #f1f5fa;
-      border: 1px solid #4d617e;
-      border-radius: 11px;
-      box-shadow: 0 12px 38px #0008;
-      font: 13px/1.55 system-ui, sans-serif;
-    }
-
-    #header {
-      height: 44px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 0 10px;
-      background: #101827;
-      border-bottom: 1px solid #34435a;
-      user-select: none;
-      touch-action: none;
-      cursor: grab;
-    }
-
-    #header.dragging { cursor: grabbing; }
-
-    #title {
-      font-weight: 700;
-      white-space: nowrap;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex: 1;
-    }
-
-    #status {
-      font-size: 10px;
-      color: #a3b5d1;
-      white-space: nowrap;
-      max-width: 88px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .action {
-      border: 0;
-      background: #26344a;
-      color: #fff;
-      border-radius: 6px;
-      width: 26px;
-      height: 26px;
-      flex: none;
-      font-size: 16px;
-      line-height: 24px;
-      padding: 0;
-    }
-
-    .action:hover, #launcher:hover {
-      filter: brightness(1.22);
-    }
-
-    #body {
-      overflow: auto;
-      height: calc(100% - 44px);
-      padding: 12px;
-      scrollbar-width: thin;
-    }
-
-    .message {
-      padding: 15px 12px;
-      border: 1px solid #405472;
-      border-radius: 8px;
-      background: #233147;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
-
-    #start {
-      margin-top: 12px;
-      display: block;
-      padding: 10px 12px;
-      background: #7565e8;
-      border: none;
-      border-radius: 7px;
-      color: white;
-      font-weight: 700;
-    }
-
-    .q-head {
-      font-weight: 700;
-      font-size: 13px;
-      margin: 0 0 10px;
-      color: #d8e5ff;
-    }
-
-    .label {
-      color: #a5c4fd;
-      font-size: 10px;
-      font-weight: 750;
-      letter-spacing: .03em;
-      margin-bottom: 5px;
-    }
-
-    .card {
-      padding: 11px 12px;
-      margin-bottom: 9px;
-      border-radius: 8px;
-      border: 1px solid #40516a;
-      background: #27364b;
-      overflow-wrap: anywhere;
-    }
-
-    .card.correct {
-      border-color: #39856e;
-      background: #194333;
-    }
-
-    .card.wrong {
-      border-color: #bc6b6b;
-      background: #492b35;
-    }
-
-    .card.selected:not(.correct):not(.wrong) {
-      border-color: #8e84fc;
-    }
-
-    .card p {
-      margin: 0;
-      white-space: pre-wrap;
-    }
-
-    .explanation {
-      margin-top: 9px;
-      border-top: 1px solid #ffffff38;
-      padding-top: 9px;
-      white-space: pre-wrap;
-      color: #e0e8f4;
-    }
-
-    #shell.minimized {
-      resize: none !important;
-      min-height: 44px !important;
-      height: 44px !important;
-    }
-
-    #shell.minimized #body {
-      display: none;
-    }
-
-    #shell.minimized #header {
-      border-bottom: none;
-      cursor: default;
-    }
-  `;
-
-  shadow.append(styles);
-
-  const launcher = document.createElement("button");
-  launcher.id = "launcher";
-  launcher.type = "button";
-  launcher.textContent = "번역 열기";
-  launcher.title = "Udemy 한국어 번역 패널 열기";
-
-  const shell = document.createElement("section");
-  shell.id = "shell";
-  shell.setAttribute("aria-label", "Udemy 한국어 자동 번역");
-
-  const header = document.createElement("div");
-  header.id = "header";
-
-  const title = document.createElement("span");
-  title.id = "title";
-  title.textContent = "⋮⋮  Udemy 한국어 번역";
-
-  const status = document.createElement("span");
-  status.id = "status";
-  status.textContent = "대기";
-
-  const refreshBtn = makeButton("↻", "번역 다시 확인");
-  const minimizeBtn = makeButton("−", "최소화 / 복원");
-  const closeBtn = makeButton("×", "패널 닫기");
-
-  header.append(
-    title,
-    status,
-    refreshBtn,
-    minimizeBtn,
-    closeBtn
-  );
-
-  const body = document.createElement("div");
-  body.id = "body";
-
-  shell.append(header, body);
-  shadow.append(launcher, shell);
-
-  (document.body || document.documentElement).append(host);
-
-  function makeButton(text, tooltip) {
-    const b = document.createElement("button");
-    b.className = "action";
-    b.textContent = text;
-    b.type = "button";
-    b.title = tooltip;
-    b.setAttribute("aria-label", tooltip);
-    return b;
-  }
-
-  function store() {
-    try {
-      localStorage.setItem(SETTINGS, JSON.stringify(saved));
-    } catch (_) {}
-  }
-
-  function clamp(value, lo, hi) {
-    return Math.max(lo, Math.min(hi, value));
-  }
-
-  function dimensions() {
-    const w = clamp(
-      Number(saved.width) || 450,
-      245,
-      Math.max(245, innerWidth - 12)
-    );
-
-    const h = clamp(
-      Number(saved.height) || 520,
-      155,
-      Math.max(155, innerHeight - 12)
-    );
-
-    return { w, h };
-  }
-
-  function positionShell() {
-    const { w, h } = dimensions();
-
-    const x = saved.left === null
-      ? Math.max(6, innerWidth - w - 20)
-      : clamp(
-          Number(saved.left) || 6,
-          6,
-          Math.max(6, innerWidth - w - 6)
-        );
-
-    const y = saved.top === null
-      ? Math.max(6, innerHeight - h - 20)
-      : clamp(
-          Number(saved.top) || 6,
-          6,
-          Math.max(6, innerHeight - h - 6)
-        );
-
-    Object.assign(shell.style, {
-      width: `${w}px`,
-      height: `${h}px`,
-      left: `${x}px`,
-      top: `${y}px`
-    });
-  }
-
-  function saveBounds() {
-    if (shell.classList.contains("minimized")) return;
-
-    const r = shell.getBoundingClientRect();
-
-    if (!r.width || !r.height) return;
-
-    Object.assign(saved, {
-      left: r.left,
-      top: r.top,
-      width: r.width,
-      height: r.height
-    });
-
-    store();
-  }
-
-  positionShell();
+  const LOG = "[Udemy Local Translator]";
+  const LANGS = { sourceLanguage: "en", targetLanguage: "ko" };
 
   let translator = null;
   let creating = null;
-  let visible = false;
-  let minimized = false;
   let seq = 0;
   let lastKey = "";
   let debounceTimer;
@@ -366,7 +31,7 @@
   let inlineNodes = [];
   let lastRendered = null;
 
-  // Inline translations appear on the Udemy page, not inside the panel's shadow DOM.
+  // Inline translations appear directly on the Udemy page.
   const inlineStyles = document.createElement("style");
   inlineStyles.id = "udemy-quiz-inline-translator-styles";
   inlineStyles.textContent = `
@@ -486,24 +151,16 @@
       inlineNodes.every(node => node.isConnected);
   }
 
-  function notice(message, showStart = false) {
-    body.replaceChildren();
-
-    const msg = document.createElement("div");
-    msg.className = "message";
-    msg.textContent = message;
-    body.append(msg);
-
-    if (showStart) {
-      const button = document.createElement("button");
-      button.id = "start";
-      button.type = "button";
-      button.textContent = "로컬 번역 시작 / 모델 다운로드";
-      button.onclick = () => {
-        void initialize();
-      };
-      body.append(button);
-    }
+  // A model download needs user activation, so it waits for the first page click.
+  function startOnFirstGesture() {
+    const start = () => {
+      document.removeEventListener("pointerdown", start, true);
+      document.removeEventListener("keydown", start, true);
+      void initialize();
+    };
+    document.addEventListener("pointerdown", start, true);
+    document.addEventListener("keydown", start, true);
+    console.info(LOG, "Waiting for a page click to download the translation model.");
   }
 
   async function initialize() {
@@ -518,29 +175,16 @@
       typeof Translator === "undefined" ||
       typeof Translator.create !== "function"
     ) {
-      status.textContent = "미지원";
-      notice(
-        "이 Chrome에서 Translator API를 사용할 수 없습니다. " +
-        "Chrome 138 이상 데스크톱 버전인지 확인하세요.",
-        true
-      );
+      console.warn(LOG, "Translator API is unavailable. Chrome 138+ desktop is required.");
       return;
     }
 
-    status.textContent = "준비 중";
-    notice(
-      "Chrome 내장 번역기를 준비 중입니다. " +
-      "첫 사용 시 언어 모델 다운로드가 필요할 수 있습니다."
-    );
-
     try {
       const promise = Translator.create({
-        sourceLanguage: "en",
-        targetLanguage: "ko",
+        ...LANGS,
         monitor(m) {
           m.addEventListener("downloadprogress", e => {
-            status.textContent =
-              `다운로드 ${Math.round(e.loaded * 100)}%`;
+            console.info(LOG, `Model download ${Math.round(e.loaded * 100)}%`);
           });
         }
       });
@@ -548,206 +192,35 @@
       creating = promise;
       translator = await promise;
 
-      status.textContent = "자동 감지";
       lastKey = "";
       schedule(true);
     } catch (error) {
-      status.textContent = "오류";
-
-      notice(
-        "번역기를 시작하지 못했습니다.\n" +
-        String(error?.message || error) +
-        "\n\n아래 버튼을 클릭해 다시 시도하세요.",
-        true
-      );
+      console.error(LOG, "Failed to start the translator.", error);
     } finally {
       creating = null;
     }
   }
 
-  function openPanel(autostart = false) {
-    visible = true;
+  async function autoStart() {
+    if (typeof Translator === "undefined") {
+      console.warn(LOG, "Translator API is unavailable. Chrome 138+ desktop is required.");
+      return;
+    }
 
-    shell.style.display = "block";
-    launcher.style.display = "none";
+    try {
+      const availability = await Translator.availability(LANGS);
 
-    if (minimized) toggleMinimize();
-
-    saved.autoOpen = true;
-    store();
-
-    if (translator) {
-      schedule(true);
-    } else if (!autostart) {
-      void initialize();
-    } else {
-      notice(
-        "번역기를 시작하려면 아래 버튼을 클릭하세요.",
-        true
-      );
-
-      if (typeof Translator !== "undefined") {
-        Translator.availability({
-          sourceLanguage: "en",
-          targetLanguage: "ko"
-        })
-          .then(v => {
-            if (
-              visible &&
-              !translator &&
-              v === "available"
-            ) {
-              void initialize();
-            }
-          })
-          .catch(() => {});
+      if (availability === "available") {
+        void initialize();
+      } else if (availability === "downloadable" || availability === "downloading") {
+        startOnFirstGesture();
+      } else {
+        console.warn(LOG, `English to Korean translation is ${availability}.`);
       }
+    } catch (error) {
+      console.error(LOG, "Failed to check translator availability.", error);
     }
   }
-
-  function closePanel() {
-    saveBounds();
-
-    visible = false;
-    ++seq;
-    lastKey = "";
-    lastRendered = null;
-    clearInlineTranslations();
-
-    shell.style.display = "none";
-    launcher.style.display = "block";
-
-    saved.autoOpen = false;
-    store();
-  }
-
-  /*
-   * v1.0.2
-   * Minimize -> always dock to bottom-right.
-   * Restore -> recover previous dimensions and position.
-   */
-
-  function dockMinimized() {
-    const w = Math.min(
-      265,
-      Math.max(245, innerWidth - 12)
-    );
-
-    const h = 44;
-
-    Object.assign(shell.style, {
-      width: `${w}px`,
-      height: `${h}px`,
-      left: `${Math.max(6, innerWidth - w - 16)}px`,
-      top: `${Math.max(6, innerHeight - h - 16)}px`
-    });
-  }
-
-  function toggleMinimize() {
-    if (!minimized) {
-      // Save expanded coordinates before minimizing.
-      saveBounds();
-
-      minimized = true;
-      shell.classList.add("minimized");
-
-      minimizeBtn.textContent = "□";
-      minimizeBtn.title = "복원";
-
-      // Always move to the bottom-right corner.
-      dockMinimized();
-    } else {
-      shell.classList.remove("minimized");
-      minimized = false;
-
-      minimizeBtn.textContent = "−";
-      minimizeBtn.title = "최소화";
-
-      // Restore the previous panel position and size.
-      positionShell();
-    }
-  }
-
-  launcher.addEventListener("click", () => openPanel());
-
-  closeBtn.addEventListener("click", closePanel);
-
-  minimizeBtn.addEventListener(
-    "click",
-    toggleMinimize
-  );
-
-  refreshBtn.addEventListener("click", () => {
-    lastKey = "";
-
-    if (translator) {
-      schedule(true);
-    } else {
-      void initialize();
-    }
-  });
-
-  // Header dragging is enabled only while expanded.
-  header.addEventListener("pointerdown", e => {
-    if (
-      minimized ||
-      e.button !== 0 ||
-      e.target.closest("button")
-    ) return;
-
-    const start = shell.getBoundingClientRect();
-    const x0 = e.clientX;
-    const y0 = e.clientY;
-
-    header.setPointerCapture(e.pointerId);
-    header.classList.add("dragging");
-
-    const move = ev => {
-      shell.style.left = `${
-        clamp(
-          start.left + ev.clientX - x0,
-          6,
-          Math.max(6, innerWidth - shell.offsetWidth - 6)
-        )
-      }px`;
-
-      shell.style.top = `${
-        clamp(
-          start.top + ev.clientY - y0,
-          6,
-          Math.max(6, innerHeight - shell.offsetHeight - 6)
-        )
-      }px`;
-    };
-
-    const end = () => {
-      header.classList.remove("dragging");
-
-      header.removeEventListener("pointermove", move);
-      header.removeEventListener("pointerup", end);
-      header.removeEventListener("pointercancel", end);
-
-      saveBounds();
-    };
-
-    header.addEventListener("pointermove", move);
-    header.addEventListener("pointerup", end);
-    header.addEventListener("pointercancel", end);
-  });
-
-  shell.addEventListener("pointerup", () => {
-    if (!minimized) saveBounds();
-  });
-
-  // Keep the minimized panel docked during window resizing.
-  window.addEventListener("resize", () => {
-    if (minimized) {
-      dockMinimized();
-    } else {
-      saveBounds();
-      positionShell();
-    }
-  });
 
   // Extract Udemy question and answer elements.
   const CONTROL =
@@ -770,9 +243,7 @@
     let n;
 
     while ((n = walk.nextNode())) {
-      if (host.contains(n) || n.parentElement?.closest(INLINE_SELECTOR)) {
-        continue;
-      }
+      if (n.parentElement?.closest(INLINE_SELECTOR)) continue;
 
       if (pattern.test((n.nodeValue || "").trim())) {
         return n;
@@ -991,68 +462,8 @@
     return p;
   }
 
-  function addCard(
-    label,
-    content,
-    statusKind = "",
-    explanation = ""
-  ) {
-    const card = document.createElement("article");
-    card.className = `card ${statusKind}`;
-
-    const heading = document.createElement("div");
-    heading.className = "label";
-    heading.textContent = label;
-
-    const p = document.createElement("p");
-    p.textContent = content;
-
-    card.append(heading, p);
-
-    if (explanation) {
-      const expl = document.createElement("div");
-      expl.className = "explanation";
-      expl.textContent = "해설\n" + explanation;
-      card.append(expl);
-    }
-
-    body.append(card);
-  }
-
-  function render(quiz, questionKo, answersKo) {
-    body.replaceChildren();
-
-    const heading = document.createElement("div");
-    heading.className = "q-head";
-    heading.textContent =
-      `문제 ${quiz.number} · 한국어 번역`;
-
-    body.append(heading);
-
-    addCard("QUESTION", questionKo);
-
-    answersKo.forEach((a, i) => {
-      const letter = String.fromCharCode(65 + i);
-
-      const outcome = a.status === "correct"
-        ? " · 정답"
-        : a.status === "wrong"
-          ? " · 오답"
-          : "";
-
-      addCard(
-        `선택지 ${letter}${a.selected ? " · 선택됨" : ""}${outcome}`,
-        a.ko,
-        `${a.status} ${a.selected ? "selected" : ""}`.trim(),
-        a.explanationKo
-      );
-    });
-
-    status.textContent = "자동 감지 중";
-  }
-
   async function update() {
-    if (!visible || !translator) return;
+    if (!translator) return;
 
     const quiz = extractQuiz();
 
@@ -1061,13 +472,6 @@
       lastKey = "";
       lastRendered = null;
       clearInlineTranslations();
-      status.textContent = "퀴즈 대기";
-
-      notice(
-        "Udemy 퀴즈를 찾지 못했습니다. " +
-        "시험 문제 화면으로 이동하면 자동 번역합니다."
-      );
-
       return;
     }
 
@@ -1094,9 +498,6 @@
     lastRendered = null;
     clearInlineTranslations();
 
-    status.textContent = "번역 중";
-    notice(`문제 ${quiz.number} 번역 중…`);
-
     try {
       const questionKo = await translateCached(quiz.question);
       const answersKo = [];
@@ -1109,10 +510,8 @@
         });
       }
 
-      if (mySeq !== seq || !visible) return;
+      if (mySeq !== seq) return;
 
-      // Keep the original panel, and ALSO insert translations in the quiz DOM.
-      render(quiz, questionKo, answersKo);
       showInlineTranslations(quiz, questionKo, answersKo);
       lastRendered = {
         key,
@@ -1121,20 +520,12 @@
         cards: [...quiz.nodes.cards]
       };
     } catch (error) {
-      if (mySeq !== seq || !visible) return;
+      if (mySeq !== seq) return;
 
       lastKey = "";
       lastRendered = null;
       clearInlineTranslations();
-      status.textContent = "번역 오류";
-
-      notice(
-        "번역 실패: " +
-        String(error?.message || error) +
-        "\n\n↻ 버튼을 눌러 다시 시도하세요."
-      );
-
-      console.error("[Udemy Local Translator]", error);
+      console.error(LOG, "Translation failed.", error);
     }
   }
 
@@ -1150,7 +541,6 @@
   // Automatically detect dynamic page changes, excluding our own inline DOM.
   function isOwnMutation(mutation) {
     const target = mutation.target;
-    if (host.contains(target)) return true;
     if (target.parentElement?.closest(INLINE_SELECTOR)) return true;
     if (target.nodeType === Node.ELEMENT_NODE &&
         target.closest(INLINE_SELECTOR)) return true;
@@ -1165,7 +555,7 @@
   }
 
   const observer = new MutationObserver(mutations => {
-    if (!visible || !translator) return;
+    if (!translator) return;
     if (mutations.every(isOwnMutation)) return;
     schedule();
   });
@@ -1186,7 +576,7 @@
     if (lastUrl !== location.href) {
       lastUrl = location.href;
 
-      if (translator && visible) {
+      if (translator) {
         schedule(true);
       }
     }
@@ -1194,8 +584,7 @@
 
   // Development helpers.
   window.udemyLocalTranslator = {
-    open: () => openPanel(),
-    close: closePanel,
+    start: () => initialize(),
     refresh: () => {
       lastKey = "";
       schedule(true);
@@ -1214,19 +603,10 @@
         translator?.destroy();
       } catch (_) {}
 
-      host.remove();
-
       delete window[INSTANCE];
       delete window.udemyLocalTranslator;
     }
   };
 
-  if (saved.autoOpen) {
-    openPanel(true);
-  } else {
-    notice(
-      "번역 열기를 클릭하면 Udemy 문제를 번역합니다.",
-      true
-    );
-  }
+  void autoStart();
 })();

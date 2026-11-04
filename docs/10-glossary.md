@@ -13,3 +13,8 @@
 ## Translator
 - Definition: The Chrome built-in on-device Translator API instance (English to Korean)
 - Code: `translator`, `Translator.create()`, `translateCached()`
+
+## Inline Translation
+- Definition: Korean text inserted into the Udemy page directly under the original question or answer
+- Code: `showInlineTranslations()`, `data-udemy-quiz-inline`
+- Avoid: "panel" (the panel UI was removed)
