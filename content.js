@@ -709,15 +709,16 @@
 
   const dictionary = window.__udemyQuizTranslatorDictionary;
 
-  // Keep dictionary terms in English. If the translator drops a placeholder,
-  // fall back to a plain translation instead of showing a broken sentence.
+  // Kept terms stay in English; pairs are replaced with their Korean meaning.
+  // If the translator drops a placeholder, fall back to a plain translation
+  // instead of showing a broken sentence.
   async function translateWithDictionary(source) {
     if (!dictionary) return translator.translate(source);
 
-    const { text, terms } = dictionary.protect(source);
+    const { text, terms, meanings } = dictionary.protect(source);
     if (!terms.length) return translator.translate(source);
 
-    const restored = dictionary.restore(await translator.translate(text), terms);
+    const restored = dictionary.restore(await translator.translate(text), terms, meanings);
     if (restored !== null) return restored;
 
     console.debug(LOG, "Dictionary placeholder lost; using plain translation.", source);

@@ -53,7 +53,8 @@ test("matches terms across line breaks and extra spaces", () => {
 
 test("leaves text with existing placeholder syntax untouched", () => {
   const source = "Value [[0]] with an EC2 instance";
-  assert.deepEqual(protect(source), { text: source, terms: [] });
+  assert.equal(protect(source).text, source);
+  assert.deepEqual(protect(source).terms, []);
 });
 
 test("restore returns null when a placeholder is lost", () => {
@@ -83,4 +84,59 @@ test("keeps CCAR-F exam terms in English", () => {
 
 test("ordinary English verbs and nouns are still translated", () => {
   assert.deepEqual(protect("Read the file and continue with the next step. Pay attention to the summary.").terms, []);
+});
+
+test("pairs are replaced with their meaning", () => {
+  const { configure } = window.__udemyQuizTranslatorDictionary;
+  configure({ "private subnet": "프라이빗 서브넷", lag: "지연" });
+  try {
+    const { text, terms, meanings } = protect("Create a private subnet with lag.");
+    assert.equal(text, "Create a [[0]] with [[1]].");
+    assert.deepEqual(terms, ["private subnet", "lag"]);
+    assert.deepEqual(meanings, ["프라이빗 서브넷", "지연"]);
+    assert.equal(
+      restore("[[0]]을 생성하고 [[1]]을 확인합니다.", terms, meanings),
+      "프라이빗 서브넷을 생성하고 지연을 확인합니다."
+    );
+  } finally {
+    configure({});
+  }
+});
+
+test("pair lookup accepts a plural of the listed word", () => {
+  const { configure } = window.__udemyQuizTranslatorDictionary;
+  configure({ "private subnet": "프라이빗 서브넷" });
+  try {
+    assert.deepEqual(protect("Two private subnets.").meanings, ["프라이빗 서브넷"]);
+  } finally {
+    configure({});
+  }
+});
+
+test("a pair overrides a kept term with the same spelling", () => {
+  const { configure } = window.__udemyQuizTranslatorDictionary;
+  configure({ "Private Subnet": "프라이빗 서브넷" });
+  try {
+    const { terms, meanings } = protect("a private subnet");
+    assert.deepEqual(terms, ["private subnet"]);
+    assert.deepEqual(meanings, ["프라이빗 서브넷"]);
+  } finally {
+    configure({});
+  }
+});
+
+test("kept terms have no meaning and restore to English", () => {
+  const { meanings } = protect("Launch an EC2 instance.");
+  assert.deepEqual(meanings, [undefined, undefined]);
+  assert.equal(restore("[[0]] [[1]]", ["EC2", "instance"], meanings), "EC2 instance");
+});
+
+test("acronym pairs match case-sensitively", () => {
+  const { configure } = window.__udemyQuizTranslatorDictionary;
+  configure({ SAM: "서버리스 애플리케이션 모델" });
+  try {
+    assert.deepEqual(protect("Sam and SAM.").terms, ["SAM"]);
+  } finally {
+    configure({});
+  }
 });

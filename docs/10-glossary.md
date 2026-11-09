@@ -16,8 +16,13 @@
 
 ## Dictionary
 - Definition: The list of developer terms kept in English in translations
-- Code: `dictionary-terms.js`, `dictionary.js` → `protect()`, `restore()`
+- Code: `dictionary-terms.js`, `dictionary.js` → `protect()`, `restore()`, `configure()`
 - Avoid: "glossary" for this feature (the glossary is this document)
+
+## Pair
+- Definition: A dictionary entry of an English word and its Korean meaning; the meaning replaces the word in the translation
+- Code: `pairs` in `dictionary-terms.js`, `configure()`, `meaningFor()` in `dictionary.js`
+- Avoid: "translation pair" (a pair here is always word → meaning)
 
 ## Placeholder
 - Definition: A `[[n]]` token that replaces a dictionary term during translation

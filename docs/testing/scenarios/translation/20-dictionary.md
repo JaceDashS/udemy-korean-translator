@@ -80,3 +80,33 @@
 - Steps: `restore()`
 - Result: "S3와 S3"
 - Test: "restore accepts spacing inside brackets and repeated placeholders"
+
+### Pair Replaces Word With Meaning
+- Input: "Create a private subnet with lag." with pairs `private subnet` → `프라이빗 서브넷`, `lag` → `지연`
+- Steps: `configure(pairs)` → `protect()` → translate "Create a [[0]] with [[1]]." → `restore()` with meanings
+- Result: Korean text contains `프라이빗 서브넷` and `지연`, not the English words
+- Test: "pairs are replaced with their meaning"
+
+### Pair Plural
+- Input: "Two private subnets." with pair `private subnet`
+- Steps: `protect()`
+- Result: Meaning `프라이빗 서브넷` is used for `private subnets`
+- Test: "pair lookup accepts a plural of the listed word"
+
+### Pair Overrides Kept Term
+- Input: "a private subnet" with pair `Private Subnet` (also a group term)
+- Steps: `protect()`
+- Result: The pair meaning is used, not the kept English term
+- Test: "a pair overrides a kept term with the same spelling"
+
+### Kept Term Has No Meaning
+- Input: "Launch an EC2 instance."
+- Steps: `protect()` → `restore()` with meanings
+- Result: `EC2 instance` restored in English
+- Test: "kept terms have no meaning and restore to English"
+
+### Acronym Pair
+- Input: "Sam and SAM." with pair `SAM`
+- Steps: `protect()`
+- Result: Only `SAM` is protected
+- Test: "acronym pairs match case-sensitively"
