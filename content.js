@@ -463,6 +463,56 @@
     }
   }
 
+  // Pairs (word → meaning) are loaded from the dictionary branch on each page
+  // load, so a push takes effect without reloading the extension. The bundled
+  // pairs in dictionary-terms.js stay in use when the download fails.
+  const GLOSSARY_URL =
+    "https://raw.githubusercontent.com/JaceDashS/udemy-quiz-translator/dictionary/dictionary.json";
+  const GLOSSARY_TIMEOUT_MS = 3000;
+  const GLOSSARY_LIMITS = { entries: 5000, length: 200 };
+
+  // The file is data only: anything that is not a short string pair is rejected.
+  function isValidPairs(pairs) {
+    if (!pairs || typeof pairs !== "object" || Array.isArray(pairs)) return false;
+
+    const entries = Object.entries(pairs);
+    if (entries.length > GLOSSARY_LIMITS.entries) return false;
+
+    return entries.every(
+      ([word, meaning]) =>
+        typeof meaning === "string" &&
+        word.trim().length > 0 &&
+        word.length <= GLOSSARY_LIMITS.length &&
+        meaning.length <= GLOSSARY_LIMITS.length
+    );
+  }
+
+  async function loadGlossary() {
+    const dictionary = window.__udemyQuizTranslatorDictionary;
+    if (!dictionary) return;
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), GLOSSARY_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(GLOSSARY_URL, {
+        cache: "no-store",
+        signal: controller.signal
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const data = await response.json();
+      if (!isValidPairs(data?.pairs)) throw new Error("Invalid dictionary file.");
+
+      dictionary.configure(data.pairs);
+      console.info(LOG, `Loaded ${Object.keys(data.pairs).length} dictionary pairs.`);
+    } catch (error) {
+      console.warn(LOG, "Using the bundled dictionary pairs.", error);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   async function autoStart() {
     if (typeof Translator === "undefined") {
       console.warn(LOG, "Translator API is unavailable. Chrome 138+ desktop is required.");
@@ -939,5 +989,5 @@
     }
   };
 
-  void autoStart();
+  void loadGlossary().then(autoStart);
 })();

@@ -4,7 +4,7 @@
 - Input: Source English text
 - Output: Korean translation with kept terms in their original English form and pairs replaced by their Korean meaning
 - Code: `dictionary.js` → `protect()`, `restore()`; `content.js` → `translateWithDictionary()`
-- Data: `dictionary-terms.js` → `window.__udemyQuizTranslatorTerms` (`groups`, `caseSensitive`, `pairs`)
+- Data: `dictionary-terms.js` → `window.__udemyQuizTranslatorTerms` (`groups`, `caseSensitive`, `pairs`); pairs can be replaced at load time from the dictionary branch ([Dictionary Sync](30-dictionary-sync.md))
 - Spec: [Dictionary](../../specs/translation/20-dictionary.md#requirements)
 - Architecture: [Overview](../../architecture/10-overview.md#translation-flow)
 

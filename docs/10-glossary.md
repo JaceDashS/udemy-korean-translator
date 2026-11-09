@@ -24,6 +24,16 @@
 - Code: `pairs` in `dictionary-terms.js`, `configure()`, `meaningFor()` in `dictionary.js`
 - Avoid: "translation pair" (a pair here is always word → meaning)
 
+## Dictionary Branch
+- Definition: The `dictionary` branch of this repository, which holds `dictionary.json` with the pairs
+- Code: `GLOSSARY_URL` in `content.js`, `editor/index.html`
+- Avoid: "sync branch"
+
+## Editor
+- Definition: The static page that edits pairs and registers them to the dictionary branch
+- Code: `editor/index.html`, `register()`
+- Avoid: "admin page"
+
 ## Placeholder
 - Definition: A `[[n]]` token that replaces a dictionary term during translation
 - Code: `PLACEHOLDER` in `dictionary.js`
