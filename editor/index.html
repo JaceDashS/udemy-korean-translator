@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dictionary Editor</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #1f2328;
+      --muted: #656d76;
+      --line: #d0d7de;
+      --accent: #0969da;
+      --danger: #cf222e;
+      --ok: #1a7f37;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #0d1117;
+        --fg: #e6edf3;
+        --muted: #8d96a0;
+        --line: #30363d;
+        --accent: #4493f8;
+        --danger: #f85149;
+        --ok: #3fb950;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #0d1117;
+      --fg: #e6edf3;
+      --muted: #8d96a0;
+      --line: #30363d;
+      --accent: #4493f8;
+      --danger: #f85149;
+      --ok: #3fb950;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 16px;
+      background: var(--bg);
+      color: var(--fg);
+      font: 14px/1.5 system-ui, "Malgun Gothic", sans-serif;
+    }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    p.muted { color: var(--muted); margin: 0 0 12px; }
+    section { margin-bottom: 16px; }
+    input, button {
+      font: inherit;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--fg);
+    }
+    input { min-width: 0; }
+    button { cursor: pointer; }
+    button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    button.danger { color: var(--danger); }
+    button:disabled { opacity: .5; cursor: default; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .row input[type="text"], .row input[type="password"] { flex: 1 1 180px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; }
+    td.word { word-break: break-word; }
+    td.meaning { word-break: break-word; }
+    td.action { width: 1%; white-space: nowrap; }
+    .status { margin-top: 8px; min-height: 1.5em; }
+    .status.ok { color: var(--ok); }
+    .status.error { color: var(--danger); }
+    .count { color: var(--muted); }
+    @media (max-width: 480px) {
+      body { padding: 12px; }
+      th.hide-sm, td.hide-sm { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Dictionary Editor</h1>
+  <p class="muted">단어(영어)와 뜻(한국어) 쌍을 관리합니다. 등록을 누르면 <code>dictionary</code> 브랜치에 바로 커밋됩니다.</p>
+
+  <section>
+    <div class="row">
+      <input id="token" type="password" placeholder="GitHub 토큰 (contents 쓰기 권한)" autocomplete="off">
+      <button id="saveToken" type="button">토큰 저장</button>
+      <button id="reload" type="button">새로고침</button>
+    </div>
+    <p class="muted">토큰은 이 탭의 sessionStorage에만 저장되고, GitHub API 요청 외에는 전송되지 않습니다.</p>
+  </section>
+
+  <section>
+    <div class="row">
+      <input id="word" type="text" placeholder="영어 단어 (예: private subnet)" autocomplete="off">
+      <input id="meaning" type="text" placeholder="뜻 (예: 프라이빗 서브넷)" autocomplete="off">
+      <button id="add" type="button">추가</button>
+    </div>
+  </section>
+
+  <section>
+    <div class="row">
+      <input id="filter" type="text" placeholder="검색" autocomplete="off">
+      <span class="count" id="count"></span>
+    </div>
+    <table>
+      <thead>
+        <tr><th>단어</th><th>뜻</th><th class="hide-sm"></th></tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="row">
+      <button id="register" class="primary" type="button" disabled>등록</button>
+      <span class="count" id="changes"></span>
+    </div>
+    <div class="status" id="status" role="status"></div>
+  </section>
+
+  <script>
+    "use strict";
+
+    const REPO = "JaceDashS/udemy-quiz-translator";
+    const BRANCH = "dictionary";
+    const FILE = "dictionary.json";
+    const API = `https://api.github.com/repos/${REPO}/contents/${FILE}`;
+    const TOKEN_KEY = "dictionaryEditorToken";
+
+    const el = id => document.getElementById(id);
+    const ui = {
+      token: el("token"), saveToken: el("saveToken"), reload: el("reload"),
+      word: el("word"), meaning: el("meaning"), add: el("add"),
+      filter: el("filter"), count: el("count"), rows: el("rows"),
+      register: el("register"), changes: el("changes"), status: el("status")
+    };
+
+    // The pairs as loaded from the branch, and the working copy being edited.
+    let original = {};
+    let pairs = {};
+    let sha = null;
+
+    function getToken() {
+      try { return sessionStorage.getItem(TOKEN_KEY) || ""; } catch (_) { return ""; }
+    }
+
+    function setToken(value) {
+      try {
+        if (value) sessionStorage.setItem(TOKEN_KEY, value);
+        else sessionStorage.removeItem(TOKEN_KEY);
+      } catch (_) {}
+    }
+
+    function say(message, kind = "") {
+      ui.status.textContent = message;
+      ui.status.className = `status ${kind}`;
+    }
+
+    // UTF-8 safe base64 for the GitHub contents API.
+    function encodeBase64(text) {
+      const bytes = new TextEncoder().encode(text);
+      let binary = "";
+      for (const b of bytes) binary += String.fromCharCode(b);
+      return btoa(binary);
+    }
+
+    function decodeBase64(base64) {
+      const binary = atob(base64.replace(/\n/g, ""));
+      const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
+    }
+
+    function sortedPairs(source) {
+      return Object.fromEntries(
+        Object.entries(source).sort(([a], [b]) => a.localeCompare(b, "en"))
+      );
+    }
+
+    // Lists which words were added, changed, or removed compared with the branch.
+    function diffSummary() {
+      const added = [];
+      const changed = [];
+      const removed = [];
+
+      for (const [word, meaning] of Object.entries(pairs)) {
+        if (!(word in original)) added.push(word);
+        else if (original[word] !== meaning) changed.push(word);
+      }
+      for (const word of Object.keys(original)) {
+        if (!(word in pairs)) removed.push(word);
+      }
+      return { added, changed, removed };
+    }
+
+    function isDirty() {
+      const { added, changed, removed } = diffSummary();
+      return added.length + changed.length + removed.length > 0;
+    }
+
+    function render() {
+      const query = ui.filter.value.trim().toLowerCase();
+      const words = Object.keys(pairs)
+        .sort((a, b) => a.localeCompare(b, "en"))
+        .filter(word => !query || word.toLowerCase().includes(query) || pairs[word].includes(query));
+
+      ui.rows.textContent = "";
+      for (const word of words) {
+        const tr = document.createElement("tr");
+
+        const wordCell = document.createElement("td");
+        wordCell.className = "word";
+        wordCell.textContent = word;
+
+        const meaningCell = document.createElement("td");
+        meaningCell.className = "meaning";
+        meaningCell.textContent = pairs[word];
+
+        const actionCell = document.createElement("td");
+        actionCell.className = "action hide-sm";
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "danger";
+        remove.textContent = "삭제";
+        remove.addEventListener("click", () => {
+          delete pairs[word];
+          render();
+        });
+        actionCell.append(remove);
+
+        tr.append(wordCell, meaningCell, actionCell);
+        ui.rows.append(tr);
+      }
+
+      ui.count.textContent = `${words.length} / ${Object.keys(pairs).length}개`;
+
+      const { added, changed, removed } = diffSummary();
+      const dirty = added.length + changed.length + removed.length > 0;
+      ui.changes.textContent = dirty
+        ? `추가 ${added.length} · 수정 ${changed.length} · 삭제 ${removed.length}`
+        : "변경 없음";
+      ui.register.disabled = !dirty || !getToken() || !sha;
+    }
+
+    function addPair() {
+      const word = ui.word.value.trim();
+      const meaning = ui.meaning.value.trim();
+      if (!word || !meaning) {
+        say("단어와 뜻을 모두 입력하세요.", "error");
+        return;
+      }
+      if (word.length > 200 || meaning.length > 200) {
+        say("단어와 뜻은 각각 200자 이하여야 합니다.", "error");
+        return;
+      }
+
+      pairs[word] = meaning;
+      ui.word.value = "";
+      ui.meaning.value = "";
+      ui.word.focus();
+      say("");
+      render();
+    }
+
+    async function load() {
+      say("불러오는 중...");
+      try {
+        const headers = { Accept: "application/vnd.github+json" };
+        const token = getToken();
+        if (token) headers.Authorization = `Bearer ${token}`;
+
+        const response = await fetch(`${API}?ref=${BRANCH}`, { headers, cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const file = await response.json();
+        const data = JSON.parse(decodeBase64(file.content));
+        original = { ...(data.pairs || {}) };
+        pairs = { ...original };
+        sha = file.sha;
+
+        say(token ? "불러왔습니다." : "불러왔습니다. 등록하려면 토큰을 입력하세요.", "ok");
+      } catch (error) {
+        say(`불러오기 실패: ${error.message}`, "error");
+      }
+      render();
+    }
+
+    async function register() {
+      const token = getToken();
+      if (!token) {
+        say("토큰을 입력하고 저장하세요.", "error");
+        return;
+      }
+
+      const { added, changed, removed } = diffSummary();
+      const lines = [
+        ...added.map(w => `- Add "${w}"`),
+        ...changed.map(w => `- Change "${w}"`),
+        ...removed.map(w => `- Remove "${w}"`)
+      ];
+      const message = `[chore] Update dictionary pairs\n\n${lines.join("\n")}`;
+
+      const body = {
+        message,
+        branch: BRANCH,
+        sha,
+        content: encodeBase64(JSON.stringify({ version: 1, pairs: sortedPairs(pairs) }, null, 2) + "\n")
+      };
+
+      ui.register.disabled = true;
+      say("등록 중...");
+      try {
+        const response = await fetch(API, {
+          method: "PUT",
+          headers: {
+            Accept: "application/vnd.github+json",
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(body)
+        });
+
+        if (response.status === 409) {
+          throw new Error("다른 변경이 먼저 등록되었습니다. 새로고침 후 다시 시도하세요.");
+        }
+        if (!response.ok) {
+          const detail = await response.json().catch(() => ({}));
+          throw new Error(`HTTP ${response.status} ${detail.message || ""}`.trim());
+        }
+
+        const result = await response.json();
+        sha = result.content.sha;
+        original = sortedPairs(pairs);
+        pairs = { ...original };
+        say("등록했습니다. 다음 번역 페이지 로드부터 반영됩니다.", "ok");
+      } catch (error) {
+        say(`등록 실패: ${error.message}`, "error");
+      } finally {
+        render();
+      }
+    }
+
+    ui.saveToken.addEventListener("click", () => {
+      setToken(ui.token.value.trim());
+      ui.token.value = "";
+      say(getToken() ? "토큰을 저장했습니다." : "토큰을 지웠습니다.", "ok");
+      render();
+    });
+    ui.reload.addEventListener("click", () => {
+      if (isDirty() && !confirm("저장하지 않은 변경이 사라집니다. 계속할까요?")) return;
+      load();
+    });
+    ui.add.addEventListener("click", addPair);
+    ui.meaning.addEventListener("keydown", e => { if (e.key === "Enter") addPair(); });
+    ui.filter.addEventListener("input", render);
+    ui.register.addEventListener("click", register);
+
+    window.addEventListener("beforeunload", e => {
+      if (isDirty()) e.preventDefault();
+    });
+
+    load();
+  </script>
+</body>
+</html>
