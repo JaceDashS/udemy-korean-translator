@@ -1,0 +1,66 @@
+# Rebuilds dictionary.json from terms/*.json on the dictionary branch.
+# The extension keeps reading dictionary.json; people only change term files.
+# Pull requests are checked with the same build so a bad file is caught before merge.
+# The build script comes from main, so only this file lives on the dictionary branch.
+name: Build dictionary
+
+on:
+  push:
+    branches: [dictionary]
+    paths: ["terms/**"]
+  pull_request:
+    branches: [dictionary]
+    paths: ["terms/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-dictionary-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: data
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'dictionary' }}
+      - uses: actions/checkout@v4
+        with:
+          path: tool
+          ref: main
+          sparse-checkout: |
+            editor/term-files.js
+            tools/build-dictionary.js
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check term files
+        if: github.event_name == 'pull_request'
+        run: node tool/tools/build-dictionary.js build data/terms "$RUNNER_TEMP/dictionary.json"
+
+      - name: Build and commit dictionary.json
+        if: github.event_name != 'pull_request'
+        working-directory: data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Another push may land while this runs; rebuild on the newest commit and retry.
+          for attempt in 1 2 3; do
+            git fetch origin dictionary
+            git reset --hard origin/dictionary
+            node ../tool/tools/build-dictionary.js build terms dictionary.json
+            if git diff --quiet -- dictionary.json; then
+              echo "dictionary.json is up to date."
+              exit 0
+            fi
+            git add dictionary.json
+            git commit -m "[chore] Rebuild dictionary.json from term files"
+            if git push origin HEAD:dictionary; then exit 0; fi
+          done
+          exit 1
