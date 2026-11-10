@@ -29,6 +29,8 @@
   const INLINE_ATTRIBUTE = "data-udemy-quiz-inline";
   const INLINE_SELECTOR = `[${INLINE_ATTRIBUTE}]`;
   let inlineNodes = [];
+  // Exam result translations shown in the side column (null when below).
+  let examSide = null;
   let lastRendered = null;
 
   // Inline translations appear directly on the Udemy page.
@@ -88,6 +90,7 @@
     }
     inlineNodes = [];
     sideLayout = null;
+    examSide = null;
     restoreShift();
   }
 
@@ -348,6 +351,12 @@
     const full = relayoutFull;
     relayoutFrame = 0;
     relayoutFull = false;
+
+    if (examSide) {
+      if (!full && positionExamSide()) return;
+      if (examLast) renderExam(examLast.exam, examLast.translated);
+      return;
+    }
     if (!lastRendered) return;
 
     const { quiz, questionKo, answersKo } = lastRendered;
@@ -903,6 +912,92 @@
   let examRenderedKey = "";
   let examNodes = [];
 
+  let examLast = null;
+
+  // Side mode (when the result column leaves room on the right): each translation
+  // floats in a fixed layer next to its original and follows scrolling, like the quiz.
+  // Otherwise each translation is inserted right after its original.
+  function renderExam(exam, translated) {
+    clearInlineTranslations();
+    examNodes = [];
+
+    const els = exam.blocks.map(block => block.el);
+    const scroller = scrollParentOf(els[0]);
+    if (sideColumn(els, scroller)) {
+      renderExamSide(exam, translated, scroller);
+      return;
+    }
+
+    exam.blocks.forEach((block, i) => {
+      if (!block.el.isConnected) return;
+      const box = makeInlineTranslation(translated[i], block.kind);
+      block.el.after(box);
+      examNodes.push(box);
+    });
+  }
+
+  function renderExamSide(exam, translated, scroller) {
+    const els = exam.blocks.map(block => block.el);
+
+    const layer = document.createElement("div");
+    layer.className = "uqt-side-layer";
+    layer.setAttribute(INLINE_ATTRIBUTE, "layer");
+    const reference = getComputedStyle(els[0]);
+    layer.style.color = reference.color;
+    layer.style.fontFamily = reference.fontFamily;
+    layer.style.fontSize = reference.fontSize;
+
+    const items = exam.blocks.map((block, i) => {
+      const box = makeInlineTranslation(translated[i], block.kind);
+      box.classList.add("uqt-side");
+      layer.append(box);
+      examNodes.push(box);
+      return { anchor: block.el, box };
+    });
+
+    // The spacer extends the page below the last block so every box is reachable.
+    const spacer = document.createElement("div");
+    spacer.setAttribute(INLINE_ATTRIBUTE, "spacer");
+    spacer.style.cssText = "display:block;height:0;margin:0;padding:0;";
+    els[els.length - 1].after(spacer);
+
+    document.body.append(layer);
+    examSide = { layer, items, els, scroller, spacer };
+    positionExamSide();
+  }
+
+  // Returns false when the side layout no longer fits, so the caller re-renders.
+  function positionExamSide() {
+    if (!examSide) return false;
+    const { layer, items, els, scroller, spacer } = examSide;
+    if (els.some(el => !el.isConnected)) return false;
+
+    const column = sideColumn(els, scroller);
+    if (!column) return false;
+
+    const clip = visibleRect(scroller);
+    Object.assign(layer.style, {
+      left: `${clip.left}px`,
+      top: `${clip.top}px`,
+      width: `${Math.max(0, clip.right - clip.left)}px`,
+      height: `${Math.max(0, clip.bottom - clip.top)}px`
+    });
+
+    // Align each box with its original; push down when the previous box is taller.
+    let previousBottom = -Infinity;
+    for (const { anchor, box } of items) {
+      const top = Math.max(anchor.getBoundingClientRect().top, previousBottom + SIDE_STACK_GAP);
+      box.style.left = `${column.left - clip.left}px`;
+      box.style.top = `${top - clip.top}px`;
+      box.style.width = `${column.width}px`;
+      previousBottom = top + box.offsetHeight;
+    }
+
+    const overflow = previousBottom - els[els.length - 1].getBoundingClientRect().bottom;
+    spacer.style.height = `${Math.max(0, Math.ceil(overflow) + SIDE_STACK_GAP)}px`;
+    return true;
+  }
+
   async function updateExam(exam) {
     if (
       exam.key === examRenderedKey &&
@@ -924,13 +1019,8 @@
     // Skip stale results when the page changed during translation.
     if (mySeq !== seq) return;
 
-    examNodes = [];
-    exam.blocks.forEach((block, i) => {
-      if (!block.el.isConnected) return;
-      const box = makeInlineTranslation(translated[i], block.kind);
-      block.el.after(box);
-      examNodes.push(box);
-    });
+    examLast = { exam, translated };
+    renderExam(exam, translated);
     examRenderedKey = exam.key;
   }
 
