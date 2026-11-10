@@ -14,7 +14,7 @@
     const $ = id => document.getElementById(id);
     const ui = {
       reload: $("reload"), helper: $("helper"), setup: $("setup"), copyJson: $("copyJson"),
-      setupCmd: $("setupCmd"), checks: $("checks"),
+      setupCmd: $("setupCmd"), openSetup: $("openSetup"), checks: $("checks"),
       search: $("search"), count: $("count"), problems: $("problems"),
       body: $("body"), register: $("register"), changes: $("changes"), status: $("status"),
       grid: $("grid"), newWord: $("newWord"), newMeaning: $("newMeaning"),
