@@ -10,7 +10,7 @@
    - 단어: the English word (required)
    - 뜻: the Korean meaning (optional). Leave it empty to keep the word in English
    - 대소문자 구분: check it for words that are ordinary English in lowercase (for example "haiku")
-   Use 행 추가 for a new row. In a cell, Enter moves to the same column in the next row.
+   To add one term, type it in the top form (단어 is required; 뜻 and 대소문자 구분 are optional) and press 추가 or Enter. The new row appears at the top. 행 추가 adds an empty row at the bottom. In a cell, Enter moves to the same column in the next row.
    To add many rows, copy them from a spreadsheet (단어 TAB 뜻 TAB Y) and paste into a 단어 cell
 3. Press 등록. The table is committed to the `dictionary` branch
 4. Reload a Udemy quiz page. The change applies on the next page load; the extension does not need a reload

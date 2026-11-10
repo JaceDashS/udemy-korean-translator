@@ -9,7 +9,8 @@
 - The registration token is kept only in the browser tab session and is sent only to the GitHub API
 
 Example:
-- Input: Editor adds a row `private subnet` with meaning `프라이빗 서브넷` and presses 등록
+- Input: Editor types `private subnet` and `프라이빗 서브넷` in the top form, presses 추가, then 등록. A word alone (no meaning) is also accepted; a word already in the table is rejected
+- Result: The new row is at the top of the table. After 등록, the branch commit `[chore] Update dictionary terms` contains it
 - Result: The branch commit `[chore] Update dictionary terms` contains the new row. The next Udemy page load translates "private subnet" as 프라이빗 서브넷
 
 - Design: [Dictionary Sync Design](../../design/translation/30-dictionary-sync.md#load-and-register)
