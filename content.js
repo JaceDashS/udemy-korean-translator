@@ -248,7 +248,8 @@
     const left = rects ? Math.min(...rects.map(r => r.left)) : column.contentLeft + column.left;
     const width = rects ? Math.max(...rects.map(r => r.right)) - left : column.width;
     const translationWidth = Math.max(SIDE_MAX_WIDTH, width);
-    const pair = width + SIDE_GAP * 2 + translationWidth;
+    // The translation starts one SIDE_GAP after the originals (see sideColumn).
+    const pair = width + SIDE_GAP + translationWidth;
 
     // Where the pair's left edge must be to center it in the visible area, and
     // where the originals are now. The margin moves by the difference.
