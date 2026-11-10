@@ -3717,6 +3717,10 @@
       "word": "retry with backoff"
     },
     {
+      "word": "return",
+      "meaning": "반환"
+    },
+    {
       "word": "reverse proxy"
     },
     {
@@ -4825,6 +4829,9 @@
     },
     {
       "word": "WebSocket API"
+    },
+    {
+      "word": "weight"
     },
     {
       "word": "weighted routing"
