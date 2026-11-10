@@ -77,6 +77,14 @@ Scenario:
 - Steps: Observer fires → same key → `inlineIsCurrent()` false → `showInlineTranslations()` with `lastRendered`
 - Result: Translations stay visible, no extra translation call
 
+## Answer Scope Without a Footer
+- Input: A practice test page with a "질문 N:" or "Question N:" heading but no "Question N of M" footer
+- Output: Only the answer controls inside the `data-testid="mc-quiz-question"` form
+- Code: `content.js` → `extractQuiz()`
+- Steps: When the form contains the heading or comes after it, answer controls outside the form are ignored. Without this, the course content list below the quiz adds its completion checkboxes, the count passes 12, and the page is skipped.
+- Scenario: MLA-C01 practice test, question 1 with five checkbox answers and fifteen course content checkboxes below → five answers are found and translated
+- All scenarios: [Inline Translation Scenarios](../../testing/scenarios/quiz/10-inline-translation.md#answer-scope-without-a-footer)
+
 ## Exam Form Fallback
 - Input: A quiz page with no "Question N:" heading (exam-style pages), where the answer form has `data-testid="mc-quiz-question"`
 - Output: The same quiz object as the heading path, with `number` set to `"form"`

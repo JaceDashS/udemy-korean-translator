@@ -68,3 +68,9 @@
 - Input: Question translation taller than the original question text
 - Steps: `positionSide()` stacks boxes with an 8px gap
 - Result: Boxes never overlap; later answer boxes may sit slightly lower than their cards
+
+### Answer Scope Without a Footer
+- Input: Korean Udemy UI practice test (`/learn/quiz/6550303/test`), heading "질문 1:", five checkbox answers in `[data-testid="mc-quiz-question"]`, course content list with checkboxes below, no "Question 1 of 85" footer
+- Steps: `extractQuiz()` finds the heading → no footer → keeps only controls inside the answer form
+- Result: Five answers found; question and answers are translated
+- Design: [Answer Scope Without a Footer](../../../design/quiz/10-inline-translation.md#answer-scope-without-a-footer)

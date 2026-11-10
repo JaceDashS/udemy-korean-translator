@@ -757,11 +757,20 @@
       )
     );
 
+    // Practice tests have no "Question N of M" footer, so the course content
+    // list below (its completion checkboxes) would count as answers. Keep
+    // only the controls of the answer form when the heading belongs to it.
+    const form = document.querySelector('[data-testid="mc-quiz-question"]');
+    const scope = form && (form.contains(headerNode) || isAfter(headerNode, form))
+      ? form
+      : null;
+
     const candidates = [
       ...document.querySelectorAll(CONTROL)
     ].filter(n =>
       isAfter(headerNode, n) &&
-      (!footerNode || isAfter(n, footerNode))
+      (!footerNode || isAfter(n, footerNode)) &&
+      (!scope || scope.contains(n))
     );
 
     const natives = candidates.filter(n =>
@@ -776,14 +785,14 @@
       controls.length < 2 ||
       controls.length > 12
     ) {
-      return null;
+      return noQuiz(`${controls.length} answer controls after the question heading`);
     }
 
     const cards = controls.map(cardOf);
     const answers = readAnswers(cards, controls);
 
     if (answers.some(a => !a.source)) {
-      return null;
+      return noQuiz("an answer has no text");
     }
 
     let question = "";
