@@ -76,3 +76,11 @@ Scenario:
 - Input: User selects an answer and Udemy re-renders the cards with the same text
 - Steps: Observer fires → same key → `inlineIsCurrent()` false → `showInlineTranslations()` with `lastRendered`
 - Result: Translations stay visible, no extra translation call
+
+## Exam Form Fallback
+- Input: A quiz page with no "Question N:" heading (exam-style pages), where the answer form has `data-testid="mc-quiz-question"`
+- Output: The same quiz object as the heading path, with `number` set to `"form"`
+- Code: `content.js` → `extractFormQuiz()`, `readAnswers()`; `extractQuiz()` falls back to it when no heading is found
+- Steps: The form's text before the first answer is the question; each answer's card is read by `readAnswers()`; the form is the header anchor for placement
+- Scenario: Form text "Which service scales EC2?" followed by four radio answers → question and four answers are translated
+- Limit: Not yet verified on a real exam page; the question text must be in the form before the first answer

@@ -618,51 +618,9 @@
     return best;
   }
 
-  function extractQuiz() {
-    const headerNode = findText(
-      /^(?:Question|질문)\s*(\d+)\s*:/i
-    );
-
-    if (!headerNode) return null;
-
-    const number = headerNode.nodeValue.match(
-      /(?:Question|질문)\s*(\d+)\s*:/i
-    )?.[1];
-
-    if (!number) return null;
-
-    const footerNode = findText(
-      new RegExp(
-        `^(?:Question\\s*${number}\\s*of\\s*\\d+|\\d+\\s*의\\s*질문\\s*${number})$`,
-        "i"
-      )
-    );
-
-    const candidates = [
-      ...document.querySelectorAll(CONTROL)
-    ].filter(n =>
-      isAfter(headerNode, n) &&
-      (!footerNode || isAfter(n, footerNode))
-    );
-
-    const natives = candidates.filter(n =>
-      n.matches("input")
-    );
-
-    const controls = natives.length >= 2
-      ? natives
-      : candidates.filter(n => n.matches("[role]"));
-
-    if (
-      controls.length < 2 ||
-      controls.length > 12
-    ) {
-      return null;
-    }
-
-    const cards = controls.map(cardOf);
-
-    const answers = cards.map((card, i) => {
+  // Reads each answer's text, selection, and feedback from its card.
+  function readAnswers(cards, controls) {
+    return cards.map((card, i) => {
       const lines = originalInnerText(card)
         .split(/\n+/)
         .map(s => s.trim())
@@ -702,6 +660,86 @@
         explanation: feedback.join("\n").trim()
       };
     });
+  }
+
+  // Exam-style pages have no "Question N:" heading. The answer form itself
+  // (data-testid="mc-quiz-question") is the quiz; its text before the first
+  // answer is the question.
+  function extractFormQuiz() {
+    const form = document.querySelector('[data-testid="mc-quiz-question"]');
+    if (!form) return null;
+
+    const controls = [...form.querySelectorAll(CONTROL)];
+    const natives = controls.filter(n => n.matches("input"));
+    const picked = natives.length >= 2
+      ? natives
+      : controls.filter(n => n.matches("[role]"));
+    if (picked.length < 2 || picked.length > 12) return null;
+
+    const cards = picked.map(cardOf);
+    const answers = readAnswers(cards, picked);
+    if (answers.some(a => !a.source)) return null;
+
+    const lines = originalInnerText(form)
+      .split(/\n+/)
+      .map(s => s.trim())
+      .filter(Boolean);
+    const first = lines.findIndex(line => line.startsWith(answers[0].source));
+    const question = first > 0 ? lines.slice(0, first).join(" ") : "";
+    if (!question) return null;
+
+    return {
+      number: "form",
+      question,
+      answers,
+      nodes: { cards, header: form.firstElementChild || form }
+    };
+  }
+
+  function extractQuiz() {
+    const headerNode = findText(
+      /^(?:Question|질문)\s*(\d+)\s*:/i
+    );
+
+    if (!headerNode) return extractFormQuiz();
+
+    const number = headerNode.nodeValue.match(
+      /(?:Question|질문)\s*(\d+)\s*:/i
+    )?.[1];
+
+    if (!number) return null;
+
+    const footerNode = findText(
+      new RegExp(
+        `^(?:Question\\s*${number}\\s*of\\s*\\d+|\\d+\\s*의\\s*질문\\s*${number})$`,
+        "i"
+      )
+    );
+
+    const candidates = [
+      ...document.querySelectorAll(CONTROL)
+    ].filter(n =>
+      isAfter(headerNode, n) &&
+      (!footerNode || isAfter(n, footerNode))
+    );
+
+    const natives = candidates.filter(n =>
+      n.matches("input")
+    );
+
+    const controls = natives.length >= 2
+      ? natives
+      : candidates.filter(n => n.matches("[role]"));
+
+    if (
+      controls.length < 2 ||
+      controls.length > 12
+    ) {
+      return null;
+    }
+
+    const cards = controls.map(cardOf);
+    const answers = readAnswers(cards, controls);
 
     if (answers.some(a => !a.source)) {
       return null;
