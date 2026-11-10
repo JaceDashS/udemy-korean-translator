@@ -38,7 +38,7 @@
 
 ### First Use Needs Registration
 - Input: Host not registered (Chrome answers "Specified native messaging host not found.")
-- Steps: Click PR 제안 → guide tab opens, button shows 등록 안내 다시 열기 → user runs the command → `ping` answers
+- Steps: Click 등록 신청 → guide tab opens, button shows 등록 안내 다시 열기 → user runs the command → `ping` answers
 - Result: The chain goes on to the GitHub CLI check without another click; the guide tab shows 등록됐습니다
 - Test: Manual (not yet run)
 
@@ -69,13 +69,13 @@
 ### Not Logged In
 - Input: gh installed, not logged in
 - Steps: Chain stops at GitHub 로그인 → click → PowerShell login window and a github.com/login/device tab → user approves → `status` polled every 3 seconds sees the login
-- Result: The change is submitted without clicking 등록 / PR 제안 again. Without approval in 10 minutes, the button returns to GitHub 로그인
+- Result: The change is submitted without clicking 등록 / 등록 신청 again. Without approval in 10 minutes, the button returns to GitHub 로그인
 - Test: Manual (not yet run)
 
 ### Cancel or Turn Off While Waiting
 - Input: The chain waits at registration, install, or login
 - Steps: Click 취소 or 도우미 끄기 → `chainId` changes
-- Result: The waiting loop ends; the button returns to 등록 / PR 제안. 도우미 끄기 also stops the helper process
+- Result: The waiting loop ends; the button returns to 등록 / 등록 신청. 도우미 끄기 also stops the helper process
 - Test: Manual (not yet run)
 
 ### Helper Outlives the Panel

@@ -42,7 +42,7 @@ Representative scenario:
 - Outside the extension (GitHub Pages) the editor is read-only: the button stays disabled and the status line says registering is in the side panel
 
 ## Register Chain
-- Input: The edited rows; a click on 등록 / PR 제안
+- Input: The edited rows; a click on 등록 / 등록 신청
 - Output: A commit on `dictionary` (owner) or a pull request (others), shown in the status line
 - Code: `editor/app.js` → `startChain()`, `continueFromStatus()`, `approveInstall()`, `approveLogin()`, `submit()`, `onRegisterClick()`; `background.js` → `connect()`, `ask()`, `stop()`
 - Spec: [Dictionary Sync](../../specs/translation/30-dictionary-sync.md#requirements)
@@ -50,7 +50,7 @@ Representative scenario:
 
 ```mermaid
 flowchart TD
-    S[Click 등록 / PR 제안] --> A{ping answers?}
+    S[Click 등록 / 등록 신청] --> A{ping answers?}
     A -- host not found or too old --> R[Open setup tab, poll ping every 2s] --> B
     A -- yes --> V{version >= bundled?}
     V -- no --> U[Button: 도우미 업데이트] -->|click| U2[send bundled script, host replaces itself and restarts] --> B
@@ -61,14 +61,14 @@ flowchart TD
     C -- yes --> P[submit]
 ```
 
-- `step` holds what the button shows: `""` (등록 / PR 제안), `busy`, `register`, `update`, `install`, `login`, `waitLogin`. A click on `update`, `install`, or `login` resumes the chain; on `register` it reopens the guide tab
+- `step` holds what the button shows: `""` (등록 / 등록 신청), `busy`, `register`, `update`, `install`, `login`, `waitLogin`. A click on `update`, `install`, or `login` resumes the chain; on `register` it reopens the guide tab
 - Version check (`isCurrentHost()`): the expected version is read from the helper script bundled in the extension (`tools/dictionary-host.ps1`, line `$HostVersion = N`, fetched with `chrome.runtime.getURL`). A `ping` answer without a version counts as 0
 - Update (`approveUpdate()`): sends the bundled script in an `update` request, disconnects, and pings again to confirm the new version before continuing
 - Too old to update (`registerThenContinue(id, true)`): a helper that answers `Unknown request.` to `ping` or `update` predates these requests. The guide tab opens; the editor and the tab stop the running helper before each `ping`, because a running process keeps its old code, and wait until a helper of the bundled version answers
 - `chainId` is incremented by 취소 and 도우미 끄기, so a waiting loop ends instead of continuing an abandoned chain
 - The rows are read at submit time, so edits made while the chain waited are included
-- The last known login and push permission are kept in the page's `localStorage` only to label the button (등록 or PR 제안) before the helper runs again
-- Scenario: Clean PC, helper registered, no GitHub CLI → click PR 제안 → button GitHub CLI 설치 → click → installed → button GitHub 로그인 → click → login window and tab → approved → pull request opened without another click
+- The last known login and push permission are kept in the page's `localStorage` only to label the button (등록 or 등록 신청) before the helper runs again
+- Scenario: Clean PC, helper registered, no GitHub CLI → click 등록 신청 → button GitHub CLI 설치 → click → installed → button GitHub 로그인 → click → login window and tab → approved → pull request opened without another click
 - All scenarios: [Dictionary Sync Scenarios](../../testing/scenarios/translation/30-dictionary-sync.md#register-chain-scenarios)
 
 ## Helper

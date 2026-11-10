@@ -23,7 +23,7 @@ Chrome 내장 Translator API (영어 → 한국어)를 사용해 Udemy 시험 �
 `dictionary-terms.js`에 등록된 용어(Claude, CCAR-F 시험 영역, AWS, 일반 개발 용어 약 1,600개)는 번역 결과에서 영어 원문 그대로 유지됩니다.
 
 - 예: "Launch an EC2 instance in a private subnet" → "private subnet에서 EC2 instance를 시작합니다"
-- 용어 추가: 확장 아이콘을 눌러 사이드 패널의 편집기에서 행을 추가하고 등록(다른 사용자는 PR 제안)합니다. 처음 한 번은 버튼이 도우미 등록, GitHub CLI 설치, 로그인을 차례로 안내합니다. 다음 번역 페이지를 열 때 반영되며 확장 프로그램을 다시 로드할 필요가 없습니다. 설정 방법은 `docs/guides/10-dictionary-editor.md`를 참고하세요.
+- 용어 추가: 확장 아이콘을 눌러 사이드 패널의 편집기에서 행을 추가하고 등록(다른 사용자는 등록 신청)합니다. 처음 한 번은 버튼이 도우미 등록, GitHub CLI 설치, 로그인을 차례로 안내합니다. 다음 번역 페이지를 열 때 반영되며 확장 프로그램을 다시 로드할 필요가 없습니다. 설정 방법은 `docs/guides/10-dictionary-editor.md`를 참고하세요.
 - 뜻 추가: 행의 뜻 칸에 한국어 뜻을 쓰면 번역에서 영어 대신 그 뜻이 나옵니다. 뜻을 비워두면 영어 그대로 유지됩니다.
 - 대문자만으로 된 약어(SAM, LAG 등)는 대소문자가 정확히 같아야 매칭됩니다. 소문자일 때 일반 단어인 이름(Projects, Haiku 등)은 편집기에서 "대소문자 구분"을 체크합니다.
 - "object", "request", "continue" 같은 일상 단어는 넣지 마세요. 모든 문장에서 번역되지 않게 됩니다.

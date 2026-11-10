@@ -106,13 +106,13 @@
       ui.status.className = `status ${kind}`;
     }
 
-    function sayWithLink(message, url) {
+    function sayWithLink(message, url, label = " 열기") {
       say(message, "ok");
       const link = document.createElement("a");
       link.href = url;
       link.target = "_blank";
       link.rel = "noopener";
-      link.textContent = " 열기";
+      link.textContent = label;
       ui.status.append(link);
     }
 
@@ -260,7 +260,7 @@
 
     function updateHelper() {
       if (!IS_EXTENSION) {
-        ui.helper.textContent = "읽기 전용: 등록과 PR 제안은 Chrome 확장의 사이드 패널에서 할 수 있습니다.";
+        ui.helper.textContent = "읽기 전용: 등록과 등록 신청은 Chrome 확장의 사이드 패널에서 할 수 있습니다.";
         ui.helper.className = "helper off";
         ui.helperStop.hidden = true;
         return;
@@ -514,7 +514,7 @@
         login: "GitHub 로그인",
         waitLogin: "로그인 기다리는 중..."
       };
-      ui.register.textContent = labels[step] || (helper?.canPush ? "등록" : "PR 제안");
+      ui.register.textContent = labels[step] || (helper?.canPush ? "등록" : "등록 신청");
       ui.register.disabled = !IS_EXTENSION ||
         step === "busy" || step === "waitLogin" ||
         (!step && (!dirty || Boolean(problem)));
@@ -676,7 +676,7 @@
       ].join("\n");
 
       setStep("busy");
-      say(helper?.canPush ? "등록 중..." : "PR을 만드는 중...");
+      say(helper?.canPush ? "등록 중..." : "등록 신청 중...");
       try {
         const data = await askHelper({ type: "submit", message, content: buildFile() }, 180000);
         if (id !== chainId) return;
@@ -684,10 +684,10 @@
 
         if (data.mode === "direct") {
           snapshot = snapshotOf(rows);
-          say(data.changed ? `등록했습니다(커밋 ${data.commit}). 다음 번역 페이지 로드부터 반영됩니다.` : "변경된 내용이 없습니다.", "ok");
+          say(data.changed ? `등록 완료 (커밋 ${data.commit}). 다음 번역 페이지부터 반영됩니다.` : "변경된 내용이 없습니다.", "ok");
         } else if (data.changed) {
           snapshot = snapshotOf(rows);
-          sayWithLink("PR을 열었습니다. 소유자가 확인하면 반영됩니다.", data.url);
+          sayWithLink("등록 신청 완료. 소유자가 확인하면 반영됩니다.", data.url, " 신청 내용 보기");
         } else {
           say("변경된 내용이 없습니다.", "ok");
         }

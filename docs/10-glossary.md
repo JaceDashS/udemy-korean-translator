@@ -45,7 +45,7 @@
 - Avoid: "server", "agent"
 
 ## Register Chain
-- Definition: The steps one click on 등록 / PR 제안 runs in order: helper registered, GitHub CLI installed, logged in, submit. It pauses only for the user's approval
+- Definition: The steps one click on 등록 / 등록 신청 runs in order: helper registered, GitHub CLI installed, logged in, submit. It pauses only for the user's approval
 - Code: `startChain()` in `editor/app.js`
 
 ## Placeholder
