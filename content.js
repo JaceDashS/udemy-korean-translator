@@ -856,12 +856,104 @@
     return p;
   }
 
+  // Exam result page (after submitting a practice exam). The selectors were
+  // checked on one CCAR-F practice exam result page. Other exam types are not
+  // verified, so these are the only result selectors used.
+  const EXAM_RESULT = '[class*="question-result--question-result"]';
+  const EXAM_QUESTION_BODY = ".rt-scaffolding";
+  const EXAM_ANSWER_PANE = '[class*="result-pane--answer-result-pane"]';
+  const EXAM_ANSWER_BODY = '[class*="answer-result-pane--answer-body"]';
+  const EXAM_FEEDBACK = '[class*="answer-result-pane--answer-feedback"]';
+  const EXAM_EXPLANATION = '[class*="result-pane--question-related-fields"]';
+  const EXAM_MAX_TEXT = 6000;
+
+  // Each text block keeps the element it is translated after. The key lists
+  // only the source texts, so re-rendering with the same text is skipped.
+  function extractExamResult() {
+    const containers = [...document.querySelectorAll(EXAM_RESULT)];
+    if (!containers.length) return null;
+
+    const blocks = [];
+    const add = (anchor, kind, textEl = anchor) => {
+      if (!anchor || !textEl) return;
+      const source = (textEl.innerText || "").replace(/[ \t]+\n/g, "\n").trim();
+      if (!source || source.length > EXAM_MAX_TEXT) return;
+      blocks.push({ el: anchor, kind, source });
+    };
+
+    for (const container of containers) {
+      add(container.querySelector(EXAM_QUESTION_BODY), "question");
+
+      for (const pane of container.querySelectorAll(EXAM_ANSWER_PANE)) {
+        add(pane, "answer", pane.querySelector(EXAM_ANSWER_BODY));
+      }
+
+      add(container.querySelector(EXAM_FEEDBACK), "feedback");
+      add(container.querySelector(EXAM_EXPLANATION), "explanation");
+    }
+
+    if (!blocks.length) return null;
+
+    return {
+      key: JSON.stringify(blocks.map(b => b.source)),
+      blocks
+    };
+  }
+
+  let examRenderedKey = "";
+  let examNodes = [];
+
+  async function updateExam(exam) {
+    if (
+      exam.key === examRenderedKey &&
+      examNodes.length &&
+      examNodes.every(node => node.isConnected)
+    ) {
+      return;
+    }
+
+    const mySeq = ++seq;
+    examRenderedKey = "";
+    clearInlineTranslations();
+
+    const translated = [];
+    for (const block of exam.blocks) {
+      translated.push(await translateCached(block.source));
+    }
+
+    // Skip stale results when the page changed during translation.
+    if (mySeq !== seq) return;
+
+    examNodes = [];
+    exam.blocks.forEach((block, i) => {
+      if (!block.el.isConnected) return;
+      const box = makeInlineTranslation(translated[i], block.kind);
+      block.el.after(box);
+      examNodes.push(box);
+    });
+    examRenderedKey = exam.key;
+  }
+
   async function update() {
     if (!translator) return;
 
     const quiz = extractQuiz();
 
     if (!quiz) {
+      const exam = extractExamResult();
+      if (exam) {
+        lastKey = "";
+        lastRendered = null;
+        try {
+          await updateExam(exam);
+        } catch (error) {
+          examRenderedKey = "";
+          console.error(LOG, "Exam translation failed.", error);
+        }
+        return;
+      }
+
+      examRenderedKey = "";
       ++seq; // An in-flight translation must not render an obsolete question.
       lastKey = "";
       lastRendered = null;

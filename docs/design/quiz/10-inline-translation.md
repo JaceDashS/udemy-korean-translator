@@ -84,3 +84,12 @@ Scenario:
 - Steps: The form's text before the first answer is the question; each answer's card is read by `readAnswers()`; the form is the header anchor for placement
 - Scenario: Form text "Which service scales EC2?" followed by four radio answers → question and four answers are translated
 - Limit: Not yet verified on a real exam page; the question text must be in the form before the first answer
+
+## Exam Result Page
+- Input: The result page after submitting a practice exam, where `[class*="question-result--question-result"]` exists
+- Output: One translation box after each text block: question body (`.rt-scaffolding`), each answer body, the answer feedback, and the question explanation (`[class*="result-pane--question-related-fields"]`)
+- Code: `content.js` → `extractExamResult()`, `updateExam()`; `update()` uses it when no quiz is found
+- Steps: Read each block's text → translate with the existing cache and dictionary → insert a box after each block element
+- Dedup: The key is the list of source texts; the same key is not rendered again
+- Selectors: Checked on one CCAR-F practice exam result page only; other exam types are not verified
+- Limit: Exam-taking pages are not supported yet
