@@ -183,7 +183,7 @@
   </div>
 
   <div class="panel" id="setup" hidden>
-    <p><b>도우미가 연결되지 않았습니다.</b> 아래 버튼으로 준비 명령을 복사해 PowerShell에 붙여넣고 Enter를 누르세요. 필요한 프로그램 확인과 설치, GitHub 로그인, 도우미 실행을 차례로 진행합니다.</p>
+    <p><b>도우미가 연결되지 않았습니다.</b> 아래 버튼으로 준비 명령을 복사해 PowerShell에 붙여넣고 Enter를 누르세요. 필요한 프로그램 확인과 설치, GitHub 로그인, 크롬 연결을 차례로 진행합니다. 끝나면 이 패널을 닫고 다시 여세요.</p>
     <p class="muted" id="checks"></p>
     <p>
       <button id="setupCmd" class="primary" type="button">준비 명령 복사</button>
@@ -256,7 +256,11 @@
     const REPO = "JaceDashS/udemy-quiz-translator";
     const BRANCH = "dictionary";
     const RAW_URL = `https://raw.githubusercontent.com/${REPO}/${BRANCH}/dictionary.json`;
+    // GitHub Pages: the helper started from a terminal (HTTP).
     const HELPER_URL = "http://127.0.0.1:8787";
+    // Side panel: an extension page, so Chrome starts the helper through native messaging.
+    const NATIVE_HOST = "com.udemy.dictionary_helper";
+    const IS_EXTENSION = typeof chrome !== "undefined" && Boolean(chrome.runtime?.connectNative);
     const TRUE_VALUES = new Set(["y", "yes", "true", "1", "o", "x", "v", "○", "✓"]);
     const LIST_LIMIT = 100;
 
@@ -280,6 +284,8 @@
     let helper = null;
     // checks: { git, gh, ghAuth } from the last /health answer, or null when the helper is off.
     let lastChecks = null;
+    // True when the helper is not installed (native messaging host not found).
+    let helperMissing = false;
     // raw.githubusercontent.com serves the script as text, which irm reads as a string.
     const SETUP_COMMAND = "irm https://raw.githubusercontent.com/JaceDashS/udemy-quiz-translator/main/tools/setup.ps1 | iex";
     let nextId = 1;
@@ -465,6 +471,61 @@
       ui.nextPage.disabled = ui.lastPage.disabled = page >= pages;
     }
 
+    // ---- Helper transport --------------------------------------------------
+    // Side panel: a native messaging port. Chrome starts the helper when the port
+    // opens and the helper exits when the port closes (the panel is closed).
+    // GitHub Pages: HTTP to the helper started from a terminal.
+    let nativePort = null;
+    const pendingRequests = new Map();
+    let nextRequestId = 1;
+
+    function connectNative() {
+      if (nativePort) return nativePort;
+      const port = chrome.runtime.connectNative(NATIVE_HOST);
+      port.onMessage.addListener(message => {
+        const resolve = pendingRequests.get(message.id);
+        if (resolve) {
+          pendingRequests.delete(message.id);
+          resolve(message);
+        }
+      });
+      port.onDisconnect.addListener(() => {
+        const error = chrome.runtime.lastError?.message || "The helper stopped.";
+        const missing = error.includes("not found");
+        for (const resolve of pendingRequests.values()) resolve({ ok: false, error, missing });
+        pendingRequests.clear();
+        nativePort = null;
+      });
+      nativePort = port;
+      return port;
+    }
+
+    // Sends one request to the helper and resolves with its answer.
+    function askHelper(request, timeoutMs = 8000) {
+      if (IS_EXTENSION) {
+        return new Promise(resolve => {
+          const id = nextRequestId++;
+          pendingRequests.set(id, resolve);
+          setTimeout(() => {
+            if (pendingRequests.delete(id)) resolve({ ok: false, error: "The helper did not answer." });
+          }, timeoutMs);
+          try {
+            connectNative().postMessage({ id, ...request });
+          } catch (error) {
+            pendingRequests.delete(id);
+            resolve({ ok: false, error: String(error.message) });
+          }
+        });
+      }
+      const path = request.type === "submit" ? "/submit" : "/health";
+      const init = request.type === "submit"
+        ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(request) }
+        : { cache: "no-store", signal: AbortSignal.timeout(timeoutMs) };
+      return fetch(HELPER_URL + path, init)
+        .then(response => response.json())
+        .catch(() => ({ ok: false, error: "The helper is not running." }));
+    }
+
     function renderChecks() {
       if (!lastChecks) {
         ui.checks.textContent = "PC 상태: 확인 불가 (도우미가 꺼져 있습니다)";
@@ -478,7 +539,7 @@
     function updateHelper() {
       renderChecks();
       if (!helper) {
-        ui.helper.textContent = "도우미 연결 안 됨";
+        ui.helper.textContent = helperMissing ? "도우미 미설치" : "도우미 연결 안 됨";
         ui.helper.className = "helper off";
         ui.setup.hidden = false;
       } else {
@@ -642,19 +703,11 @@
 
     // Asks the local helper who is logged in and whether that account can push.
     async function checkHelper() {
-      try {
-        const response = await fetch(`${HELPER_URL}/health`, {
-          cache: "no-store",
-          signal: AbortSignal.timeout(2000)
-        });
-        const data = await response.json();
-        lastChecks = data.checks || null;
-        helper = data.ok ? { login: data.login, canPush: data.canPush } : null;
-        if (!data.ok) console.warn("[Dictionary Editor]", data.error, data.detail || "");
-      } catch (_) {
-        lastChecks = null;
-        helper = null;
-      }
+      const data = await askHelper({ type: "health" });
+      lastChecks = data.checks || null;
+      helper = data.ok ? { login: data.login, canPush: data.canPush } : null;
+      helperMissing = Boolean(data.missing);
+      if (!data.ok) console.warn("[Dictionary Editor]", data.error, data.detail || "");
       updateHelper();
       updateSummary();
     }
@@ -686,13 +739,8 @@
       ui.register.disabled = true;
       say(helper.canPush ? "등록 중..." : "PR을 만드는 중...");
       try {
-        const response = await fetch(`${HELPER_URL}/submit`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message, content: buildFile() })
-        });
-        const data = await response.json();
-        if (!data.ok) throw new Error(data.error || `HTTP ${response.status}`);
+        const data = await askHelper({ type: "submit", message, content: buildFile() }, 120000);
+        if (!data.ok) throw new Error(data.error || "The helper failed.");
 
         if (data.mode === "direct") {
           snapshot = snapshotOf(rows);
@@ -770,6 +818,12 @@
 
     window.addEventListener("beforeunload", e => {
       if (isDirty()) e.preventDefault();
+    });
+
+    // Closing the side panel disconnects the port, which stops the helper.
+    window.addEventListener("pagehide", () => {
+      nativePort?.disconnect();
+      nativePort = null;
     });
 
     load();

@@ -100,16 +100,36 @@ function Invoke-DictionarySetup {
   gh auth setup-git
   Write-Host "OK: logged in to GitHub" -ForegroundColor Green
 
-  Write-Step "4/4 Download and start the helper"
+  Write-Step "4/4 Download the helper and register it with Chrome"
   New-Item -ItemType Directory -Force -Path $helperDir | Out-Null
   Invoke-WebRequest -Uri $helperUrl -OutFile $helperFile -UseBasicParsing
   Write-Host "Helper saved to $helperFile" -ForegroundColor Green
+
+  # Chrome starts the helper when the side panel opens, and stops it when the panel closes.
+  # The wrapper runs the helper with the full path to node, so Chrome's PATH does not matter.
+  $nodePath = (Get-Command node).Source
+  $wrapperFile = Join-Path $helperDir "dictionary-helper-host.bat"
+  Set-Content -Path $wrapperFile -Encoding ASCII -Value "@echo off`r`n`"$nodePath`" `"$helperFile`""
+
+  $hostManifest = [ordered]@{
+    name = "com.udemy.dictionary_helper"
+    description = "Udemy quiz translator dictionary helper"
+    path = $wrapperFile
+    type = "stdio"
+    allowed_origins = @("chrome-extension://mmmljckioegeobbebbmildgebfjfbbdo/")
+  }
+  $manifestFile = Join-Path $helperDir "com.udemy.dictionary_helper.json"
+  [IO.File]::WriteAllText($manifestFile, ($hostManifest | ConvertTo-Json), (New-Object Text.UTF8Encoding $false))
+
+  $registryKey = "HKCU:\Software\Google\Chrome\NativeMessagingHosts\com.udemy.dictionary_helper"
+  New-Item -Path $registryKey -Force -Value $manifestFile | Out-Null
+  Write-Host "OK: Chrome can start the helper" -ForegroundColor Green
+
   Write-Host ""
-  Write-Host "Keep this window open while you edit the dictionary."
-  Write-Host "Editor: https://jacedashs.github.io/udemy-quiz-translator/editor/"
-  Write-Host "Stop the helper with Ctrl+C."
-  Write-Host ""
-  node $helperFile
+  Write-Host "Setup is complete." -ForegroundColor Green
+  Write-Host "Open Chrome, click the Udemy Quiz Translator icon, and the editor opens in the side panel."
+  Write-Host "The helper starts with the panel and stops when you close it."
+  Write-Host "If the extension was loaded from this repository before, reload it once at chrome://extensions."
 }
 
 Invoke-DictionarySetup
