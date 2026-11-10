@@ -10,8 +10,14 @@
 #   status  -> whether gh is installed and logged in, the login, push permission
 #   install -> installs GitHub CLI with winget
 #   login   -> opens a PowerShell window that runs `gh auth login --web`
-#   submit  -> owner: commits dictionary.json to the dictionary branch
+#   submit  -> writes only the changed term files (terms/<name>.json) on top of
+#              the newest dictionary branch, or answers with the conflicts.
+#              owner: commits to the dictionary branch
 #              others: forks, commits to a new branch, opens a pull request
+#   proposals      -> the user's open dictionary pull requests; conflicted ones
+#                     list their term files with both values
+#   updateProposal -> rebuilds a conflicted pull request with the chosen values
+# dictionary.json is rebuilt from the term files by the branch's Actions workflow.
 #
 # Registered by tools/register.ps1.
 
@@ -19,11 +25,11 @@ $ErrorActionPreference = "Stop"
 
 # Raise this whenever the requests or their answers change. The editor reads it
 # from the copy bundled in the extension and asks to update an older host.
-$HostVersion = 2
+$HostVersion = 3
 
 $Repo ="JaceDashS/udemy-korean-translator"
 $Branch = "dictionary"
-$File = "dictionary.json"
+
 $MaxWordLength = 200
 $Utf8 = New-Object System.Text.UTF8Encoding $false
 
@@ -202,30 +208,45 @@ if (`$LASTEXITCODE -eq 0) {
   return @{ ok = $true }
 }
 
-# Rejects anything that is not a valid version 2 dictionary file.
-function Test-Content([string]$content) {
-  try {
-    $data = $content | ConvertFrom-Json
-  } catch {
-    throw [HelperError]::new("dictionary.json is not valid JSON.")
-  }
-  if ($data.version -ne 2 -or $null -eq $data.terms) {
-    throw [HelperError]::new("dictionary.json must be version 2 with a terms array.")
-  }
-  foreach ($row in @($data.terms)) {
-    $word = $row.word
-    $ok = ($word -is [string]) -and $word.Trim().Length -gt 0 -and $word.Length -le $MaxWordLength
-    if ($ok -and $null -ne $row.meaning) {
-      $ok = ($row.meaning -is [string]) -and $row.meaning.Length -le $MaxWordLength
+# ---- Term files: terms/<name>.json on the dictionary branch, one per term ----
+
+$TermPath = '^terms/[a-z0-9-]+-[0-9a-f]{8}\.json$'
+
+# Rejects a change that is not a term file path with a valid term (or a delete).
+function Get-Changes($request) {
+  $changes = @($request.changes)
+  if ($changes.Count -eq 0) { throw [HelperError]::new("No changes were sent.") }
+  if ($changes.Count -gt 5000) { throw [HelperError]::new("Too many changes.") }
+  foreach ($change in $changes) {
+    if ([string]$change.path -notmatch $TermPath) {
+      throw [HelperError]::new("Invalid term path: $($change.path)")
     }
-    if ($ok -and $null -ne $row.exact) { $ok = $row.exact -is [bool] }
-    if (-not $ok) { throw [HelperError]::new("Invalid row: $(ConvertTo-Json $row -Compress)") }
+    if ($null -ne $change.base -and [string]$change.base -notmatch '^[0-9a-f]{40}$') {
+      throw [HelperError]::new("Invalid base for $($change.path)")
+    }
+    if ($null -ne $change.content) { Test-Term ([string]$change.content) $change.path }
   }
-  return @($data.terms).Count
+  return $changes
 }
 
-# Git's blob id of the content, to skip a commit when nothing changed.
-function Get-BlobSha([byte[]]$bytes) {
+function Test-Term([string]$content, [string]$path) {
+  try {
+    $term = $content | ConvertFrom-Json
+  } catch {
+    throw [HelperError]::new("$path is not valid JSON.")
+  }
+  $word = $term.word
+  $ok = ($word -is [string]) -and $word.Trim().Length -gt 0 -and $word.Length -le $MaxWordLength
+  if ($ok -and $null -ne $term.meaning) {
+    $ok = ($term.meaning -is [string]) -and $term.meaning.Length -le $MaxWordLength
+  }
+  if ($ok -and $null -ne $term.exact) { $ok = $term.exact -eq $true }
+  if (-not $ok) { throw [HelperError]::new("Invalid term in $($path): $content") }
+}
+
+# Git's blob id of a text, to compare a file with what is on the branch.
+function Get-BlobSha([string]$text) {
+  $bytes = $Utf8.GetBytes($text)
   $header = $Utf8.GetBytes("blob $($bytes.Length)`0")
   $sha1 = [Security.Cryptography.SHA1]::Create()
   $all = New-Object byte[] ($header.Length + $bytes.Length)
@@ -234,66 +255,216 @@ function Get-BlobSha([byte[]]$bytes) {
   return (($sha1.ComputeHash($all) | ForEach-Object { $_.ToString("x2") }) -join "")
 }
 
-# Commits the file on a branch of a repository. Returns the commit id, or $null when unchanged.
-function Write-DictionaryFile([string]$repository, [string]$branchName, [byte[]]$bytes, [string]$message) {
-  $current = Invoke-GhApi "repos/$repository/contents/$($File)?ref=$branchName" -jq ".sha"
-  if ($current -eq (Get-BlobSha $bytes)) { return $null }
-
-  $body = @{
-    message = $message
-    content = [Convert]::ToBase64String($bytes)
-    sha = $current
-    branch = $branchName
-  }
-  return Invoke-GhApi "repos/$repository/contents/$File" "PUT" $body ".commit.sha"
+function Get-TargetSha($change) {
+  if ($null -eq $change.content) { return $null }
+  return Get-BlobSha ([string]$change.content)
 }
 
-function Submit-Dictionary($request) {
-  $content = [string]$request.content
+function Get-Head([string]$repository) {
+  return Invoke-GhApi "repos/$repository/git/ref/heads/$Branch" -jq ".object.sha"
+}
+
+# The commit's tree id and the blob id of every term file, in one call.
+function Get-TermState([string]$repository, [string]$commit) {
+  $json = Invoke-GhApi "repos/$repository/git/trees/$($commit)?recursive=1" -jq '{tree: .sha, truncated: .truncated, files: [.tree[] | select(.type == "blob" and (.path | startswith("terms/"))) | {path, sha}]}'
+  $data = $json | ConvertFrom-Json
+  if ($data.truncated) { throw [HelperError]::new("The term list is too large to read at once.") }
+  $shas = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([StringComparer]::Ordinal)
+  foreach ($file in @($data.files)) { $shas[$file.path] = $file.sha }
+  return @{ Tree = $data.tree; Shas = $shas }
+}
+
+function Get-Sha($state, [string]$path) {
+  if ($state.Shas.ContainsKey($path)) { return $state.Shas[$path] }
+  return $null
+}
+
+function Get-BlobText([string]$repository, $sha) {
+  if ($null -eq $sha) { return $null }
+  $base64 = Invoke-GhApi "repos/$repository/git/blobs/$sha" -jq ".content"
+  return $Utf8.GetString([Convert]::FromBase64String(($base64 -replace '\s', '')))
+}
+
+# Splits the changes against the branch state: already equal (dropped),
+# conflicting (the file changed since the editor loaded it), or pending.
+function Compare-Changes([string]$repository, $state, $changes) {
+  $pending = New-Object System.Collections.Generic.List[object]
+  $conflicts = New-Object System.Collections.Generic.List[object]
+  foreach ($change in $changes) {
+    $current = Get-Sha $state $change.path
+    if ($current -eq (Get-TargetSha $change)) { continue }
+    if ($current -ne $change.base) {
+      $conflicts.Add(@{ path = $change.path; current = (Get-BlobText $repository $current) })
+    } else {
+      $pending.Add($change)
+    }
+  }
+  return @{ Pending = $pending; Conflicts = $conflicts }
+}
+
+# One commit on top of $parent that writes or deletes the changed term files.
+function New-TermsCommit([string]$repository, [string]$parent, [string]$tree, $changes, [string]$message) {
+  $entries = @(foreach ($change in $changes) {
+    if ($null -eq $change.content) {
+      @{ path = $change.path; mode = "100644"; type = "blob"; sha = $null }
+    } else {
+      @{ path = $change.path; mode = "100644"; type = "blob"; content = [string]$change.content }
+    }
+  })
+  $newTree = Invoke-GhApi "repos/$repository/git/trees" "POST" @{ base_tree = $tree; tree = $entries } ".sha"
+  return Invoke-GhApi "repos/$repository/git/commits" "POST" @{ message = $message; tree = $newTree; parents = @($parent) } ".sha"
+}
+
+function Move-Branch([string]$repository, [string]$name, [string]$commit, [bool]$force) {
+  $flag = if ($force) { "force=true" } else { "force=false" }
+  $result = Invoke-Gh @("api", "-X", "PATCH", "repos/$repository/git/refs/heads/$name", "-f", "sha=$commit", "-F", $flag)
+  return $result.Code -eq 0
+}
+
+function Get-Message($request) {
   $message = ([string]$request.message).Trim()
   if (-not $message) { throw [HelperError]::new("A commit message is required.") }
   if ($message.Length -gt 4000) { throw [HelperError]::new("The commit message is too long.") }
-  $count = Test-Content $content
-  $bytes = $Utf8.GetBytes($content)
+  return $message
+}
 
-  $status = Get-Status
-  if (-not $status.ghAuth) { throw [HelperError]::new("GitHub CLI is not logged in.") }
-
-  # Owner: commit straight to the dictionary branch.
-  if ($status.canPush) {
-    $commit = Write-DictionaryFile $Repo $Branch $bytes $message
-    Write-Log "direct $(if ($commit) { 'changed' } else { 'no change' }) ($count terms)"
-    if (-not $commit) { return @{ ok = $true; mode = "direct"; changed = $false } }
-    return @{ ok = $true; mode = "direct"; changed = $true; commit = $commit.Substring(0, 7) }
-  }
-
-  # Everyone else: fork, commit to a new branch on the fork, open a pull request.
+function Get-Fork {
   $fork = Invoke-GhApi "repos/$Repo/forks" "POST" @{} ".full_name"
   for ($i = 0; $i -lt 30; $i++) {
     if ((Invoke-Gh @("api", "repos/$fork", "--jq", ".full_name")).Code -eq 0) { break }
     Start-Sleep -Seconds 1
   }
+  return $fork
+}
 
-  $base = Invoke-GhApi "repos/$Repo/git/ref/heads/$Branch" -jq ".object.sha"
-  $newBranch = "dictionary-update-$([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())"
-  Invoke-GhApi "repos/$fork/git/refs" "POST" @{ ref = "refs/heads/$newBranch"; sha = $base } ".ref" | Out-Null
+# Owner: commits only the changed term files on top of the newest dictionary
+# branch, so other people's terms are never overwritten. A term that changed
+# on the branch since the editor loaded it comes back as a conflict, and
+# nothing is committed. If another push lands between reading and writing,
+# the branch update is refused (no force) and the whole check runs again.
+# Everyone else: the same check, then a commit on a fork branch and a pull request.
+function Submit-Terms($request) {
+  $message = Get-Message $request
+  $changes = Get-Changes $request
 
-  $commit = Write-DictionaryFile $fork $newBranch $bytes $message
-  if (-not $commit) {
-    Invoke-Gh @("api", "-X", "DELETE", "repos/$fork/git/refs/heads/$newBranch") | Out-Null
-    Write-Log "proposal no change ($count terms)"
-    return @{ ok = $true; mode = "proposal"; changed = $false }
+  $status = Get-Status
+  if (-not $status.ghAuth) { throw [HelperError]::new("GitHub CLI is not logged in.") }
+
+  for ($attempt = 1; $attempt -le 3; $attempt++) {
+    $head = Get-Head $Repo
+    $state = Get-TermState $Repo $head
+    $check = Compare-Changes $Repo $state $changes
+    if ($check.Conflicts.Count -gt 0) {
+      Write-Log "conflicts: $($check.Conflicts.Count)"
+      return @{ ok = $true; conflicts = @($check.Conflicts) }
+    }
+    $mode = if ($status.canPush) { "direct" } else { "proposal" }
+    if ($check.Pending.Count -eq 0) { return @{ ok = $true; mode = $mode; changed = $false } }
+
+    if ($status.canPush) {
+      $commit = New-TermsCommit $Repo $head $state.Tree $check.Pending $message
+      if (Move-Branch $Repo $Branch $commit $false) {
+        Write-Log "direct commit $commit ($($check.Pending.Count) files)"
+        return @{ ok = $true; mode = "direct"; changed = $true; commit = $commit.Substring(0, 7) }
+      }
+      Write-Log "branch moved during submit; retrying ($attempt)"
+      continue
+    }
+
+    $fork = Get-Fork
+    $commit = New-TermsCommit $fork $head $state.Tree $check.Pending $message
+    $newBranch = "dictionary-update-$([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())"
+    Invoke-GhApi "repos/$fork/git/refs" "POST" @{ ref = "refs/heads/$newBranch"; sha = $commit } ".ref" | Out-Null
+    $owner = $fork.Split("/")[0]
+    $url = Invoke-GhApi "repos/$Repo/pulls" "POST" @{
+      title = $message.Split("`n")[0]
+      head = "$($owner):$newBranch"
+      base = $Branch
+      body = "Submitted from the dictionary editor. Each term is its own file, so this can be merged with the merge button."
+    } ".html_url"
+    Write-Log "proposal opened $url ($($check.Pending.Count) files)"
+    return @{ ok = $true; mode = "proposal"; changed = $true; url = $url }
+  }
+  throw [HelperError]::new("The dictionary branch kept changing. Try again in a moment.")
+}
+
+# The open dictionary pull requests of the logged-in user. For a conflicted
+# one, every term file it changes is listed with its own value and the
+# branch's current value; `conflict` marks files that both sides changed.
+function Get-Proposals {
+  $status = Get-Status
+  if (-not $status.ghAuth) { throw [HelperError]::new("GitHub CLI is not logged in.") }
+  $login = $status.login
+
+  $json = Invoke-GhApi "repos/$Repo/pulls?state=open&base=$Branch&per_page=100" -jq "[.[] | select(.user.login == `"$login`" and (.head.ref | startswith(`"dictionary-update-`"))) | {number, url: .html_url, title}]"
+  $list = New-Object System.Collections.Generic.List[object]
+  $current = $null
+  foreach ($pr in @($json | ConvertFrom-Json)) {
+    if ($null -eq $pr) { continue }
+    $info = $null
+    for ($i = 0; $i -lt 4; $i++) {
+      $info = Invoke-GhApi "repos/$Repo/pulls/$($pr.number)" -jq "{mergeable, head: .head.sha, repo: .head.repo.full_name}" | ConvertFrom-Json
+      if ($null -ne $info.mergeable) { break }
+      Start-Sleep -Seconds 2
+    }
+    $item = @{ number = $pr.number; url = $pr.url; title = $pr.title; mergeable = $info.mergeable }
+    if ($info.mergeable -eq $false) {
+      if ($null -eq $current) { $current = Get-TermState $Repo (Get-Head $Repo) }
+      $item.files = @(Get-ProposalFiles $pr.number $info $current)
+    }
+    $list.Add($item)
+  }
+  return @{ ok = $true; login = $login; proposals = @($list) }
+}
+
+function Get-ProposalFiles($number, $info, $current) {
+  $paths = Invoke-GhApi "repos/$Repo/pulls/$number/files?per_page=100" -jq "[.[].filename]" | ConvertFrom-Json
+  $parent = Invoke-GhApi "repos/$($info.repo)/git/commits/$($info.head)" -jq ".parents[0].sha"
+  $base = Get-TermState $info.repo $parent
+  $mine = Get-TermState $info.repo $info.head
+  foreach ($path in @($paths)) {
+    if ($path -notmatch $TermPath) { continue }
+    $b = Get-Sha $base $path
+    $m = Get-Sha $mine $path
+    $c = Get-Sha $current $path
+    if ($m -eq $c) { continue }
+    @{
+      path = $path
+      conflict = ($c -ne $b)
+      mine = (Get-BlobText $info.repo $m)
+      current = (Get-BlobText $Repo $c)
+    }
+  }
+}
+
+# Rebuilds a conflicted pull request on top of the newest dictionary branch
+# with the values the user chose, and moves its fork branch there. When no
+# change is left, the pull request is closed.
+function Update-Proposal($request) {
+  $status = Get-Status
+  if (-not $status.ghAuth) { throw [HelperError]::new("GitHub CLI is not logged in.") }
+  $number = [int]$request.number
+  $info = Invoke-GhApi "repos/$Repo/pulls/$number" -jq "{login: .user.login, repo: .head.repo.full_name, ref: .head.ref, url: .html_url, title}" | ConvertFrom-Json
+  if ($info.login -ne $status.login) { throw [HelperError]::new("This pull request belongs to someone else.") }
+
+  $changes = @($request.changes)
+  if ($changes.Count -gt 0) { $changes = Get-Changes $request }
+  $head = Get-Head $Repo
+  $state = Get-TermState $Repo $head
+  $pending = @($changes | Where-Object { (Get-Sha $state $_.path) -ne (Get-TargetSha $_) })
+
+  if ($pending.Count -eq 0) {
+    Invoke-GhApi "repos/$Repo/issues/$number/comments" "POST" @{ body = "Closed from the dictionary editor: no change is left after resolving conflicts." } ".id" | Out-Null
+    Invoke-GhApi "repos/$Repo/pulls/$number" "PATCH" @{ state = "closed" } ".state" | Out-Null
+    return @{ ok = $true; closed = $true; url = $info.url }
   }
 
-  $owner = $fork.Split("/")[0]
-  $url = Invoke-GhApi "repos/$Repo/pulls" "POST" @{
-    title = $message.Split("`n")[0]
-    head = "$($owner):$newBranch"
-    base = $Branch
-    body = "Submitted from the dictionary editor. Please review the changed terms."
-  } ".html_url"
-  Write-Log "proposal opened $url ($count terms)"
-  return @{ ok = $true; mode = "proposal"; changed = $true; url = $url }
+  $commit = New-TermsCommit $info.repo $head $state.Tree $pending "$($info.title)`n`nResolve conflicts with the dictionary branch"
+  if (-not (Move-Branch $info.repo $info.ref $commit $true)) {
+    throw [HelperError]::new("Could not update the pull request branch.")
+  }
+  Write-Log "proposal $number rebuilt on $head ($($pending.Count) files)"
+  return @{ ok = $true; closed = $false; url = $info.url }
 }
 
 # Replaces this script with the copy bundled in the extension. The running
@@ -321,7 +492,9 @@ function Invoke-Request($request) {
     "status" { return Get-Status }
     "install" { return Install-Gh }
     "login" { return Start-Login }
-    "submit" { return Submit-Dictionary $request }
+    "submit" { return Submit-Terms $request }
+    "proposals" { return Get-Proposals }
+    "updateProposal" { return Update-Proposal $request }
     default { throw [HelperError]::new("Unknown request.") }
   }
 }

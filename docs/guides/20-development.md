@@ -35,7 +35,7 @@ Status and errors are logged with the `[Korean Translator]` prefix.
 - Design: [Dictionary](../design/translation/20-dictionary.md), [Dictionary Sync](../design/translation/30-dictionary-sync.md)
 
 ## Tests
-`node --test tests/dictionary.test.js`
+`node --test tests/dictionary.test.js tests/term-files.test.js`
 
 ## Known Limits
 - Udemy DOM changes can break quiz or caption detection

@@ -12,11 +12,15 @@
     const TRUE_VALUES = new Set(["y", "yes", "true", "1", "o", "x", "v", "○", "✓"]);
     const LIST_LIMIT = 100;
 
+    const TermFiles = globalThis.__dictionaryTermFiles;
+    const Conflicts = globalThis.__dictionaryConflicts;
+
     const $ = id => document.getElementById(id);
     const ui = {
       reload: $("reload"), helper: $("helper"), helperStop: $("helperStop"), cancel: $("cancel"),
       search: $("search"), count: $("count"), problems: $("problems"),
       body: $("body"), register: $("register"), changes: $("changes"), status: $("status"),
+      proposals: $("proposals"),
       grid: $("grid"), newWord: $("newWord"), newMeaning: $("newMeaning"),
       newExact: $("newExact"), addTerm: $("addTerm"),
       firstPage: $("firstPage"), prevPage: $("prevPage"), nextPage: $("nextPage"),
@@ -633,17 +637,61 @@
       ui.newWord.focus();
     }
 
-    // The whole dictionary.json content for the current rows (version 2).
-    function buildFile() {
-      const terms = rows
-        .map(r => {
-          const term = { word: r.word.trim() };
-          if (r.meaning.trim()) term.meaning = r.meaning.trim();
-          if (r.exact) term.exact = true;
-          return term;
-        })
-        .sort((a, b) => a.word.localeCompare(b.word, "en"));
-      return JSON.stringify({ version: 2, terms }, null, 2) + "\n";
+    // One entry per changed term file. `base` is the git blob id of the file as
+    // loaded (null when the term was not there), so the helper can tell whether
+    // someone else changed the same term since. `content` is null for a delete.
+    async function buildChanges() {
+      const { added, changed, removed } = changes();
+      const byWord = new Map(rows.map(r => [r.word.trim(), r]));
+      const baseOf = async word => snapshot.has(word)
+        ? TermFiles.blobSha(TermFiles.fileContent({ word, ...snapshot.get(word) }))
+        : null;
+      const list = [];
+      for (const word of [...added, ...changed, ...removed]) {
+        const row = byWord.get(word);
+        list.push({
+          word,
+          path: await TermFiles.fileName(word),
+          content: row ? TermFiles.fileContent(row) : null,
+          base: await baseOf(word)
+        });
+      }
+      return list;
+    }
+
+    const parseTerm = text => (text == null ? null : JSON.parse(text));
+
+    // Applies the user's pick for one conflicted term. Either way the snapshot
+    // takes the branch's current value, so the next submit compares against it.
+    function resolveConflict(word, current, choice) {
+      if (current) snapshot.set(word, { meaning: current.meaning || "", exact: current.exact === true });
+      else snapshot.delete(word);
+      if (choice === "mine") return;
+
+      const row = rows.find(r => r.word.trim() === word);
+      if (!current) {
+        if (row) rows = rows.filter(r => r !== row);
+      } else if (row) {
+        row.meaning = current.meaning || "";
+        row.exact = current.exact === true;
+      } else {
+        rows.push(newRow(word, current.meaning || "", current.exact === true));
+      }
+    }
+
+    // Shows the conflicts in a new window. Returns false when the user closed it.
+    async function handleConflicts(list, conflicts) {
+      const byPath = new Map(list.map(c => [c.path, c]));
+      const items = conflicts.map(c => {
+        const change = byPath.get(c.path);
+        return { path: c.path, word: change.word, mine: parseTerm(change.content), current: parseTerm(c.current) };
+      });
+      say(`같은 단어를 다른 사람도 수정했습니다(${items.length}개). 새 창에서 남길 값을 고르세요.`);
+      const choices = await Conflicts.askConflicts(items);
+      if (!choices) return false;
+      for (const item of items) resolveConflict(item.word, item.current, choices.get(item.path) || "mine");
+      render();
+      return true;
     }
 
     // Reads the current dictionary.json from the branch (public, no token needed).
@@ -692,12 +740,30 @@
         ...list("Remove", removed)
       ].join("\n");
 
+      if (!added.length && !changed.length && !removed.length) {
+        setStep("");
+        say("변경된 내용이 없습니다.", "ok");
+        return;
+      }
+
       setStep("busy");
       say(helper?.canPush ? "등록 중..." : "등록 신청 중...");
       try {
-        const data = await askHelper({ type: "submit", message, content: buildFile() }, 180000);
+        const list = await buildChanges();
+        const request = list.map(({ path, content, base }) => ({ path, content, base }));
+        const data = await askHelper({ type: "submit", message, changes: request }, 180000);
         if (id !== chainId) return;
         if (!data.ok) throw new Error(data.error || "The helper failed.");
+
+        if (data.conflicts?.length) {
+          if (!(await handleConflicts(list, data.conflicts))) {
+            say("등록을 취소했습니다. 변경 내용은 그대로 남아 있습니다.");
+            return;
+          }
+          if (id !== chainId) return;
+          // Picks may leave nothing to send; submit() checks that first.
+          return await submit(id);
+        }
 
         if (data.mode === "direct") {
           snapshot = snapshotOf(rows);
@@ -713,6 +779,64 @@
       } finally {
         if (id === chainId) setStep("");
       }
+    }
+
+    // Contributors: open pull requests that GitHub can no longer merge because
+    // someone else changed the same term. Checked when the panel opens.
+    async function checkProposals() {
+      if (!IS_EXTENSION || !helper || helper.canPush) return;
+      const data = await askHelper({ type: "proposals" }, 120000);
+      if (!data.ok) return;
+      showProposals((data.proposals || []).filter(p => p.mergeable === false));
+    }
+
+    function showProposals(conflicted) {
+      ui.proposals.replaceChildren();
+      ui.proposals.hidden = !conflicted.length;
+      for (const pr of conflicted) {
+        const line = document.createElement("div");
+        const link = document.createElement("a");
+        link.href = pr.url;
+        link.target = "_blank";
+        link.rel = "noopener";
+        link.textContent = `등록 신청 #${pr.number}`;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "link";
+        button.textContent = "충돌 해결";
+        button.addEventListener("click", () => resolveProposal(pr));
+        line.append(link, "이 다른 사람의 수정과 충돌합니다. ", button);
+        ui.proposals.append(line);
+      }
+    }
+
+    // Conflicted terms go to the conflict window; the rest keep this user's
+    // value. The helper rebuilds the pull request on the newest branch.
+    async function resolveProposal(pr) {
+      const files = pr.files || [];
+      const items = files.filter(f => f.conflict).map(f => {
+        const mine = parseTerm(f.mine);
+        const current = parseTerm(f.current);
+        return { path: f.path, word: (mine || current).word, mine, current };
+      });
+      let choices = new Map();
+      if (items.length) {
+        choices = await Conflicts.askConflicts(items, `등록 신청 #${pr.number}: 단어마다 남길 값을 고르세요.`);
+        if (!choices) return;
+      }
+      const request = files.map(f => ({
+        path: f.path,
+        content: f.conflict && choices.get(f.path) === "current" ? f.current : f.mine
+      }));
+      say(`등록 신청 #${pr.number}을 다시 만드는 중...`);
+      const data = await askHelper({ type: "updateProposal", number: pr.number, changes: request }, 180000);
+      if (!data.ok) {
+        say(`실패: ${data.error}`, "error");
+        return;
+      }
+      if (data.closed) say(`등록 신청 #${pr.number}은 남은 변경이 없어 닫았습니다.`, "ok");
+      else sayWithLink(`등록 신청 #${pr.number}을 최신 단어장 기준으로 다시 만들었습니다.`, data.url, " 신청 내용 보기");
+      checkProposals();
     }
 
     ui.reload.addEventListener("click", () => {
@@ -775,5 +899,5 @@
     });
 
     load();
-    if (IS_EXTENSION) refreshRunning();
+    if (IS_EXTENSION) refreshRunning().then(checkProposals);
     else updateHelper();

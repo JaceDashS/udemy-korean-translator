@@ -32,6 +32,8 @@ To add many rows, copy them from a spreadsheet (단어 TAB 뜻 TAB Y) and paste 
 ## Submit
 The button shows one of two actions, depending on your GitHub permission:
 - **등록** (repository owner): commits the table straight to the `dictionary` branch. The status line says **등록 완료**.
+- If someone else changed the same word since you opened the editor, a window lists those words with your value and the newest value. Pick one per word and press **이대로 등록**. Closing the window cancels and keeps your edits.
+- If your open 등록 신청 conflicts with a later change, the panel shows it with **충돌 해결**; picking values updates the request, or closes it when nothing is left.
 - **등록 신청** (anyone else): the helper forks the repository once, commits your change to a new branch on your fork, and opens a pull request to `dictionary`. The status line says **등록 신청 완료** and links to the pull request (신청 내용 보기).
 
 After the owner merges a change, it applies on the next Udemy quiz page load. The extension does not need a reload.

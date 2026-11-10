@@ -4,7 +4,7 @@
 Pure logic (the dictionary) is tested with the Node built-in test runner. No dependencies are needed.
 
 ```
-node --test tests/dictionary.test.js
+node --test tests/dictionary.test.js tests/term-files.test.js
 ```
 
 The test loads `dictionary-terms.js` and `dictionary.js` with `globalThis` as `window`.

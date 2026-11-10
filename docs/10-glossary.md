@@ -45,6 +45,15 @@
 - Code: `editor/index.html`, `editor/app.js`
 - Avoid: "admin page"
 
+## Term File
+- Definition: The file of one dictionary term on the `dictionary` branch, `terms/<slug>-<hash>.json`. `dictionary.json` is built from all term files
+- Code: `fileName()`, `fileContent()` in `editor/term-files.js`; `tools/build-dictionary.js`
+
+## Conflict
+- Definition: Someone else changed the same term since the editor loaded it (owner), or since a pull request was made (contributor). Settled by the user's pick in the conflict window
+- Code: `Compare-Changes` in `tools/dictionary-host.ps1`; `askConflicts()` in `editor/conflicts.js`
+- Avoid: calling different terms changed at the same time a conflict; those merge without one
+
 ## Helper
 - Definition: The PowerShell program on the user's PC that Chrome starts for the editor. It installs GitHub CLI and opens the login window on request, and commits or opens pull requests with the user's gh login
 - Code: `tools/dictionary-host.ps1`, native host name `com.udemy.dictionary_helper`, `background.js`

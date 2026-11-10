@@ -27,6 +27,51 @@
 - Result: The cell shows `IAM role`; duplicate highlighting and the summary use the trimmed word
 - Test: Manual in the side panel
 
+## Term File Scenarios
+- Design: [Term Files](../../../design/translation/30-dictionary-sync.md#term-files)
+
+### Stable Case Safe File Names
+- Input: Words `IAM role`, `SAM`, `sam`, `/compact`, `한국어`
+- Steps: `fileName()`
+- Result: `terms/iam-role-<hash>.json`; `SAM` and `sam` differ; `/compact` → `terms/compact-<hash>.json`; `한국어` → `terms/term-<hash>.json`; the same word always gives the same name
+- Test: `term-files.test.js` → "file names are stable, readable, and differ by case"
+
+### Lossless Conversion
+- Input: The `dictionary` branch's `dictionary.json` with 1,590 terms (2026-11-10)
+- Steps: `build-dictionary.js split` → `verify` → `build`
+- Result: 1,590 files, 0 missing, 0 extra; the rebuilt `dictionary.json` is byte-identical; every stored blob id equals the editor's `blobSha(fileContent(term))`
+- Test: `term-files.test.js` → "split then build gives back the same dictionary.json" (small sample); the full run is manual, before the push
+
+### Invalid Term File Fails the Build
+- Input: A term file under the wrong name, or with an unknown key
+- Steps: The workflow runs `build`
+- Result: The run fails and `dictionary.json` is not changed; the extension keeps the previous terms
+- Test: `term-files.test.js` → "build rejects a file stored under the wrong name"
+
+### Different Terms at the Same Time
+- Input: A and B load the editor. A registers `agent`; B registers `agentic` a minute later
+- Steps: B's helper reads the newest head; the blob id of `agentic`'s file equals B's base (absent) → pending → commit on top of A's commit
+- Result: Both terms are on the branch. As pull requests, both can be merged with GitHub's merge button in any order
+- Test: Manual after the push
+
+### Same Term Changed by Someone Else
+- Input: The owner loads `agent` (no meaning); someone else registers `agent` = 에이전트; the owner then sets `agent` = 대리자 and registers
+- Steps: Branch blob id differs from base → conflict → nothing written → the window shows 내 값 대리자 and 최신 값 에이전트
+- Result: 내 값 → committed as 대리자. 최신 값 → the table shows 에이전트 and nothing is left to send. Closing the window → registering is cancelled and the edit stays
+- Test: Manual after the push
+
+### Push Lands Between Check and Write
+- Input: Another commit moves `dictionary` after the helper read the head
+- Steps: The non-force ref update is refused → the helper reads the new head and checks again
+- Result: The change is committed on top of the other commit; after 3 refusals the status says to try again
+- Test: Manual (not reproducible on demand)
+
+### Conflicted Contributor Pull Request
+- Input: Y's open pull request changes `agent`; the owner then changes `agent` directly
+- Steps: Panel opens → `proposals` → `mergeable` false → 충돌 해결 → window with the conflicted terms → `updateProposal`
+- Result: The pull request is rebuilt on the newest branch with Y's picks and becomes mergeable, or is closed with a comment when nothing is left
+- Test: Manual (needs a second account)
+
 ## Register Chain Scenarios
 - Design: [Register Chain](../../../design/translation/30-dictionary-sync.md#register-chain)
 

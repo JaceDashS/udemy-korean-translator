@@ -4,8 +4,11 @@
 - `manifest.json` — Manifest V3. Injects the content scripts into Udemy pages in the `MAIN` world, in this order: `dictionary-terms.js`, `dictionary.js`, `translator.js`, `content.js`, `caption.js`.
 - `dictionary-terms.js` — Developer term list, loaded first. Sets `window.__udemyQuizTranslatorTerms`.
 - `dictionary.js` — Builds the term matcher. Sets `window.__udemyQuizTranslatorDictionary` (`protect`, `restore`, `configure`).
-- `dictionary.json` (on the `dictionary` branch, not on `main`) — Terms (version 2) loaded on each page load. Written by `editor/index.html`.
-- `editor/index.html`, `editor/app.js` — The dictionary editor. In the side panel it registers `dictionary.json`; opened outside the extension it is read-only.
+- `terms/*.json` (on the `dictionary` branch) — One file per term. Written by the editor through the helper.
+- `dictionary.json` (on the `dictionary` branch, not on `main`) — Terms (version 2) loaded on each page load. Rebuilt from `terms/` by `.github/workflows/build-dictionary.yml` with `tools/build-dictionary.js`.
+- `editor/index.html`, `editor/app.js` — The dictionary editor. In the side panel it registers changed term files; opened outside the extension it is read-only.
+- `editor/term-files.js` — Term file names, contents, and blob ids; shared by the editor, the build script, and the tests.
+- `editor/conflicts.js`, `editor/conflict.html`, `editor/conflict-window.js` — The window where the user picks a value for each conflicted term.
 - `editor/setup.html`, `editor/setup.js` — One-time registration guide tab, opened by the editor.
 - `background.js` — Service worker. Opens the side panel on the toolbar icon and holds the native messaging port to the helper.
 - `tools/dictionary-host.ps1` — Helper on the user's PC (native messaging host). Installs GitHub CLI and opens the login window on request; commits or opens pull requests through `gh api`.
