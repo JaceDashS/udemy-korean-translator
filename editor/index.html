@@ -52,10 +52,11 @@
       font: 14px/1.45 system-ui, "Malgun Gothic", sans-serif;
     }
     h1 { font-size: 18px; margin: 0 12px 0 0; }
+    a { color: var(--accent); }
     .muted { color: var(--muted); }
     .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .row + .row { margin-top: 8px; }
-    input[type="text"], input[type="password"], input[type="search"] {
+    input[type="text"], input[type="search"] {
       font: inherit;
       padding: 6px 8px;
       border: 1px solid var(--line);
@@ -125,24 +126,24 @@
     td button.remove { border: 0; padding: 4px 8px; color: var(--danger); background: transparent; }
     tr.invalid td input[type="text"].word { color: var(--danger); }
     tr.dup td { background: var(--dup); }
-    .add-term { margin-top: 10px; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--head); }
-    .add-term input[type="text"] { flex: 1 1 160px; }
-    .add-term label { display: inline-flex; gap: 4px; align-items: center; }
-    .proposal { margin-top: 8px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--head); }
-    .proposal textarea { width: 100%; font: 12px/1.4 ui-monospace, Consolas, monospace; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 6px; }
+    .panel { margin-top: 8px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--head); width: min(640px, 100%); }
+    .panel ol { margin: 4px 0 0; padding-left: 20px; }
     /* Use only the width the content needs. */
     .grid-wrap, .add-term { width: fit-content; max-width: 100%; }
-    .proposal { width: min(640px, 100%); }
     td input.word { width: 240px; }
     td input.meaning { width: 300px; }
     #newWord { width: 240px; }
     #newMeaning { width: 300px; }
+    .add-term { margin-top: 10px; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--head); }
     .add-term input[type="text"] { flex: 0 0 auto; }
+    .add-term label { display: inline-flex; gap: 4px; align-items: center; }
     .pager select { font: inherit; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); }
     .status { min-height: 1.5em; margin-top: 8px; }
     .status.ok { color: var(--ok); }
     .status.error { color: var(--danger); }
     .problem { color: var(--danger); }
+    .helper.ok { color: var(--ok); }
+    .helper.off { color: var(--danger); }
     @media (max-width: 480px) {
       body { padding: 10px; }
       .grid-wrap { max-height: calc(100vh - 260px); }
@@ -156,9 +157,19 @@
   </header>
 
   <div class="row">
-    <input id="token" type="password" placeholder="토큰 (소유자만 입력, 없으면 제안하기 사용)" autocomplete="off">
-    <button id="saveToken" type="button">토큰 저장</button>
     <button id="reload" type="button">새로고침</button>
+    <span class="helper" id="helper"></span>
+  </div>
+
+  <div class="panel" id="setup" hidden>
+    <p><b>도우미가 연결되지 않았습니다.</b> 등록하려면 PC에서 한 번 설정하세요.</p>
+    <ol>
+      <li>Node.js 18 이상, git, GitHub CLI(<code>gh</code>)를 설치합니다.</li>
+      <li>터미널에서 <code>gh auth login</code>을 실행합니다. Git 인증도 함께 설정하세요.</li>
+      <li>저장소를 받아 <code>node tools/dictionary-helper.js</code>를 실행합니다. 그 창은 편집하는 동안 열어 두세요.</li>
+      <li>이 페이지를 새로고침합니다.</li>
+    </ol>
+    <p><button id="copyJson" type="button">JSON 복사</button> 도우미 없이 내용을 복사해 직접 올릴 수도 있습니다.</p>
   </div>
 
   <div class="row">
@@ -207,17 +218,7 @@
 
   <div class="row">
     <button id="register" class="primary" type="button" disabled>등록</button>
-    <button id="propose" type="button" disabled>제안하기 (PR)</button>
     <span class="muted" id="changes"></span>
-  </div>
-  <div class="proposal" id="proposal" hidden>
-    <ol>
-      <li>GitHub 탭에서 <b>Fork</b>를 누릅니다(처음 한 번). "Copy the main branch only"는 끄세요. <code>dictionary</code> 브랜치가 필요합니다.</li>
-      <li>포크한 저장소에서 <code>dictionary</code> 브랜치의 <code>dictionary.json</code>을 열고 연필 아이콘(Edit)을 누릅니다.</li>
-      <li>내용을 모두 지우고 붙여넣습니다(복사된 내용). 아래 상자에서도 복사할 수 있습니다.</li>
-      <li>커밋 옵션에서 <b>Create a new branch for this commit and start a pull request</b>를 선택하고 <b>Propose changes</b>를 누릅니다. 이 PR이 소유자에게 전달됩니다.</li>
-    </ol>
-    <textarea id="proposalText" rows="6" readonly></textarea>
   </div>
   <div class="status" id="status" role="status"></div>
   <p class="muted">
@@ -230,20 +231,18 @@
 
     const REPO = "JaceDashS/udemy-quiz-translator";
     const BRANCH = "dictionary";
-    const FILE = "dictionary.json";
-    const API = `https://api.github.com/repos/${REPO}/contents/${FILE}`;
-    const TOKEN_KEY = "dictionaryEditorToken";
+    const RAW_URL = `https://raw.githubusercontent.com/${REPO}/${BRANCH}/dictionary.json`;
+    const HELPER_URL = "http://127.0.0.1:8787";
     const TRUE_VALUES = new Set(["y", "yes", "true", "1", "o", "x", "v", "○", "✓"]);
     const LIST_LIMIT = 100;
 
     const $ = id => document.getElementById(id);
     const ui = {
-      token: $("token"), saveToken: $("saveToken"), reload: $("reload"),
+      reload: $("reload"), helper: $("helper"), setup: $("setup"), copyJson: $("copyJson"),
       search: $("search"), addRow: $("addRow"), count: $("count"), problems: $("problems"),
       body: $("body"), register: $("register"), changes: $("changes"), status: $("status"),
       grid: $("grid"), newWord: $("newWord"), newMeaning: $("newMeaning"),
-      newExact: $("newExact"), addTerm: $("addTerm"), propose: $("propose"),
-      proposal: $("proposal"), proposalText: $("proposalText"),
+      newExact: $("newExact"), addTerm: $("addTerm"),
       firstPage: $("firstPage"), prevPage: $("prevPage"), nextPage: $("nextPage"),
       lastPage: $("lastPage"), pageInfo: $("pageInfo"), pageSize: $("pageSize")
     };
@@ -252,7 +251,8 @@
     let rows = [];
     // snapshot: word → { meaning, exact } as loaded from the branch.
     let snapshot = new Map();
-    let sha = null;
+    // helper: { login, canPush } when tools/dictionary-helper.js is running, else null.
+    let helper = null;
     let nextId = 1;
     let query = "";
     let sort = { key: null, dir: 1 };
@@ -307,7 +307,7 @@
       return { added, changed, removed };
     }
 
-    // Returns a message when the rows cannot be registered yet.
+    // Returns a message when the rows cannot be submitted yet.
     function problems() {
       const empty = rows.filter(r => !r.word.trim()).length;
       if (empty) return `단어가 비어 있는 행이 ${empty}개 있습니다. 채우거나 삭제하세요.`;
@@ -318,34 +318,19 @@
       return null;
     }
 
-    function getToken() {
-      try { return sessionStorage.getItem(TOKEN_KEY) || ""; } catch (_) { return ""; }
-    }
-
-    function setToken(value) {
-      try {
-        if (value) sessionStorage.setItem(TOKEN_KEY, value);
-        else sessionStorage.removeItem(TOKEN_KEY);
-      } catch (_) {}
-    }
-
     function say(message, kind = "") {
       ui.status.textContent = message;
       ui.status.className = `status ${kind}`;
     }
 
-    // UTF-8 safe base64 for the GitHub contents API.
-    function encodeBase64(text) {
-      const bytes = new TextEncoder().encode(text);
-      let binary = "";
-      for (const b of bytes) binary += String.fromCharCode(b);
-      return btoa(binary);
-    }
-
-    function decodeBase64(base64) {
-      const binary = atob(base64.replace(/\n/g, ""));
-      const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
-      return new TextDecoder().decode(bytes);
+    function sayWithLink(message, url) {
+      say(message, "ok");
+      const link = document.createElement("a");
+      link.href = url;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = " 열기";
+      ui.status.append(link);
     }
 
     function compareRows(a, b) {
@@ -445,6 +430,25 @@
       }
     }
 
+    function updatePager() {
+      ui.pageInfo.textContent = `${page} / ${pages} 페이지`;
+      ui.firstPage.disabled = ui.prevPage.disabled = page <= 1;
+      ui.nextPage.disabled = ui.lastPage.disabled = page >= pages;
+    }
+
+    function updateHelper() {
+      if (!helper) {
+        ui.helper.textContent = "도우미 연결 안 됨";
+        ui.helper.className = "helper off";
+        ui.setup.hidden = false;
+      } else {
+        const role = helper.canPush ? "소유자: 바로 등록" : "외부 계정: PR로 제안";
+        ui.helper.textContent = `도우미 연결됨 · ${helper.login} · ${role}`;
+        ui.helper.className = "helper ok";
+        ui.setup.hidden = true;
+      }
+    }
+
     function updateSummary() {
       const withMeaning = rows.filter(r => r.meaning.trim()).length;
       ui.count.textContent = `전체 ${rows.length}행 · 검색 결과 ${matched}행 · 뜻 있음 ${withMeaning}개`;
@@ -458,17 +462,10 @@
       ui.changes.textContent = dirty
         ? `추가 ${added.length} · 수정 ${changed.length} · 삭제 ${removed.length}`
         : "변경 없음";
-      // The owner (token saved) commits directly; everyone else proposes a pull request.
-      const owner = Boolean(getToken());
-      ui.register.disabled = !dirty || !owner || !sha || Boolean(problem);
-      ui.propose.hidden = owner;
-      ui.propose.disabled = !dirty || owner || Boolean(problem) || !sha;
-    }
 
-    function updatePager() {
-      ui.pageInfo.textContent = `${page} / ${pages} 페이지`;
-      ui.firstPage.disabled = ui.prevPage.disabled = page <= 1;
-      ui.nextPage.disabled = ui.lastPage.disabled = page >= pages;
+      // Owners commit directly; everyone else opens a pull request.
+      ui.register.textContent = helper?.canPush ? "등록" : "PR 제안";
+      ui.register.disabled = !helper || !dirty || Boolean(problem);
     }
 
     function render() {
@@ -577,35 +574,6 @@
       ui.newWord.focus();
     }
 
-    async function load() {
-      say("불러오는 중...");
-      try {
-        const headers = { Accept: "application/vnd.github+json" };
-        const token = getToken();
-        if (token) headers.Authorization = `Bearer ${token}`;
-
-        const response = await fetch(`${API}?ref=${BRANCH}`, { headers, cache: "no-store" });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const file = await response.json();
-        const data = JSON.parse(decodeBase64(file.content));
-        if (data.version !== 2 || !Array.isArray(data.terms)) {
-          throw new Error("dictionary.json이 버전 2 형식이 아닙니다.");
-        }
-
-        rows = toRows(data.terms);
-        page = 1;
-        snapshot = snapshotOf(rows);
-        sha = file.sha;
-        query = "";
-        ui.search.value = "";
-        say(token ? `${rows.length}행을 불러왔습니다.` : "불러왔습니다. 소유자는 토큰을 입력해 등록하고, 그 외에는 제안하기로 PR을 보내세요.", "ok");
-      } catch (error) {
-        say(`불러오기 실패: ${error.message}`, "error");
-      }
-      render();
-    }
-
     // The whole dictionary.json content for the current rows (version 2).
     function buildFile() {
       const terms = rows
@@ -619,45 +587,57 @@
       return JSON.stringify({ version: 2, terms }, null, 2) + "\n";
     }
 
-    // Non-owners cannot write to the repository. The change is copied as the
-    // full file and the fork page is opened. Committing it on the fork opens a
-    // pull request, which the owner reviews and merges.
-    async function propose() {
-      const problem = problems();
-      if (problem) {
-        say(problem, "error");
-        return;
-      }
-
-      // Open the tab first, before any await, so the popup is not blocked.
-      window.open(`https://github.com/${REPO}/fork`, "_blank", "noopener");
-
-      const text = buildFile();
-      ui.proposalText.value = text;
-      ui.proposal.hidden = false;
-      const { added, changed, removed } = changes();
-      let copied = false;
+    // Reads the current dictionary.json from the branch (public, no token needed).
+    async function load() {
+      say("불러오는 중...");
       try {
-        await navigator.clipboard.writeText(text);
-        copied = true;
-      } catch (_) {}
-      say(
-        copied
-          ? `변경 내용을 복사했습니다(추가 ${added.length} · 수정 ${changed.length} · 삭제 ${removed.length}). 열린 GitHub 탭에서 아래 단계를 따르세요.`
-          : "복사하지 못했습니다. 아래 상자의 내용을 직접 복사하세요.",
-        copied ? "ok" : "error"
-      );
+        const response = await fetch(RAW_URL, { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        if (data.version !== 2 || !Array.isArray(data.terms)) {
+          throw new Error("dictionary.json이 버전 2 형식이 아닙니다.");
+        }
+
+        rows = toRows(data.terms);
+        page = 1;
+        snapshot = snapshotOf(rows);
+        query = "";
+        ui.search.value = "";
+        say(`${rows.length}행을 불러왔습니다.`, "ok");
+      } catch (error) {
+        say(`불러오기 실패: ${error.message}`, "error");
+      }
+      render();
     }
 
-    async function register() {
-      const token = getToken();
-      if (!token) {
-        say("토큰을 입력하고 저장하세요.", "error");
-        return;
+    // Asks the local helper who is logged in and whether that account can push.
+    async function checkHelper() {
+      try {
+        const response = await fetch(`${HELPER_URL}/health`, {
+          cache: "no-store",
+          signal: AbortSignal.timeout(2000)
+        });
+        const data = await response.json();
+        helper = data.ok ? { login: data.login, canPush: data.canPush } : null;
+        if (!data.ok) console.warn("[Dictionary Editor]", data.error, data.detail || "");
+      } catch (_) {
+        helper = null;
       }
+      updateHelper();
+      updateSummary();
+    }
+
+    // Sends the full file and the commit message to the helper. The helper decides
+    // between a direct commit (owner) and a pull request (everyone else).
+    async function submit() {
       const problem = problems();
       if (problem) {
         say(problem, "error");
+        return;
+      }
+      if (!helper) {
+        say("도우미가 연결되어 있지 않습니다. 위 안내를 따라 실행하세요.", "error");
         return;
       }
 
@@ -672,58 +652,44 @@
         ...list("Remove", removed)
       ].join("\n");
 
-
       ui.register.disabled = true;
-      say("등록 중...");
+      say(helper.canPush ? "등록 중..." : "PR을 만드는 중...");
       try {
-        const response = await fetch(API, {
-          method: "PUT",
-          headers: {
-            Accept: "application/vnd.github+json",
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            message,
-            branch: BRANCH,
-            sha,
-            content: encodeBase64(buildFile())
-          })
+        const response = await fetch(`${HELPER_URL}/submit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message, content: buildFile() })
         });
+        const data = await response.json();
+        if (!data.ok) throw new Error(data.error || `HTTP ${response.status}`);
 
-        if (response.status === 409) {
-          throw new Error("다른 변경이 먼저 등록되었습니다. 새로고침 후 다시 시도하세요.");
+        if (data.mode === "direct") {
+          snapshot = snapshotOf(rows);
+          say(data.changed ? `등록했습니다(커밋 ${data.commit}). 다음 번역 페이지 로드부터 반영됩니다.` : "변경된 내용이 없습니다.", "ok");
+        } else if (data.changed) {
+          snapshot = snapshotOf(rows);
+          sayWithLink("PR을 열었습니다. 소유자가 확인하면 반영됩니다.", data.url);
+        } else {
+          say("변경된 내용이 없습니다.", "ok");
         }
-        if (!response.ok) {
-          const detail = await response.json().catch(() => ({}));
-          throw new Error(`HTTP ${response.status} ${detail.message || ""}`.trim());
-        }
-
-        const result = await response.json();
-        sha = result.content.sha;
-        snapshot = snapshotOf(rows);
-        say("등록했습니다. 다음 번역 페이지 로드부터 반영됩니다.", "ok");
       } catch (error) {
-        say(`등록 실패: ${error.message}`, "error");
+        say(`실패: ${error.message}`, "error");
       } finally {
-        render();
+        updateSummary();
       }
     }
 
-    function isDirty() {
-      const { added, changed, removed } = changes();
-      return added.length + changed.length + removed.length > 0;
-    }
-
-    ui.saveToken.addEventListener("click", () => {
-      setToken(ui.token.value.trim());
-      ui.token.value = "";
-      say(getToken() ? "토큰을 저장했습니다." : "토큰을 지웠습니다.", "ok");
-      render();
-    });
     ui.reload.addEventListener("click", () => {
       if (isDirty() && !confirm("저장하지 않은 변경이 사라집니다. 계속할까요?")) return;
       load();
+    });
+    ui.copyJson.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(buildFile());
+        say("JSON을 복사했습니다.", "ok");
+      } catch (_) {
+        say("복사하지 못했습니다.", "error");
+      }
     });
     ui.search.addEventListener("input", () => {
       query = ui.search.value;
@@ -740,7 +706,6 @@
       render();
     });
     ui.addTerm.addEventListener("click", addTerm);
-    ui.propose.addEventListener("click", propose);
     for (const input of [ui.newWord, ui.newMeaning]) {
       input.addEventListener("keydown", e => {
         if (e.key === "Enter" && !e.isComposing) {
@@ -750,7 +715,7 @@
       });
     }
     ui.addRow.addEventListener("click", addRow);
-    ui.register.addEventListener("click", register);
+    ui.register.addEventListener("click", submit);
     for (const th of document.querySelectorAll("th.sortable")) {
       th.addEventListener("click", () => {
         const key = th.dataset.key;
@@ -760,11 +725,17 @@
       });
     }
 
+    function isDirty() {
+      const { added, changed, removed } = changes();
+      return added.length + changed.length + removed.length > 0;
+    }
+
     window.addEventListener("beforeunload", e => {
       if (isDirty()) e.preventDefault();
     });
 
     load();
+    checkHelper();
   </script>
 </body>
 </html>

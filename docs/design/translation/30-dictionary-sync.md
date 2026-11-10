@@ -37,12 +37,12 @@ Representative scenario:
 - Headers sort the table. The search box filters by word or meaning
 - The table shows 50, 100 (default), or 200 rows per page. Searching, sorting, and adding a term return to page 1
 - The layout uses only the width its content needs (`fit-content`)
-- 제안하기 is shown when no token is saved. It copies `buildFile()` output and opens the fork page; the user commits it on the fork as a new branch, which opens a pull request
 - Duplicate or empty words are highlighted and block registration
-- On 등록 the file is written with `PUT /repos/{repo}/contents/dictionary.json` using the file `sha`. Rows are sorted by word, and empty meanings are omitted
+- On 등록 (or PR 제안 for users without push permission) the editor posts the file and the commit message to the local helper (`POST /submit`). Rows are sorted by word, and empty meanings are omitted
+- The helper (`tools/dictionary-helper.js`) commits directly for a user with push permission, or forks, commits to a new branch, and opens a pull request with `gh pr create`. It runs git and gh without a shell, one request at a time
+- The editor holds no token. On load it calls `GET /health`, which reports the gh login and push permission; the button reads 등록 or PR 제안 accordingly. Without the helper, the setup panel is shown and the file can be copied (JSON 복사)
 - The commit message lists added, changed, and removed words
-- A 409 response means the branch changed; the user reloads and retries (no silent overwrite)
-- The token is read from and written to `sessionStorage` only
+- The helper pulls the branch before committing. A conflicting change is reported as an error instead of being overwritten
 
 ## Known Limits
 - The Udemy page's Content Security Policy may block the cross-origin `fetch`. This is not yet verified on a Udemy page. If it is blocked, the bundled list is used and a warning is logged
