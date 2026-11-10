@@ -168,7 +168,7 @@
       <button id="setupCmd" class="primary" type="button">준비 명령 복사</button>
       <button id="copyJson" type="button">JSON 복사</button>
     </p>
-    <p class="muted">복사되는 명령: <code>irm https://jacedashs.github.io/udemy-quiz-translator/tools/setup.ps1 | iex</code></p>
+    <p class="muted">복사되는 명령: <code>irm https://raw.githubusercontent.com/JaceDashS/udemy-quiz-translator/main/tools/setup.ps1 | iex</code></p>
   </div>
 
   <div class="row">
@@ -255,7 +255,8 @@
     let helper = null;
     // checks: { git, gh, ghAuth } from the last /health answer, or null when the helper is off.
     let lastChecks = null;
-    const SETUP_COMMAND = "irm https://jacedashs.github.io/udemy-quiz-translator/tools/setup.ps1 | iex";
+    // raw.githubusercontent.com serves the script as text, which irm reads as a string.
+    const SETUP_COMMAND = "irm https://raw.githubusercontent.com/JaceDashS/udemy-quiz-translator/main/tools/setup.ps1 | iex";
     let nextId = 1;
     let query = "";
     let sort = { key: null, dir: 1 };
