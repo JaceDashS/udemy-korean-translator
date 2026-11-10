@@ -35,6 +35,9 @@ Representative scenario:
 - Each row is one term. Edits change the row in memory; the table is rebuilt only for add, delete, sort, and search, so the cell being typed in keeps its focus
 - Enter moves to the same column in the next row. Pasting tab-separated text (word, meaning, Y) into a cell inserts one row per line after the current row
 - Headers sort the table. The search box filters by word or meaning
+- The table shows 50, 100 (default), or 200 rows per page. Searching, sorting, and adding a term return to page 1
+- The layout uses only the width its content needs (`fit-content`)
+- 제안하기 is shown when no token is saved. It copies `buildFile()` output and opens the fork page; the user commits it on the fork as a new branch, which opens a pull request
 - Duplicate or empty words are highlighted and block registration
 - On 등록 the file is written with `PUT /repos/{repo}/contents/dictionary.json` using the file `sha`. Rows are sorted by word, and empty meanings are omitted
 - The commit message lists added, changed, and removed words

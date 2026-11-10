@@ -15,6 +15,14 @@
 3. Press 등록. The table is committed to the `dictionary` branch
 4. Reload a Udemy quiz page. The change applies on the next page load; the extension does not need a reload
 
+## Propose a change (no token)
+Anyone with a GitHub account can propose changes; the owner reviews them.
+1. Edit the table and press 제안하기 (PR). The full file is copied and the fork page opens
+2. Fork the repository once (uncheck "Copy the main branch only" so the `dictionary` branch is included)
+3. In the fork, open `dictionary/dictionary.json` on the `dictionary` branch and press Edit. Replace the content with the copied text
+4. Choose "Create a new branch for this commit and start a pull request" and press Propose changes
+5. The owner gets the pull request. After review and merge, the change applies on the next Udemy page load
+
 ## Notes
 - Only people with write access can register. Others can view the editor, but a token without write access cannot save changes
 - Changing the bundled fallback (`dictionary-terms.js`) requires reloading the extension at chrome://extensions

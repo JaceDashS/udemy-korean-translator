@@ -4,7 +4,8 @@
 - Terms are read from the `dictionary` branch of this repository (`dictionary.json`, version 2) on each Udemy page load, so a change takes effect without reloading the extension
 - The file is data only. It must be `{ "version": 2, "terms": [...] }`, with at most 10000 rows. Each row needs a word of at most 200 characters, may have a string meaning of at most 200 characters, and may have a boolean `exact` flag. Anything else is rejected
 - If the download fails, times out (3 seconds), or the file is invalid, the terms bundled in `dictionary-terms.js` are used
-- Registering a change from the editor commits the whole table to the `dictionary` branch
+- The owner registers a change from the editor with a token; it is committed to the `dictionary` branch
+- Anyone else proposes a change from the editor (제안하기): the full file is copied and the GitHub fork page opens. Committing it on a fork opens a pull request to the `dictionary` branch. GitHub notifies the owner, who reviews and merges it. No token is needed for this
 - Only people with write access to the repository can push to the branch. Anyone else can read it but cannot change it
 - The registration token is kept only in the browser tab session and is sent only to the GitHub API
 

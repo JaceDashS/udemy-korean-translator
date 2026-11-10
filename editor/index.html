@@ -83,7 +83,7 @@
       border: 1px solid var(--line);
       border-radius: 6px;
     }
-    table { border-collapse: collapse; width: 100%; min-width: 480px; }
+    table { border-collapse: collapse; }
     thead th {
       position: sticky;
       top: 0;
@@ -128,6 +128,17 @@
     .add-term { margin-top: 10px; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--head); }
     .add-term input[type="text"] { flex: 1 1 160px; }
     .add-term label { display: inline-flex; gap: 4px; align-items: center; }
+    .proposal { margin-top: 8px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--head); }
+    .proposal textarea { width: 100%; font: 12px/1.4 ui-monospace, Consolas, monospace; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 6px; }
+    /* Use only the width the content needs. */
+    .grid-wrap, .add-term { width: fit-content; max-width: 100%; }
+    .proposal { width: min(640px, 100%); }
+    td input.word { width: 240px; }
+    td input.meaning { width: 300px; }
+    #newWord { width: 240px; }
+    #newMeaning { width: 300px; }
+    .add-term input[type="text"] { flex: 0 0 auto; }
+    .pager select { font: inherit; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); }
     .status { min-height: 1.5em; margin-top: 8px; }
     .status.ok { color: var(--ok); }
     .status.error { color: var(--danger); }
@@ -145,7 +156,7 @@
   </header>
 
   <div class="row">
-    <input id="token" type="password" placeholder="GitHub 토큰 (Contents 쓰기 권한)" autocomplete="off">
+    <input id="token" type="password" placeholder="토큰 (소유자만 입력, 없으면 제안하기 사용)" autocomplete="off">
     <button id="saveToken" type="button">토큰 저장</button>
     <button id="reload" type="button">새로고침</button>
   </div>
@@ -179,9 +190,34 @@
     </table>
   </div>
 
+  <div class="row pager" aria-label="페이지">
+    <button id="firstPage" type="button">«</button>
+    <button id="prevPage" type="button">‹ 이전</button>
+    <span class="muted" id="pageInfo"></span>
+    <button id="nextPage" type="button">다음 ›</button>
+    <button id="lastPage" type="button">»</button>
+    <label class="muted">페이지당
+      <select id="pageSize">
+        <option value="50">50</option>
+        <option value="100" selected>100</option>
+        <option value="200">200</option>
+      </select>
+    </label>
+  </div>
+
   <div class="row">
     <button id="register" class="primary" type="button" disabled>등록</button>
+    <button id="propose" type="button" disabled>제안하기 (PR)</button>
     <span class="muted" id="changes"></span>
+  </div>
+  <div class="proposal" id="proposal" hidden>
+    <ol>
+      <li>GitHub 탭에서 <b>Fork</b>를 누릅니다(처음 한 번). "Copy the main branch only"는 끄세요. <code>dictionary</code> 브랜치가 필요합니다.</li>
+      <li>포크한 저장소에서 <code>dictionary</code> 브랜치의 <code>dictionary.json</code>을 열고 연필 아이콘(Edit)을 누릅니다.</li>
+      <li>내용을 모두 지우고 붙여넣습니다(복사된 내용). 아래 상자에서도 복사할 수 있습니다.</li>
+      <li>커밋 옵션에서 <b>Create a new branch for this commit and start a pull request</b>를 선택하고 <b>Propose changes</b>를 누릅니다. 이 PR이 소유자에게 전달됩니다.</li>
+    </ol>
+    <textarea id="proposalText" rows="6" readonly></textarea>
   </div>
   <div class="status" id="status" role="status"></div>
   <p class="muted">
@@ -206,7 +242,10 @@
       search: $("search"), addRow: $("addRow"), count: $("count"), problems: $("problems"),
       body: $("body"), register: $("register"), changes: $("changes"), status: $("status"),
       grid: $("grid"), newWord: $("newWord"), newMeaning: $("newMeaning"),
-      newExact: $("newExact"), addTerm: $("addTerm")
+      newExact: $("newExact"), addTerm: $("addTerm"), propose: $("propose"),
+      proposal: $("proposal"), proposalText: $("proposalText"),
+      firstPage: $("firstPage"), prevPage: $("prevPage"), nextPage: $("nextPage"),
+      lastPage: $("lastPage"), pageInfo: $("pageInfo"), pageSize: $("pageSize")
     };
 
     // rows: [{ id, word, meaning, exact }]. Edits change these objects directly.
@@ -217,6 +256,11 @@
     let nextId = 1;
     let query = "";
     let sort = { key: null, dir: 1 };
+    // Pagination: `page` is 1-based; `pages` and `matched` are set by render().
+    let page = 1;
+    let pageSize = 100;
+    let pages = 1;
+    let matched = 0;
 
     function newRow(word = "", meaning = "", exact = false) {
       return { id: nextId++, word, meaning, exact };
@@ -402,9 +446,8 @@
     }
 
     function updateSummary() {
-      const shown = ui.body.children.length;
       const withMeaning = rows.filter(r => r.meaning.trim()).length;
-      ui.count.textContent = `전체 ${rows.length}행 · 표시 ${shown}행 · 뜻 있음 ${withMeaning}개`;
+      ui.count.textContent = `전체 ${rows.length}행 · 검색 결과 ${matched}행 · 뜻 있음 ${withMeaning}개`;
 
       const problem = problems();
       ui.problems.textContent = problem ? "⚠ 등록 불가" : "";
@@ -415,7 +458,17 @@
       ui.changes.textContent = dirty
         ? `추가 ${added.length} · 수정 ${changed.length} · 삭제 ${removed.length}`
         : "변경 없음";
-      ui.register.disabled = !dirty || !getToken() || !sha || Boolean(problem);
+      // The owner (token saved) commits directly; everyone else proposes a pull request.
+      const owner = Boolean(getToken());
+      ui.register.disabled = !dirty || !owner || !sha || Boolean(problem);
+      ui.propose.hidden = owner;
+      ui.propose.disabled = !dirty || owner || Boolean(problem) || !sha;
+    }
+
+    function updatePager() {
+      ui.pageInfo.textContent = `${page} / ${pages} 페이지`;
+      ui.firstPage.disabled = ui.prevPage.disabled = page <= 1;
+      ui.nextPage.disabled = ui.lastPage.disabled = page >= pages;
     }
 
     function render() {
@@ -431,9 +484,17 @@
       }
       if (sort.key) view = [...view].sort(compareRows);
 
+      matched = view.length;
+      pages = Math.max(1, Math.ceil(matched / pageSize));
+      page = Math.min(Math.max(1, page), pages);
+      const start = (page - 1) * pageSize;
+
       const fragment = document.createDocumentFragment();
-      for (const r of view) fragment.append(rowElement(r, numbers.get(r.id), counts));
+      for (const r of view.slice(start, start + pageSize)) {
+        fragment.append(rowElement(r, numbers.get(r.id), counts));
+      }
       ui.body.replaceChildren(fragment);
+      updatePager();
 
       updateHeaders();
       updateSummary();
@@ -474,6 +535,7 @@
     function addRow() {
       const r = newRow();
       rows.push(r);
+      page = Math.ceil(rows.length / pageSize);
       query = "";
       ui.search.value = "";
       sort = { key: null, dir: 1 };
@@ -502,6 +564,7 @@
       }
 
       rows.unshift(newRow(word, meaning, ui.newExact.checked));
+      page = 1;
       ui.newWord.value = "";
       ui.newMeaning.value = "";
       ui.newExact.checked = false;
@@ -531,15 +594,59 @@
         }
 
         rows = toRows(data.terms);
+        page = 1;
         snapshot = snapshotOf(rows);
         sha = file.sha;
         query = "";
         ui.search.value = "";
-        say(token ? `${rows.length}행을 불러왔습니다.` : "불러왔습니다. 등록하려면 토큰을 입력하세요.", "ok");
+        say(token ? `${rows.length}행을 불러왔습니다.` : "불러왔습니다. 소유자는 토큰을 입력해 등록하고, 그 외에는 제안하기로 PR을 보내세요.", "ok");
       } catch (error) {
         say(`불러오기 실패: ${error.message}`, "error");
       }
       render();
+    }
+
+    // The whole dictionary.json content for the current rows (version 2).
+    function buildFile() {
+      const terms = rows
+        .map(r => {
+          const term = { word: r.word.trim() };
+          if (r.meaning.trim()) term.meaning = r.meaning.trim();
+          if (r.exact) term.exact = true;
+          return term;
+        })
+        .sort((a, b) => a.word.localeCompare(b.word, "en"));
+      return JSON.stringify({ version: 2, terms }, null, 2) + "\n";
+    }
+
+    // Non-owners cannot write to the repository. The change is copied as the
+    // full file and the fork page is opened. Committing it on the fork opens a
+    // pull request, which the owner reviews and merges.
+    async function propose() {
+      const problem = problems();
+      if (problem) {
+        say(problem, "error");
+        return;
+      }
+
+      // Open the tab first, before any await, so the popup is not blocked.
+      window.open(`https://github.com/${REPO}/fork`, "_blank", "noopener");
+
+      const text = buildFile();
+      ui.proposalText.value = text;
+      ui.proposal.hidden = false;
+      const { added, changed, removed } = changes();
+      let copied = false;
+      try {
+        await navigator.clipboard.writeText(text);
+        copied = true;
+      } catch (_) {}
+      say(
+        copied
+          ? `변경 내용을 복사했습니다(추가 ${added.length} · 수정 ${changed.length} · 삭제 ${removed.length}). 열린 GitHub 탭에서 아래 단계를 따르세요.`
+          : "복사하지 못했습니다. 아래 상자의 내용을 직접 복사하세요.",
+        copied ? "ok" : "error"
+      );
     }
 
     async function register() {
@@ -565,14 +672,6 @@
         ...list("Remove", removed)
       ].join("\n");
 
-      const terms = rows
-        .map(r => {
-          const term = { word: r.word.trim() };
-          if (r.meaning.trim()) term.meaning = r.meaning.trim();
-          if (r.exact) term.exact = true;
-          return term;
-        })
-        .sort((a, b) => a.word.localeCompare(b.word, "en"));
 
       ui.register.disabled = true;
       say("등록 중...");
@@ -588,7 +687,7 @@
             message,
             branch: BRANCH,
             sha,
-            content: encodeBase64(JSON.stringify({ version: 2, terms }, null, 2) + "\n")
+            content: encodeBase64(buildFile())
           })
         });
 
@@ -628,9 +727,20 @@
     });
     ui.search.addEventListener("input", () => {
       query = ui.search.value;
+      page = 1;
+      render();
+    });
+    ui.firstPage.addEventListener("click", () => { page = 1; render(); });
+    ui.prevPage.addEventListener("click", () => { page -= 1; render(); });
+    ui.nextPage.addEventListener("click", () => { page += 1; render(); });
+    ui.lastPage.addEventListener("click", () => { page = pages; render(); });
+    ui.pageSize.addEventListener("change", () => {
+      pageSize = Number(ui.pageSize.value);
+      page = 1;
       render();
     });
     ui.addTerm.addEventListener("click", addTerm);
+    ui.propose.addEventListener("click", propose);
     for (const input of [ui.newWord, ui.newMeaning]) {
       input.addEventListener("keydown", e => {
         if (e.key === "Enter" && !e.isComposing) {
@@ -645,6 +755,7 @@
       th.addEventListener("click", () => {
         const key = th.dataset.key;
         sort = sort.key === key ? { key, dir: -sort.dir } : { key, dir: 1 };
+        page = 1;
         render();
       });
     }
