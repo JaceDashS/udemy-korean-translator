@@ -509,6 +509,18 @@
       if (isDirty() && !confirm("저장하지 않은 변경이 사라집니다. 계속할까요?")) return;
       load();
     });
+    ui.openSetup.addEventListener("click", async () => {
+      if (!IS_EXTENSION) {
+        say("PowerShell 열기는 확장 프로그램 사이드 패널에서 사용할 수 있습니다.", "error");
+        return;
+      }
+      const data = await askHelper({ type: "openSetup" });
+      if (data.ok) {
+        say("PowerShell 창을 열었습니다. 창의 안내를 따라 진행하세요.", "ok");
+      } else {
+        say("도우미가 아직 등록되지 않았습니다. 저장소 루트의 setup.cmd를 한 번 더블클릭하세요.", "error");
+      }
+    });
     ui.setupCmd.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(SETUP_COMMAND);

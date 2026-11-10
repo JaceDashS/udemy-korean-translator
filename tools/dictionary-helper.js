@@ -211,6 +211,22 @@ async function handle(request) {
     }
   }
 
+  // Opens a PowerShell window that runs the setup script. Called from the side panel.
+  if (request.type === "openSetup") {
+    const child = require("node:child_process").spawn(
+      "powershell.exe",
+      [
+        "-NoExit",
+        "-ExecutionPolicy", "Bypass",
+        "-Command", "irm https://raw.githubusercontent.com/JaceDashS/udemy-quiz-translator/main/tools/setup.ps1 | iex"
+      ],
+      { detached: true, stdio: "ignore" }
+    );
+    child.unref();
+    log("opened the setup window");
+    return { ok: true };
+  }
+
   if (request.type === "submit") {
     const content = String(request.content || "");
     const message = String(request.message || "").trim();
