@@ -240,10 +240,15 @@
   // Left margin that centers original + translation as a pair, or null when the
   // column is already there. The margin can move the column left or right.
   function shiftTarget(column, scroller) {
-    const room = visibleRect(scroller).right - column.contentLeft;
+    const clip = visibleRect(scroller);
     const translationWidth = Math.max(SIDE_MAX_WIDTH, column.width);
     const pair = column.width + SIDE_GAP * 2 + translationWidth;
-    const target = Math.max(SHIFT_MIN_MARGIN, (room - pair) / 2);
+
+    // Where the pair's left edge must be to center it in the visible area, and
+    // where the column is now. The margin moves by the difference.
+    const desiredLeft = clip.left + (clip.right - clip.left - pair) / 2;
+    const currentLeft = column.contentLeft + column.left;
+    const target = Math.max(SHIFT_MIN_MARGIN, column.left + (desiredLeft - currentLeft));
     return Math.abs(target - column.left) > 1 ? target : null;
   }
 
