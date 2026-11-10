@@ -987,7 +987,13 @@
     const column = sideColumn(els, scroller);
     if (!column) return false;
 
+    // A sidebar opening or closing changes the free width without a resize event.
+    // The column must then be centered again (the pair moves), like the quiz does.
     const clip = visibleRect(scroller);
+    const clipWidth = clip.right - clip.left;
+    if (examSide.clipWidth === undefined) examSide.clipWidth = clipWidth;
+    else if (Math.abs(examSide.clipWidth - clipWidth) > 1) return false;
+
     Object.assign(layer.style, {
       left: `${clip.left}px`,
       top: `${clip.top}px`,
