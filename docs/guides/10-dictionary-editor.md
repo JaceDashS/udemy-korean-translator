@@ -6,9 +6,14 @@
 
 ## Use
 1. Open the editor page and paste the token, then press 토큰 저장. The token stays in this tab only
-2. Enter a word and its meaning, then press 추가 (Enter also works in the meaning box)
-3. Press 등록. The change is committed to the `dictionary` branch
-4. Reload a Udemy quiz page. The new pair applies on the next page load; the extension does not need a reload
+2. Edit the table. Each row is one term:
+   - 단어: the English word (required)
+   - 뜻: the Korean meaning (optional). Leave it empty to keep the word in English
+   - 대소문자 구분: check it for words that are ordinary English in lowercase (for example "haiku")
+   Use 행 추가 for a new row. In a cell, Enter moves to the same column in the next row.
+   To add many rows, copy them from a spreadsheet (단어 TAB 뜻 TAB Y) and paste into a 단어 cell
+3. Press 등록. The table is committed to the `dictionary` branch
+4. Reload a Udemy quiz page. The change applies on the next page load; the extension does not need a reload
 
 ## Notes
 - Only people with write access can register. Others can view the editor, but a token without write access cannot save changes

@@ -10,8 +10,11 @@
       --fg: #1f2328;
       --muted: #656d76;
       --line: #d0d7de;
+      --head: #f6f8fa;
+      --focus: #ddf4ff;
       --accent: #0969da;
       --danger: #cf222e;
+      --dup: #fff1e5;
       --ok: #1a7f37;
     }
     @media (prefers-color-scheme: dark) {
@@ -20,8 +23,11 @@
         --fg: #e6edf3;
         --muted: #8d96a0;
         --line: #30363d;
+        --head: #161b22;
+        --focus: #132a44;
         --accent: #4493f8;
         --danger: #f85149;
+        --dup: #3d2b12;
         --ok: #3fb950;
       }
     }
@@ -30,93 +36,148 @@
       --fg: #e6edf3;
       --muted: #8d96a0;
       --line: #30363d;
+      --head: #161b22;
+      --focus: #132a44;
       --accent: #4493f8;
       --danger: #f85149;
+      --dup: #3d2b12;
       --ok: #3fb950;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      padding: 16px;
+      padding: 12px 16px;
       background: var(--bg);
       color: var(--fg);
-      font: 14px/1.5 system-ui, "Malgun Gothic", sans-serif;
+      font: 14px/1.45 system-ui, "Malgun Gothic", sans-serif;
     }
-    h1 { font-size: 20px; margin: 0 0 4px; }
-    p.muted { color: var(--muted); margin: 0 0 12px; }
-    section { margin-bottom: 16px; }
-    input, button {
+    h1 { font-size: 18px; margin: 0 12px 0 0; }
+    .muted { color: var(--muted); }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .row + .row { margin-top: 8px; }
+    input[type="text"], input[type="password"], input[type="search"] {
+      font: inherit;
+      padding: 6px 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--fg);
+      min-width: 0;
+    }
+    button {
       font: inherit;
       padding: 6px 10px;
       border: 1px solid var(--line);
       border-radius: 6px;
       background: var(--bg);
       color: var(--fg);
+      cursor: pointer;
     }
-    input { min-width: 0; }
-    button { cursor: pointer; }
-    button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
     button.danger { color: var(--danger); }
     button:disabled { opacity: .5; cursor: default; }
-    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    .row input[type="text"], .row input[type="password"] { flex: 1 1 180px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
-    th { color: var(--muted); font-weight: 600; }
-    td.word { word-break: break-word; }
-    td.meaning { word-break: break-word; }
-    td.action { width: 1%; white-space: nowrap; }
-    .status { margin-top: 8px; min-height: 1.5em; }
+    .grid-wrap {
+      margin-top: 10px;
+      overflow: auto;
+      max-height: calc(100vh - 200px);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+    table { border-collapse: collapse; width: 100%; min-width: 480px; }
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: var(--head);
+      text-align: left;
+      font-weight: 600;
+      padding: 6px 8px;
+      border: 1px solid var(--line);
+      white-space: nowrap;
+      user-select: none;
+    }
+    thead th.sortable { cursor: pointer; }
+    thead th.sortable:hover { color: var(--accent); }
+    tbody td { border: 1px solid var(--line); padding: 0; }
+    tbody td.rownum {
+      background: var(--head);
+      color: var(--muted);
+      text-align: right;
+      padding: 0 8px;
+      width: 1%;
+      white-space: nowrap;
+      user-select: none;
+      font-variant-numeric: tabular-nums;
+    }
+    tbody td.check { text-align: center; width: 1%; }
+    tbody td.del { width: 1%; }
+    td input[type="text"] {
+      width: 100%;
+      border: 0;
+      border-radius: 0;
+      padding: 6px 8px;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+    }
+    td input[type="text"]:focus { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--focus); }
+    td input[type="checkbox"] { width: 16px; height: 16px; margin: 0; }
+    td button.remove { border: 0; padding: 4px 8px; color: var(--danger); background: transparent; }
+    tr.invalid td input[type="text"].word { color: var(--danger); }
+    tr.dup td { background: var(--dup); }
+    .status { min-height: 1.5em; margin-top: 8px; }
     .status.ok { color: var(--ok); }
     .status.error { color: var(--danger); }
-    .count { color: var(--muted); }
+    .problem { color: var(--danger); }
     @media (max-width: 480px) {
-      body { padding: 12px; }
-      th.hide-sm, td.hide-sm { display: none; }
+      body { padding: 10px; }
+      .grid-wrap { max-height: calc(100vh - 260px); }
     }
   </style>
 </head>
 <body>
-  <h1>Dictionary Editor</h1>
-  <p class="muted">단어(영어)와 뜻(한국어) 쌍을 관리합니다. 등록을 누르면 <code>dictionary</code> 브랜치에 바로 커밋됩니다.</p>
+  <header class="row">
+    <h1>Dictionary Editor</h1>
+    <span class="muted">단어 한 행 = 단어 1개. 뜻은 비워둘 수 있습니다(비우면 영어 그대로).</span>
+  </header>
 
-  <section>
-    <div class="row">
-      <input id="token" type="password" placeholder="GitHub 토큰 (contents 쓰기 권한)" autocomplete="off">
-      <button id="saveToken" type="button">토큰 저장</button>
-      <button id="reload" type="button">새로고침</button>
-    </div>
-    <p class="muted">토큰은 이 탭의 sessionStorage에만 저장되고, GitHub API 요청 외에는 전송되지 않습니다.</p>
-  </section>
+  <div class="row">
+    <input id="token" type="password" placeholder="GitHub 토큰 (Contents 쓰기 권한)" autocomplete="off">
+    <button id="saveToken" type="button">토큰 저장</button>
+    <button id="reload" type="button">새로고침</button>
+  </div>
 
-  <section>
-    <div class="row">
-      <input id="word" type="text" placeholder="영어 단어 (예: private subnet)" autocomplete="off">
-      <input id="meaning" type="text" placeholder="뜻 (예: 프라이빗 서브넷)" autocomplete="off">
-      <button id="add" type="button">추가</button>
-    </div>
-  </section>
+  <div class="row">
+    <input id="search" type="search" placeholder="검색 (단어 또는 뜻)" autocomplete="off">
+    <button id="addRow" type="button">행 추가</button>
+    <span class="muted" id="count"></span>
+    <span class="problem" id="problems"></span>
+  </div>
 
-  <section>
-    <div class="row">
-      <input id="filter" type="text" placeholder="검색" autocomplete="off">
-      <span class="count" id="count"></span>
-    </div>
+  <div class="grid-wrap">
     <table>
       <thead>
-        <tr><th>단어</th><th>뜻</th><th class="hide-sm"></th></tr>
+        <tr>
+          <th></th>
+          <th class="sortable" data-key="word">단어 <span class="arrow"></span></th>
+          <th class="sortable" data-key="meaning">뜻 <span class="arrow"></span></th>
+          <th class="sortable" data-key="exact">대소문자 구분 <span class="arrow"></span></th>
+          <th></th>
+        </tr>
       </thead>
-      <tbody id="rows"></tbody>
+      <tbody id="body"></tbody>
     </table>
-  </section>
+  </div>
 
-  <section>
-    <div class="row">
-      <button id="register" class="primary" type="button" disabled>등록</button>
-      <span class="count" id="changes"></span>
-    </div>
-    <div class="status" id="status" role="status"></div>
-  </section>
+  <div class="row">
+    <button id="register" class="primary" type="button" disabled>등록</button>
+    <span class="muted" id="changes"></span>
+  </div>
+  <div class="status" id="status" role="status"></div>
+  <p class="muted">
+    엑셀에서 행을 복사해 단어 칸에 붙여넣으면 여러 행이 한 번에 추가됩니다.
+    열 순서는 <b>단어 · 뜻 · 대소문자구분(Y)</b>입니다. Enter는 아래 칸으로 이동합니다.
+  </p>
 
   <script>
     "use strict";
@@ -126,19 +187,80 @@
     const FILE = "dictionary.json";
     const API = `https://api.github.com/repos/${REPO}/contents/${FILE}`;
     const TOKEN_KEY = "dictionaryEditorToken";
+    const TRUE_VALUES = new Set(["y", "yes", "true", "1", "o", "x", "v", "○", "✓"]);
+    const LIST_LIMIT = 100;
 
-    const el = id => document.getElementById(id);
+    const $ = id => document.getElementById(id);
     const ui = {
-      token: el("token"), saveToken: el("saveToken"), reload: el("reload"),
-      word: el("word"), meaning: el("meaning"), add: el("add"),
-      filter: el("filter"), count: el("count"), rows: el("rows"),
-      register: el("register"), changes: el("changes"), status: el("status")
+      token: $("token"), saveToken: $("saveToken"), reload: $("reload"),
+      search: $("search"), addRow: $("addRow"), count: $("count"), problems: $("problems"),
+      body: $("body"), register: $("register"), changes: $("changes"), status: $("status")
     };
 
-    // The pairs as loaded from the branch, and the working copy being edited.
-    let original = {};
-    let pairs = {};
+    // rows: [{ id, word, meaning, exact }]. Edits change these objects directly.
+    let rows = [];
+    // snapshot: word → { meaning, exact } as loaded from the branch.
+    let snapshot = new Map();
     let sha = null;
+    let nextId = 1;
+    let query = "";
+    let sort = { key: null, dir: 1 };
+
+    function newRow(word = "", meaning = "", exact = false) {
+      return { id: nextId++, word, meaning, exact };
+    }
+
+    function toRows(terms) {
+      return terms.map(t => newRow(String(t.word || ""), t.meaning || "", t.exact === true));
+    }
+
+    function snapshotOf(list) {
+      const map = new Map();
+      for (const r of list) {
+        const word = r.word.trim();
+        if (word && !map.has(word)) map.set(word, { meaning: r.meaning.trim(), exact: r.exact });
+      }
+      return map;
+    }
+
+    function wordCounts() {
+      const counts = new Map();
+      for (const r of rows) {
+        const word = r.word.trim();
+        if (word) counts.set(word, (counts.get(word) || 0) + 1);
+      }
+      return counts;
+    }
+
+    function changes() {
+      const seen = new Set();
+      const added = [];
+      const changed = [];
+      for (const r of rows) {
+        const word = r.word.trim();
+        if (!word || seen.has(word)) continue;
+        seen.add(word);
+        if (!snapshot.has(word)) {
+          added.push(word);
+        } else {
+          const old = snapshot.get(word);
+          if (old.meaning !== r.meaning.trim() || old.exact !== r.exact) changed.push(word);
+        }
+      }
+      const removed = [...snapshot.keys()].filter(word => !seen.has(word));
+      return { added, changed, removed };
+    }
+
+    // Returns a message when the rows cannot be registered yet.
+    function problems() {
+      const empty = rows.filter(r => !r.word.trim()).length;
+      if (empty) return `단어가 비어 있는 행이 ${empty}개 있습니다. 채우거나 삭제하세요.`;
+
+      const counts = wordCounts();
+      const dups = [...counts].filter(([, n]) => n > 1).map(([word]) => word);
+      if (dups.length) return `같은 단어가 여러 행에 있습니다: ${dups.slice(0, 5).join(", ")}`;
+      return null;
+    }
 
     function getToken() {
       try { return sessionStorage.getItem(TOKEN_KEY) || ""; } catch (_) { return ""; }
@@ -170,95 +292,181 @@
       return new TextDecoder().decode(bytes);
     }
 
-    function sortedPairs(source) {
-      return Object.fromEntries(
-        Object.entries(source).sort(([a], [b]) => a.localeCompare(b, "en"))
-      );
+    function compareRows(a, b) {
+      if (sort.key === "exact") {
+        if (a.exact !== b.exact) return (a.exact ? 1 : -1) * sort.dir;
+        return a.word.localeCompare(b.word, "en") * sort.dir;
+      }
+      const left = sort.key === "meaning" ? a.meaning : a.word;
+      const right = sort.key === "meaning" ? b.meaning : b.word;
+      return left.localeCompare(right, "en") * sort.dir;
     }
 
-    // Lists which words were added, changed, or removed compared with the branch.
-    function diffSummary() {
-      const added = [];
-      const changed = [];
-      const removed = [];
-
-      for (const [word, meaning] of Object.entries(pairs)) {
-        if (!(word in original)) added.push(word);
-        else if (original[word] !== meaning) changed.push(word);
-      }
-      for (const word of Object.keys(original)) {
-        if (!(word in pairs)) removed.push(word);
-      }
-      return { added, changed, removed };
+    function cellInput(r, col) {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = col;
+      input.dataset.col = col;
+      input.value = r[col];
+      input.autocomplete = "off";
+      input.spellcheck = false;
+      input.addEventListener("input", () => {
+        r[col] = input.value;
+        updateFlags();
+        updateSummary();
+      });
+      input.addEventListener("keydown", e => onKeydown(e, input));
+      input.addEventListener("paste", e => onPaste(e, r));
+      return input;
     }
 
-    function isDirty() {
-      const { added, changed, removed } = diffSummary();
-      return added.length + changed.length + removed.length > 0;
+    function rowElement(r, number, counts) {
+      const tr = document.createElement("tr");
+      tr.dataset.id = r.id;
+
+      const num = document.createElement("td");
+      num.className = "rownum";
+      num.textContent = number;
+
+      const word = document.createElement("td");
+      word.append(cellInput(r, "word"));
+
+      const meaning = document.createElement("td");
+      meaning.append(cellInput(r, "meaning"));
+
+      const exact = document.createElement("td");
+      exact.className = "check";
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.checked = r.exact;
+      box.setAttribute("aria-label", "대소문자 구분");
+      box.addEventListener("change", () => {
+        r.exact = box.checked;
+        updateSummary();
+      });
+      exact.append(box);
+
+      const del = document.createElement("td");
+      del.className = "del";
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "remove";
+      remove.textContent = "×";
+      remove.setAttribute("aria-label", "행 삭제");
+      remove.addEventListener("click", () => {
+        rows = rows.filter(x => x !== r);
+        render();
+      });
+      del.append(remove);
+
+      tr.append(num, word, meaning, exact, del);
+      applyFlags(tr, r, counts);
+      return tr;
     }
 
-    function render() {
-      const query = ui.filter.value.trim().toLowerCase();
-      const words = Object.keys(pairs)
-        .sort((a, b) => a.localeCompare(b, "en"))
-        .filter(word => !query || word.toLowerCase().includes(query) || pairs[word].includes(query));
+    function applyFlags(tr, r, counts) {
+      const word = r.word.trim();
+      tr.classList.toggle("invalid", !word);
+      tr.classList.toggle("dup", Boolean(word) && counts.get(word) > 1);
+    }
 
-      ui.rows.textContent = "";
-      for (const word of words) {
-        const tr = document.createElement("tr");
-
-        const wordCell = document.createElement("td");
-        wordCell.className = "word";
-        wordCell.textContent = word;
-
-        const meaningCell = document.createElement("td");
-        meaningCell.className = "meaning";
-        meaningCell.textContent = pairs[word];
-
-        const actionCell = document.createElement("td");
-        actionCell.className = "action hide-sm";
-        const remove = document.createElement("button");
-        remove.type = "button";
-        remove.className = "danger";
-        remove.textContent = "삭제";
-        remove.addEventListener("click", () => {
-          delete pairs[word];
-          render();
-        });
-        actionCell.append(remove);
-
-        tr.append(wordCell, meaningCell, actionCell);
-        ui.rows.append(tr);
+    // Updates row highlighting after an edit without rebuilding the table,
+    // so the cell being typed in keeps its focus.
+    function updateFlags() {
+      const counts = wordCounts();
+      const byId = new Map(rows.map(r => [String(r.id), r]));
+      for (const tr of ui.body.children) {
+        const r = byId.get(tr.dataset.id);
+        if (r) applyFlags(tr, r, counts);
       }
+    }
 
-      ui.count.textContent = `${words.length} / ${Object.keys(pairs).length}개`;
+    function updateHeaders() {
+      for (const th of document.querySelectorAll("th.sortable")) {
+        const arrow = th.querySelector(".arrow");
+        const active = sort.key === th.dataset.key;
+        arrow.textContent = active ? (sort.dir === 1 ? "▲" : "▼") : "";
+      }
+    }
 
-      const { added, changed, removed } = diffSummary();
+    function updateSummary() {
+      const shown = ui.body.children.length;
+      const withMeaning = rows.filter(r => r.meaning.trim()).length;
+      ui.count.textContent = `전체 ${rows.length}행 · 표시 ${shown}행 · 뜻 있음 ${withMeaning}개`;
+
+      const problem = problems();
+      ui.problems.textContent = problem ? "⚠ 등록 불가" : "";
+      ui.problems.title = problem || "";
+
+      const { added, changed, removed } = changes();
       const dirty = added.length + changed.length + removed.length > 0;
       ui.changes.textContent = dirty
         ? `추가 ${added.length} · 수정 ${changed.length} · 삭제 ${removed.length}`
         : "변경 없음";
-      ui.register.disabled = !dirty || !getToken() || !sha;
+      ui.register.disabled = !dirty || !getToken() || !sha || Boolean(problem);
     }
 
-    function addPair() {
-      const word = ui.word.value.trim();
-      const meaning = ui.meaning.value.trim();
-      if (!word || !meaning) {
-        say("단어와 뜻을 모두 입력하세요.", "error");
-        return;
-      }
-      if (word.length > 200 || meaning.length > 200) {
-        say("단어와 뜻은 각각 200자 이하여야 합니다.", "error");
-        return;
-      }
+    function render() {
+      const counts = wordCounts();
+      const numbers = new Map(rows.map((r, i) => [r.id, i + 1]));
 
-      pairs[word] = meaning;
-      ui.word.value = "";
-      ui.meaning.value = "";
-      ui.word.focus();
-      say("");
+      let view = rows;
+      const q = query.trim().toLowerCase();
+      if (q) {
+        view = view.filter(r =>
+          r.word.toLowerCase().includes(q) || r.meaning.toLowerCase().includes(q)
+        );
+      }
+      if (sort.key) view = [...view].sort(compareRows);
+
+      const fragment = document.createDocumentFragment();
+      for (const r of view) fragment.append(rowElement(r, numbers.get(r.id), counts));
+      ui.body.replaceChildren(fragment);
+
+      updateHeaders();
+      updateSummary();
+    }
+
+    // Enter moves to the same column in the next row (spreadsheet behavior).
+    function onKeydown(event, input) {
+      if (event.key !== "Enter" || event.isComposing) return;
+      event.preventDefault();
+      const next = input.closest("tr").nextElementSibling;
+      next?.querySelector(`input[data-col="${input.dataset.col}"]`)?.focus();
+    }
+
+    // Pasting several spreadsheet rows inserts them after the current row.
+    function onPaste(event, r) {
+      const text = event.clipboardData.getData("text/plain");
+      if (!/[\t\n\r]/.test(text)) return;
+      event.preventDefault();
+
+      const parsed = text
+        .split(/\r?\n/)
+        .filter(line => line.trim())
+        .map(line => {
+          const [word = "", meaning = "", exact = ""] = line.split("\t");
+          return newRow(word.trim(), meaning.trim(), TRUE_VALUES.has(exact.trim().toLowerCase()));
+        });
+      if (!parsed.length) return;
+
+      const index = rows.indexOf(r);
+      const emptyCurrent = !r.word.trim() && !r.meaning.trim() && !r.exact;
+      rows.splice(emptyCurrent ? index : index + 1, emptyCurrent ? 1 : 0, ...parsed);
+      query = "";
+      ui.search.value = "";
       render();
+      say(`${parsed.length}행을 붙여넣었습니다.`);
+    }
+
+    function addRow() {
+      const r = newRow();
+      rows.push(r);
+      query = "";
+      ui.search.value = "";
+      sort = { key: null, dir: 1 };
+      render();
+      ui.body.querySelector(`tr[data-id="${r.id}"] input.word`)?.focus();
     }
 
     async function load() {
@@ -273,11 +481,16 @@
 
         const file = await response.json();
         const data = JSON.parse(decodeBase64(file.content));
-        original = { ...(data.pairs || {}) };
-        pairs = { ...original };
-        sha = file.sha;
+        if (data.version !== 2 || !Array.isArray(data.terms)) {
+          throw new Error("dictionary.json이 버전 2 형식이 아닙니다.");
+        }
 
-        say(token ? "불러왔습니다." : "불러왔습니다. 등록하려면 토큰을 입력하세요.", "ok");
+        rows = toRows(data.terms);
+        snapshot = snapshotOf(rows);
+        sha = file.sha;
+        query = "";
+        ui.search.value = "";
+        say(token ? `${rows.length}행을 불러왔습니다.` : "불러왔습니다. 등록하려면 토큰을 입력하세요.", "ok");
       } catch (error) {
         say(`불러오기 실패: ${error.message}`, "error");
       }
@@ -290,21 +503,31 @@
         say("토큰을 입력하고 저장하세요.", "error");
         return;
       }
+      const problem = problems();
+      if (problem) {
+        say(problem, "error");
+        return;
+      }
 
-      const { added, changed, removed } = diffSummary();
-      const lines = [
-        ...added.map(w => `- Add "${w}"`),
-        ...changed.map(w => `- Change "${w}"`),
-        ...removed.map(w => `- Remove "${w}"`)
-      ];
-      const message = `[chore] Update dictionary pairs\n\n${lines.join("\n")}`;
+      const { added, changed, removed } = changes();
+      const list = (verb, words) => words.slice(0, LIST_LIMIT).map(w => `- ${verb} "${w}"`)
+        .concat(words.length > LIST_LIMIT ? [`- ${verb} ${words.length - LIST_LIMIT} more`] : []);
+      const message = [
+        "[chore] Update dictionary terms",
+        "",
+        ...list("Add", added),
+        ...list("Change", changed),
+        ...list("Remove", removed)
+      ].join("\n");
 
-      const body = {
-        message,
-        branch: BRANCH,
-        sha,
-        content: encodeBase64(JSON.stringify({ version: 1, pairs: sortedPairs(pairs) }, null, 2) + "\n")
-      };
+      const terms = rows
+        .map(r => {
+          const term = { word: r.word.trim() };
+          if (r.meaning.trim()) term.meaning = r.meaning.trim();
+          if (r.exact) term.exact = true;
+          return term;
+        })
+        .sort((a, b) => a.word.localeCompare(b.word, "en"));
 
       ui.register.disabled = true;
       say("등록 중...");
@@ -316,7 +539,12 @@
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json"
           },
-          body: JSON.stringify(body)
+          body: JSON.stringify({
+            message,
+            branch: BRANCH,
+            sha,
+            content: encodeBase64(JSON.stringify({ version: 2, terms }, null, 2) + "\n")
+          })
         });
 
         if (response.status === 409) {
@@ -329,14 +557,18 @@
 
         const result = await response.json();
         sha = result.content.sha;
-        original = sortedPairs(pairs);
-        pairs = { ...original };
+        snapshot = snapshotOf(rows);
         say("등록했습니다. 다음 번역 페이지 로드부터 반영됩니다.", "ok");
       } catch (error) {
         say(`등록 실패: ${error.message}`, "error");
       } finally {
         render();
       }
+    }
+
+    function isDirty() {
+      const { added, changed, removed } = changes();
+      return added.length + changed.length + removed.length > 0;
     }
 
     ui.saveToken.addEventListener("click", () => {
@@ -349,10 +581,19 @@
       if (isDirty() && !confirm("저장하지 않은 변경이 사라집니다. 계속할까요?")) return;
       load();
     });
-    ui.add.addEventListener("click", addPair);
-    ui.meaning.addEventListener("keydown", e => { if (e.key === "Enter") addPair(); });
-    ui.filter.addEventListener("input", render);
+    ui.search.addEventListener("input", () => {
+      query = ui.search.value;
+      render();
+    });
+    ui.addRow.addEventListener("click", addRow);
     ui.register.addEventListener("click", register);
+    for (const th of document.querySelectorAll("th.sortable")) {
+      th.addEventListener("click", () => {
+        const key = th.dataset.key;
+        sort = sort.key === key ? { key, dir: -sort.dir } : { key, dir: 1 };
+        render();
+      });
+    }
 
     window.addEventListener("beforeunload", e => {
       if (isDirty()) e.preventDefault();
