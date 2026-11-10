@@ -31,6 +31,9 @@ The button shows one of two actions, depending on your GitHub permission:
 
 After the owner merges a change, it applies on the next Udemy quiz page load. The extension does not need a reload.
 
+## Open in the Chrome side panel
+The extension (version 1.6.0 or later) opens the same editor in the side panel. Click the extension icon in the Chrome toolbar. After updating the extension, reload it once at chrome://extensions.
+
 ## Notes
 - The first submit may ask Chrome for permission to reach devices on your local network. Allow it, or the editor cannot reach the helper.
 - The helper runs the commands `git` and `gh` only, and only for this repository.

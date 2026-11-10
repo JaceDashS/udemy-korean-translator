@@ -137,7 +137,7 @@
     .grid-wrap { width: max-content; max-width: 100%; }
     .add-term { width: fit-content; max-width: 100%; }
     /* Two columns: controls on the left, the term table on the right. */
-    .layout { display: grid; grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: 16px; align-items: start; }
+    .layout { display: flex; flex-direction: column; gap: 12px; }
     .side { display: flex; flex-direction: column; gap: 8px; }
     .side .row + .row { margin-top: 0; }
     .side #search, .side .add-term { width: 100%; max-width: none; }

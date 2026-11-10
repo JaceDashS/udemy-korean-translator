@@ -2,9 +2,26 @@
     "manifest_version":  3,
     "name":  "Udemy Quiz Translator",
     "short_name":  "Udemy Quiz",
-    "version":  "1.5.1",
-    "description":  "Udemy 퀴즈를 Chrome 내장 Translator API로 로컬 번역하고 문제 옆(오른쪽 또는 아래)에 표시합니다.",
+    "version":  "1.6.0",
+    "key":  "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAw+qujB+izAniVxGILvKGJiL3VwId1VgLqvLH4UonzKKD1GpCzt8fzBOt+pA0xIKi6+Jn0AWzkuOLUVJodwcmmjSEdZCJZpspx1cnxic6Hdx/DlTfwRhiqJvNuQCiOlSH3yqHZmKoEHFiUNQDkLqF/tPhYhVSC1ik93Ey+K7QYrsfYRanspalFbouHBNxclgH6cVTasVSY0YKCETNBw8SvxACClGclHqvMbWmV1LoAr+WdqaGwmhG3LuftuzoUWcsqvRFBOpYVO9AhOL8e7Uy7t/DcBk397JAiCM8GnlUQkoCRESU3cj+xB1hVTlh4iATQcHsGyLt+AEu7gaZDIM2iQIDAQAB",
+    "description":  "Udemy 퀴즈를 Chrome 내장 Translator API로 로컬 번역하고 문제 옆(오른쪽 또는 아래)에 표시합니다. 아이콘을 누르면 단어장 편집기가 사이드 패널에 열립니다.",
     "minimum_chrome_version":  "138",
+    "permissions":  [
+                        "sidePanel"
+                    ],
+    "host_permissions":  [
+                             "https://raw.githubusercontent.com/*",
+                             "http://127.0.0.1:8787/*"
+                         ],
+    "background":  {
+                       "service_worker": "background.js"
+                   },
+    "action":  {
+                   "default_title":  "단어장 열기"
+               },
+    "side_panel":  {
+                       "default_path":  "editor/index.html"
+                   },
     "content_scripts":  [
                             {
                                 "matches":  [

@@ -30,7 +30,11 @@ const FILE = "dictionary.json";
 const HOST = "127.0.0.1";
 const PORT = Number(process.env.DICTIONARY_HELPER_PORT || 8787);
 // Only the editor page may call the helper.
-const ALLOWED_ORIGIN = "https://jacedashs.github.io";
+// The editor page (GitHub Pages) and the extension's side panel (fixed ID from manifest.json).
+const ALLOWED_ORIGINS = new Set([
+  "https://jacedashs.github.io",
+  "chrome-extension://mmmljckioegeobbebbmildgebfjfbbdo"
+]);
 const MAX_BODY_BYTES = 5 * 1024 * 1024;
 const MAX_WORD_LENGTH = 200;
 const WORK_DIR = path.join(os.homedir(), ".udemy-dictionary-helper");
@@ -211,7 +215,7 @@ function send(res, status, body) {
 
 const server = http.createServer(async (req, res) => {
   const origin = req.headers.origin;
-  if (origin && origin !== ALLOWED_ORIGIN) {
+  if (origin && !ALLOWED_ORIGINS.has(origin)) {
     send(res, 403, { error: "Origin not allowed." });
     return;
   }
