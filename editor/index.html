@@ -44,6 +44,11 @@
       --ok: #3fb950;
     }
     * { box-sizing: border-box; }
+    /* Scrollbars follow the theme colors above (standard properties, Chrome 121+). */
+    html, body, .grid-wrap {
+      scrollbar-width: thin;
+      scrollbar-color: var(--line) var(--head);
+    }
     body {
       margin: 0;
       padding: 12px 16px;
@@ -129,7 +134,9 @@
     .panel { margin-top: 8px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--head); width: min(640px, 100%); }
     .panel ol { margin: 4px 0 0; padding-left: 20px; }
     /* Use only the width the content needs. */
-    .grid-wrap, .add-term { width: fit-content; max-width: 100%; }
+    .grid-wrap { width: max-content; max-width: 100%; }
+    .add-term { width: fit-content; max-width: 100%; }
+    table { width: max-content; }
     td input.word { width: 240px; }
     td input.meaning { width: 300px; }
     #newWord { width: 240px; }
@@ -173,7 +180,6 @@
 
   <div class="row">
     <input id="search" type="search" placeholder="검색 (단어 또는 뜻)" autocomplete="off">
-    <button id="addRow" type="button">행 추가</button>
     <span class="muted" id="count"></span>
     <span class="problem" id="problems"></span>
   </div>
@@ -183,21 +189,6 @@
     <input id="newMeaning" type="text" placeholder="뜻 (선택, 예: 프라이빗 서브넷)" autocomplete="off">
     <label><input id="newExact" type="checkbox"> 대소문자 구분</label>
     <button id="addTerm" class="primary" type="button">추가</button>
-  </div>
-
-  <div class="grid-wrap" id="grid">
-    <table>
-      <thead>
-        <tr>
-          <th></th>
-          <th class="sortable" data-key="word">단어 <span class="arrow"></span></th>
-          <th class="sortable" data-key="meaning">뜻 <span class="arrow"></span></th>
-          <th class="sortable" data-key="exact">대소문자 구분 <span class="arrow"></span></th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="body"></tbody>
-    </table>
   </div>
 
   <div class="row pager" aria-label="페이지">
@@ -213,6 +204,21 @@
         <option value="200">200</option>
       </select>
     </label>
+  </div>
+
+  <div class="grid-wrap" id="grid">
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th class="sortable" data-key="word">단어 <span class="arrow"></span></th>
+          <th class="sortable" data-key="meaning">뜻 <span class="arrow"></span></th>
+          <th class="sortable" data-key="exact">대소문자 구분 <span class="arrow"></span></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="body"></tbody>
+    </table>
   </div>
 
   <div class="row">
@@ -239,7 +245,7 @@
     const ui = {
       reload: $("reload"), helper: $("helper"), setup: $("setup"), copyJson: $("copyJson"),
       setupCmd: $("setupCmd"), checks: $("checks"),
-      search: $("search"), addRow: $("addRow"), count: $("count"), problems: $("problems"),
+      search: $("search"), count: $("count"), problems: $("problems"),
       body: $("body"), register: $("register"), changes: $("changes"), status: $("status"),
       grid: $("grid"), newWord: $("newWord"), newMeaning: $("newMeaning"),
       newExact: $("newExact"), addTerm: $("addTerm"),
@@ -544,17 +550,6 @@
       say(`${parsed.length}행을 붙여넣었습니다.`);
     }
 
-    function addRow() {
-      const r = newRow();
-      rows.push(r);
-      page = Math.ceil(rows.length / pageSize);
-      query = "";
-      ui.search.value = "";
-      sort = { key: null, dir: 1 };
-      render();
-      ui.body.querySelector(`tr[data-id="${r.id}"] input.word`)?.focus();
-    }
-
     // Adds a term from the top form. Only the word is required; the new row
     // goes to the top of the table so it is visible right away.
     function addTerm() {
@@ -739,7 +734,6 @@
         }
       });
     }
-    ui.addRow.addEventListener("click", addRow);
     ui.register.addEventListener("click", submit);
     for (const th of document.querySelectorAll("th.sortable")) {
       th.addEventListener("click", () => {

@@ -20,7 +20,7 @@ Each row is one term:
 - 뜻: the Korean meaning (optional). Leave it empty to keep the word in English
 - 대소문자 구분: check it for words that are ordinary English in lowercase (for example "haiku")
 
-To add one term, type it in the top form (단어 is required) and press 추가 or Enter. The new row appears at the top. 행 추가 adds an empty row at the bottom. In a cell, Enter moves to the same column in the next row.
+To add one term, type it in the top form (단어 is required) and press 추가 or Enter. The new row appears at the top. In a cell, Enter moves to the same column in the next row.
 
 To add many rows, copy them from a spreadsheet (단어 TAB 뜻 TAB Y) and paste into a 단어 cell.
 
