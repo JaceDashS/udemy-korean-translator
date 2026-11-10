@@ -126,6 +126,14 @@
       return left.localeCompare(right, "en") * sort.dir;
     }
 
+    // Removes leading and trailing spaces. Returns true when the value changed.
+    function trimInput(input) {
+      const trimmed = input.value.trim();
+      if (trimmed === input.value) return false;
+      input.value = trimmed;
+      return true;
+    }
+
     function cellInput(r, col) {
       const input = document.createElement("input");
       input.type = "text";
@@ -135,6 +143,13 @@
       input.autocomplete = "off";
       input.spellcheck = false;
       input.addEventListener("input", () => {
+        r[col] = input.value;
+        updateFlags();
+        updateSummary();
+      });
+      // Trim on leaving the cell, so spaces inside a term ("IAM role") can be typed.
+      input.addEventListener("change", () => {
+        if (!trimInput(input)) return;
         r[col] = input.value;
         updateFlags();
         updateSummary();
@@ -732,6 +747,7 @@
     });
     ui.addTerm.addEventListener("click", addTerm);
     for (const input of [ui.newWord, ui.newMeaning]) {
+      input.addEventListener("change", () => trimInput(input));
       input.addEventListener("keydown", e => {
         if (e.key === "Enter" && !e.isComposing) {
           e.preventDefault();

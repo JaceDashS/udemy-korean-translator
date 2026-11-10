@@ -21,6 +21,12 @@
 - Result: The file is rejected; the bundled list is used
 - Test: Manual
 
+### Edge Spaces Trimmed in the Editor
+- Input: The user types `IAM role ` (trailing space) in a word cell or the new-word box
+- Steps: While typing, the space stays, so `IAM role` can be typed; leaving the cell fires `change` → `trimInput()`
+- Result: The cell shows `IAM role`; duplicate highlighting and the summary use the trimmed word
+- Test: Manual in the side panel
+
 ## Register Chain Scenarios
 - Design: [Register Chain](../../../design/translation/30-dictionary-sync.md#register-chain)
 

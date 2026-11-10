@@ -37,6 +37,7 @@ Representative scenario:
 - Headers sort the table. The search box filters by word or meaning
 - The table shows 50, 100 (default), or 200 rows per page. Searching, sorting, and adding a term return to page 1
 - The layout uses only the width its content needs (`fit-content`)
+- Leading and trailing spaces are removed when a cell or the new-term box loses focus (`change` → `trimInput()`), not on each keystroke, so spaces inside a term can be typed. See [Edge Spaces Trimmed in the Editor](../../testing/scenarios/translation/30-dictionary-sync.md#edge-spaces-trimmed-in-the-editor)
 - Duplicate or empty words are highlighted and block registration
 - The commit message lists added, changed, and removed words. Rows are sorted by word, and empty meanings are omitted
 - Outside the extension (for example opened as a file) the editor is read-only: the button stays disabled and the status line says registering is in the side panel
