@@ -618,6 +618,17 @@
     return best;
   }
 
+  let lastNoQuizReason = "";
+
+  // Logs why a quiz was not detected, once per reason, so new page layouts can be debugged.
+  function noQuiz(reason) {
+    if (reason !== lastNoQuizReason) {
+      lastNoQuizReason = reason;
+      console.info(LOG, "Quiz not detected:", reason);
+    }
+    return null;
+  }
+
   // Reads each answer's text, selection, and feedback from its card.
   function readAnswers(cards, controls) {
     return cards.map((card, i) => {
@@ -680,13 +691,19 @@
     const answers = readAnswers(cards, picked);
     if (answers.some(a => !a.source)) return null;
 
-    const lines = originalInnerText(form)
-      .split(/\n+/)
-      .map(s => s.trim())
-      .filter(Boolean);
-    const first = lines.findIndex(line => line.startsWith(answers[0].source));
-    const question = first > 0 ? lines.slice(0, first).join(" ") : "";
-    if (!question) return null;
+    // The question text may sit in the form or in a container just above it.
+    let question = "";
+    let container = form;
+    for (let depth = 0; depth < 4 && container && container !== document.body && !question; depth++) {
+      const lines = originalInnerText(container)
+        .split(/\n+/)
+        .map(s => s.trim())
+        .filter(Boolean);
+      const first = lines.findIndex(line => line.startsWith(answers[0].source));
+      if (first > 0 && first < 30) question = lines.slice(0, first).join(" ");
+      container = container.parentElement;
+    }
+    if (!question) return noQuiz("question text not found near the answer form");
 
     return {
       number: "form",
