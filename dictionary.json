@@ -3639,6 +3639,10 @@
       "word": "reproducibility"
     },
     {
+      "word": "request-signing",
+      "meaning": "요청-서명"
+    },
+    {
       "word": "requester pays"
     },
     {
@@ -3990,6 +3994,9 @@
     },
     {
       "word": "SES"
+    },
+    {
+      "word": "session"
     },
     {
       "word": "session fork"
