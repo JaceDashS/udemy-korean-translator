@@ -5,7 +5,8 @@
 # It needs only Windows PowerShell 5.1 and GitHub CLI (gh); no Node or git.
 #
 # Requests (JSON, one at a time):
-#   ping    -> answers at once (the editor checks that the host is registered)
+#   ping    -> answers at once with $HostVersion (registered and up to date?)
+#   update  -> replaces this file with the script the extension sends, then exits
 #   status  -> whether gh is installed and logged in, the login, push permission
 #   install -> installs GitHub CLI with winget
 #   login   -> opens a PowerShell window that runs `gh auth login --web`
@@ -16,7 +17,11 @@
 
 $ErrorActionPreference = "Stop"
 
-$Repo = "JaceDashS/udemy-quiz-translator"
+# Raise this whenever the requests or their answers change. The editor reads it
+# from the copy bundled in the extension and asks to update an older host.
+$HostVersion = 1
+
+$Repo ="JaceDashS/udemy-quiz-translator"
 $Branch = "dictionary"
 $File = "dictionary.json"
 $MaxWordLength = 200
@@ -291,9 +296,28 @@ function Submit-Dictionary($request) {
   return @{ ok = $true; mode = "proposal"; changed = $true; url = $url }
 }
 
+# Replaces this script with the copy bundled in the extension. The running
+# process keeps the old code, so it exits after answering; the next request
+# starts the new one.
+function Update-Host($request) {
+  $content = [string]$request.content
+  if ($content -notmatch '(?m)^\$HostVersion = (\d+)') {
+    throw [HelperError]::new("The update is not a dictionary host script.")
+  }
+  $version = [int]$Matches[1]
+  $target = $PSCommandPath
+  $temp = "$target.new"
+  # Windows PowerShell 5.1 needs the BOM to read the Korean text as UTF-8.
+  [IO.File]::WriteAllText($temp, $content, (New-Object System.Text.UTF8Encoding $true))
+  Move-Item -Path $temp -Destination $target -Force
+  Write-Log "updated from version $HostVersion to $version"
+  return @{ ok = $true; version = $version; restart = $true }
+}
+
 function Invoke-Request($request) {
   switch ([string]$request.type) {
-    "ping" { return @{ ok = $true } }
+    "ping" { return @{ ok = $true; version = $HostVersion } }
+    "update" { return Update-Host $request }
     "status" { return Get-Status }
     "install" { return Install-Gh }
     "login" { return Start-Login }
@@ -318,6 +342,7 @@ while ($true) {
     $answer = Invoke-Request $request
     $answer.id = $id
     Send-Message $answer
+    if ($answer.restart) { break }
   } catch {
     $message = $_.Exception.Message
     Write-Log "error: $message"

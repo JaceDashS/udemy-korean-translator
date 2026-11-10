@@ -51,15 +51,20 @@ Representative scenario:
 ```mermaid
 flowchart TD
     S[Click 등록 / PR 제안] --> A{ping answers?}
-    A -- host not found --> R[Open setup tab, poll ping every 2s] --> B
-    A -- yes --> B{status: gh installed?}
+    A -- host not found or too old --> R[Open setup tab, poll ping every 2s] --> B
+    A -- yes --> V{version >= bundled?}
+    V -- no --> U[Button: 도우미 업데이트] -->|click| U2[send bundled script, host replaces itself and restarts] --> B
+    V -- yes --> B{status: gh installed?}
     B -- no --> I[Button: GitHub CLI 설치] -->|click| I2[install via winget] --> B
     B -- yes --> C{logged in?}
     C -- no --> L[Button: GitHub 로그인] -->|click| L2[PowerShell login window + Chrome tab, poll status every 3s] --> P
     C -- yes --> P[submit]
 ```
 
-- `step` holds what the button shows: `""` (등록 / PR 제안), `busy`, `register`, `install`, `login`, `waitLogin`. A click on `install` or `login` resumes the chain; on `register` it reopens the guide tab
+- `step` holds what the button shows: `""` (등록 / PR 제안), `busy`, `register`, `update`, `install`, `login`, `waitLogin`. A click on `update`, `install`, or `login` resumes the chain; on `register` it reopens the guide tab
+- Version check (`isCurrentHost()`): the expected version is read from the helper script bundled in the extension (`tools/dictionary-host.ps1`, line `$HostVersion = N`, fetched with `chrome.runtime.getURL`). A `ping` answer without a version counts as 0
+- Update (`approveUpdate()`): sends the bundled script in an `update` request, disconnects, and pings again to confirm the new version before continuing
+- Too old to update (`registerThenContinue(id, true)`): a helper that answers `Unknown request.` to `ping` or `update` predates these requests. The guide tab opens; the editor and the tab stop the running helper before each `ping`, because a running process keeps its old code, and wait until a helper of the bundled version answers
 - `chainId` is incremented by 취소 and 도우미 끄기, so a waiting loop ends instead of continuing an abandoned chain
 - The rows are read at submit time, so edits made while the chain waited are included
 - The last known login and push permission are kept in the page's `localStorage` only to label the button (등록 or PR 제안) before the helper runs again
@@ -69,17 +74,20 @@ flowchart TD
 ## Helper
 - Code: `tools/dictionary-host.ps1` (native messaging host), `tools/register.ps1` (one-time registration), `editor/setup.html` and `editor/setup.js` (guide tab), `background.js` (port)
 - Transport: Chrome native messaging (`nativeMessaging` permission). `background.js` holds the port, so the helper outlives the side panel; an open native port also keeps the service worker alive. Chrome closes the port, and the helper exits, when the extension stops or Chrome exits
-- Requests, one at a time: `ping` (registration check, no GitHub call), `status` (`gh` found, `gh api user` login, push permission), `install` (`winget install GitHub.cli`), `login` (a PowerShell window running `gh auth login --web` with `GH_BROWSER` set to a no-op, because the editor opens github.com/login/device in a Chrome tab), `submit`
+- Requests, one at a time: `ping` (registration check and `$HostVersion`, no GitHub call), `update` (writes the script the extension sends over its own file with a UTF-8 BOM, then exits after answering; a text without a `$HostVersion = N` line is rejected), `status` (`gh` found, `gh api user` login, push permission), `install` (`winget install GitHub.cli`), `login` (a PowerShell window running `gh auth login --web` with `GH_BROWSER` set to a no-op, because the editor opens github.com/login/device in a Chrome tab), `submit`
 - `submit` checks the file (version 2, valid rows) and then uses only `gh api`:
   - Owner: reads the file's blob sha on `dictionary`, skips when the new content has the same git blob id, otherwise `PUT contents` with that sha
   - Others: `POST forks`, waits for the fork, creates `dictionary-update-<ms>` from the upstream `dictionary` head, commits the file there, and opens the pull request. An unchanged file deletes the new branch and reports no change
 - Registration (`register.ps1`, ASCII only so it runs through `irm | iex`): saves the host and a launcher to `%USERPROFILE%\.udemy-dictionary-helper` and writes the registry key `HKCU\Software\Google\Chrome\NativeMessagingHosts\com.udemy.dictionary_helper`. The launcher runs `powershell.exe -File "%~dp0dictionary-host.ps1"`, so a non-ASCII user folder name never goes into the ASCII batch file. It installs nothing
 - `dictionary-host.ps1` is saved with a UTF-8 BOM. Windows PowerShell 5.1 reads a file without one in the system code page, which breaks its Korean login messages
+- `$HostVersion` must be raised whenever a request or an answer changes; otherwise registered PCs keep a helper that does not match the editor
+- Scenario: Installed v1, extension bundles v2 → `ping` answers 1 → 도우미 업데이트 → `update` → the host writes v2 and exits → next `ping` answers 2 → the chain continues
 - stdout carries the protocol, so the host writes diagnostics to stderr and discards every other output
 - Scenario: User folder `C:\Users\シンジョンス` → `register.ps1` → the launcher holds only `%~dp0` → `ping` and `status` answer through Chrome's launch path
 
 ## Known Limits
 - The owner path commits on top of the latest file. A change registered by someone else after the editor loaded is overwritten, because the editor does not send the sha it loaded
+- Re-registering through `irm | iex` downloads the helper from `main`. Until `main` has the version the extension bundles, a too-old helper on another PC cannot be replaced that way
 - The pull request path (fork, branch, pull request) has not been run end to end yet, because the owner's account cannot fork its own repository
 - The Udemy page's Content Security Policy may block the cross-origin `fetch`. This is not yet verified on a Udemy page. If it is blocked, the bundled list is used and a warning is logged
 - The remote file replaces the bundled list as a whole; the bundled list is used only when the remote file is unavailable

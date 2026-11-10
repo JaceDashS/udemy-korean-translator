@@ -42,6 +42,24 @@
 - Result: The chain goes on to the GitHub CLI check without another click; the guide tab shows 등록됐습니다
 - Test: Manual (not yet run)
 
+### Outdated Helper Updates on a Click
+- Input: Installed helper reports `version` 1; the extension bundles `$HostVersion = 2`
+- Steps: Click 등록 → `ping` answers 1 → button 도우미 업데이트 → click → `update` with the bundled script → host writes it and exits → `ping` answers 2
+- Result: The chain continues to the GitHub CLI check; the installed file keeps the UTF-8 BOM
+- Test: Manual with a stdin frame script (host part passed 2026-11-10: v1 → v2, BOM kept, exit after answer). The editor button is not yet run in the extension
+
+### Helper Too Old to Update Itself
+- Input: Installed helper answers `Unknown request.` to `ping` (before versions) or to `update` (version-less ping)
+- Steps: The chain opens the guide tab → user registers again → editor and tab stop the old process before each `ping` → a helper of the bundled version answers
+- Result: The chain continues; the tab shows 등록됐습니다 only when the new version answers
+- Test: Host part checked 2026-11-10 (the version-less copy answered `Unknown request.` to `update`). Not yet run in the extension
+
+### Invalid Update Is Rejected
+- Input: `update` with content that has no `$HostVersion = N` line
+- Steps: `Update-Host` checks the content
+- Result: Error "The update is not a dictionary host script."; the installed file is unchanged
+- Test: Manual with a stdin frame script (passed 2026-11-10)
+
 ### GitHub CLI Missing
 - Input: Registered; gh not installed
 - Steps: Chain stops at GitHub CLI 설치 → click → `install` (winget) → `status`

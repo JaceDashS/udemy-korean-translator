@@ -8,6 +8,7 @@
     const IS_EXTENSION = typeof chrome !== "undefined" && Boolean(chrome.runtime?.id);
     const LOGIN_URL = "https://github.com/login/device";
     const ROLE_KEY = "dictionaryHelperRole";
+    const HOST_SCRIPT = "tools/dictionary-host.ps1";
     const TRUE_VALUES = new Set(["y", "yes", "true", "1", "o", "x", "v", "○", "✓"]);
     const LIST_LIMIT = 100;
 
@@ -31,7 +32,7 @@
     let helper = readRole();
     let helperRunning = false;
     // The step of the register chain the button shows:
-    // "" (idle), "busy", "register", "install", "login", "waitLogin".
+    // "" (idle), "busy", "register", "update", "install", "login", "waitLogin".
     let step = "";
     // Incremented to abandon a chain that is waiting (cancel, helper turned off).
     let chainId = 0;
@@ -303,22 +304,116 @@
       setStep("busy");
       say("도우미를 확인하는 중...");
 
-      let ping = await askHelper({ type: "ping" }, 20000);
+      const ping = await askHelper({ type: "ping" }, 20000);
       if (id !== chainId) return;
       if (!ping.ok) {
-        if (!ping.missing) return fail(ping.error);
-        openSetupTab();
-        setStep("register");
-        say("이 PC에서 처음 한 번 등록이 필요합니다. 열린 탭의 안내를 따라 주세요. 등록되면 자동으로 이어집니다.");
-        while (!ping.ok) {
-          await sleep(2000);
-          if (id !== chainId) return;
-          ping = await askHelper({ type: "ping" }, 20000);
-          if (id !== chainId) return;
-          if (!ping.ok && !ping.missing) return fail(ping.error);
-        }
-        setStep("busy");
+        if (ping.missing) return registerThenContinue(id, false);
+        // A helper from before version checks does not know ping.
+        if (isUnknownRequest(ping)) return registerThenContinue(id, true);
+        return fail(ping.error);
       }
+      if (!(await isCurrentHost(id, ping))) return;
+      await continueFromStatus(id);
+    }
+
+    // Opens the registration tab and waits until a helper of the bundled
+    // version answers, then continues the chain. `replace` is set when an old
+    // helper is installed that cannot update itself; a running one keeps its
+    // old code, so it is restarted before each check.
+    async function registerThenContinue(id, replace) {
+      openSetupTab();
+      setStep("register");
+      say(replace
+        ? "설치된 도우미가 스스로 업데이트할 수 없는 버전입니다. 열린 탭의 안내대로 한 번 다시 등록해 주세요. 등록되면 자동으로 이어집니다."
+        : "이 PC에서 처음 한 번 등록이 필요합니다. 열린 탭의 안내를 따라 주세요. 등록되면 자동으로 이어집니다.");
+
+      const needed = (await bundledHost())?.version || 0;
+      for (;;) {
+        await sleep(2000);
+        if (id !== chainId) return;
+        if (replace) await stopHelper();
+        const ping = await askHelper({ type: "ping" }, 20000);
+        if (id !== chainId) return;
+        if (ping.ok && (Number(ping.version) || 0) >= needed) break;
+        if (!ping.ok && !ping.missing && !isUnknownRequest(ping)) return fail(ping.error);
+      }
+      setStep("busy");
+      await continueFromStatus(id);
+    }
+
+    function isUnknownRequest(answer) {
+      return !answer.ok && /Unknown request/i.test(answer.error || "");
+    }
+
+    async function stopHelper() {
+      try {
+        await chrome.runtime.sendMessage({ target: "helper", action: "stop" });
+      } catch (_) {}
+      await refreshRunning();
+    }
+
+    // The helper script bundled in this extension is the expected version and
+    // the update source, so the installed helper always matches the extension.
+    async function bundledHost() {
+      try {
+        const response = await fetch(chrome.runtime.getURL(HOST_SCRIPT), { cache: "no-store" });
+        const content = await response.text();
+        const version = Number(/^\$HostVersion = (\d+)/m.exec(content)?.[1]);
+        return version ? { version, content } : null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    // Stops the chain with 도우미 업데이트 when the installed helper is older.
+    async function isCurrentHost(id, ping) {
+      const bundled = await bundledHost();
+      if (id !== chainId) return false;
+      if (!bundled) {
+        console.warn("[Dictionary Editor] The bundled helper script could not be read; skipping the version check.");
+        return true;
+      }
+      const installed = Number(ping.version) || 0;
+      if (installed >= bundled.version) return true;
+
+      setStep("update");
+      say(`도우미가 오래된 버전입니다(설치 v${installed}, 최신 v${bundled.version}). '도우미 업데이트'를 누르세요.`);
+      return false;
+    }
+
+    async function approveUpdate() {
+      const id = chainId;
+      setStep("busy");
+      say("도우미를 업데이트하는 중...");
+      const bundled = await bundledHost();
+      if (id !== chainId) return;
+      if (!bundled) {
+        setStep("update");
+        say("확장에 들어 있는 도우미 파일을 읽지 못했습니다. 확장을 다시 로드해 보세요.", "error");
+        return;
+      }
+
+      const result = await askHelper({ type: "update", content: bundled.content }, 30000);
+      if (id !== chainId) return;
+      // Helpers from before the update request can only be replaced by registering again.
+      if (isUnknownRequest(result)) return registerThenContinue(id, true);
+      if (!result.ok) {
+        setStep("update");
+        say(`업데이트하지 못했습니다: ${result.error}`, "error");
+        return;
+      }
+
+      // The old process exits after answering; disconnect so the next request
+      // starts the updated helper instead of reaching the closing one.
+      await stopHelper();
+      const ping = await askHelper({ type: "ping" }, 20000);
+      if (id !== chainId) return;
+      if (!ping.ok || (Number(ping.version) || 0) < bundled.version) {
+        setStep("update");
+        say(`업데이트를 확인하지 못했습니다. 다시 눌러 주세요. (${ping.error || `v${ping.version}`})`, "error");
+        return;
+      }
+      say(`도우미를 v${ping.version}으로 업데이트했습니다.`, "ok");
       await continueFromStatus(id);
     }
 
@@ -388,6 +483,7 @@
     }
 
     function onRegisterClick() {
+      if (step === "update") return approveUpdate();
       if (step === "install") return approveInstall();
       if (step === "login") return approveLogin();
       if (step === "register") return openSetupTab();
@@ -413,6 +509,7 @@
       const labels = {
         busy: "진행 중...",
         register: "등록 안내 다시 열기",
+        update: "도우미 업데이트",
         install: "GitHub CLI 설치",
         login: "GitHub 로그인",
         waitLogin: "로그인 기다리는 중..."
