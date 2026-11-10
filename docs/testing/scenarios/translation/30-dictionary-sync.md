@@ -21,14 +21,53 @@
 - Result: The file is rejected; the bundled list is used
 - Test: Manual
 
-### Editor Register
-- Input: Editor adds one row and presses 등록 with a valid token
-- Steps: `register()` → PUT with `sha`
-- Result: New commit `[chore] Update dictionary terms` on `dictionary`; the editor shows the success message
-- Test: Manual
+## Register Chain Scenarios
+- Design: [Register Chain](../../../design/translation/30-dictionary-sync.md#register-chain)
 
-### Editor Conflict
-- Input: Branch changed after the editor loaded; 등록 pressed
-- Steps: PUT returns 409
-- Result: Error "다른 변경이 먼저 등록되었습니다"; nothing is overwritten
-- Test: Manual
+### Ready PC Submits in One Click
+- Input: Helper registered, gh installed and logged in as the owner; one row added
+- Steps: Click 등록 → `ping` → `status` (ghAuth, canPush) → `submit`
+- Result: New commit `[chore] Update dictionary terms` on `dictionary`; the status line shows the short commit id
+- Test: Manual (not yet run)
+
+### Unchanged File
+- Input: The rows equal the file on `dictionary`
+- Steps: `submit` → blob id of the new content equals the file's sha
+- Result: No commit; the status line says 변경된 내용이 없습니다. For a proposal, the new branch on the fork is deleted
+- Test: Manual (not yet run; it calls the real GitHub API)
+
+### First Use Needs Registration
+- Input: Host not registered (Chrome answers "Specified native messaging host not found.")
+- Steps: Click PR 제안 → guide tab opens, button shows 등록 안내 다시 열기 → user runs the command → `ping` answers
+- Result: The chain goes on to the GitHub CLI check without another click; the guide tab shows 등록됐습니다
+- Test: Manual (not yet run)
+
+### GitHub CLI Missing
+- Input: Registered; gh not installed
+- Steps: Chain stops at GitHub CLI 설치 → click → `install` (winget) → `status`
+- Result: Nothing is installed before the click; after the install the chain checks the login at once
+- Test: Manual (not yet run)
+
+### Not Logged In
+- Input: gh installed, not logged in
+- Steps: Chain stops at GitHub 로그인 → click → PowerShell login window and a github.com/login/device tab → user approves → `status` polled every 3 seconds sees the login
+- Result: The change is submitted without clicking 등록 / PR 제안 again. Without approval in 10 minutes, the button returns to GitHub 로그인
+- Test: Manual (not yet run)
+
+### Cancel or Turn Off While Waiting
+- Input: The chain waits at registration, install, or login
+- Steps: Click 취소 or 도우미 끄기 → `chainId` changes
+- Result: The waiting loop ends; the button returns to 등록 / PR 제안. 도우미 끄기 also stops the helper process
+- Test: Manual (not yet run)
+
+### Helper Outlives the Panel
+- Input: The helper ran a request; the side panel is closed and opened again
+- Steps: `background.js` still holds the port → `state` answers running
+- Result: The status line shows 도우미 실행 중. Turning the extension off ends the helper process
+- Test: Manual (not yet run)
+
+### Host Answers Through Chrome's Launch Path
+- Input: User folder `C:\Users\シンジョンス`; `register.ps1` run from the checkout
+- Steps: The launcher `dictionary-helper-host.bat` is started with a native messaging `ping` / `status` frame on stdin
+- Result: `status` answers `{ gh: true, ghAuth: true, login: "JaceDashS", canPush: true }`; the host exits when stdin closes
+- Test: Manual with a stdin frame script (passed 2026-11-10)

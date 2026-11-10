@@ -131,8 +131,6 @@
     td button.remove { border: 0; padding: 4px 8px; color: var(--danger); background: transparent; }
     tr.invalid td input[type="text"].word { color: var(--danger); }
     tr.dup td { background: var(--dup); }
-    .panel { margin-top: 8px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--head); width: min(640px, 100%); }
-    .panel ol { margin: 4px 0 0; padding-left: 20px; }
     /* Use only the width the content needs. */
     .grid-wrap { width: max-content; max-width: 100%; }
     .add-term { width: fit-content; max-width: 100%; }
@@ -163,6 +161,7 @@
     .problem { color: var(--danger); }
     .helper.ok { color: var(--ok); }
     .helper.off { color: var(--danger); }
+    button.link { border: 0; padding: 0; background: none; color: var(--accent); text-decoration: underline; }
     @media (max-width: 480px) {
       body { padding: 10px; }
       .grid-wrap { max-height: calc(100vh - 260px); }
@@ -180,17 +179,7 @@
   <div class="row">
     <button id="reload" type="button">새로고침</button>
     <span class="helper" id="helper"></span>
-  </div>
-
-  <div class="panel" id="setup" hidden>
-    <p><b>도우미가 연결되지 않았습니다.</b> 아래 버튼으로 준비 명령을 복사해 PowerShell에 붙여넣고 Enter를 누르세요. 필요한 프로그램 확인과 설치, GitHub 로그인, 크롬 연결을 차례로 진행합니다. 끝나면 이 패널을 닫고 다시 여세요.</p>
-    <p class="muted" id="checks"></p>
-    <p>
-      <button id="openSetup" class="primary" type="button">PowerShell 열기</button>
-      <button id="setupCmd" type="button">준비 명령 복사</button>
-      <button id="copyJson" type="button">JSON 복사</button>
-    </p>
-    <p class="muted">복사되는 명령: <code>irm https://raw.githubusercontent.com/JaceDashS/udemy-quiz-translator/main/tools/setup.ps1 | iex</code></p>
+    <button id="helperStop" class="link" type="button" hidden>도우미 끄기</button>
   </div>
 
   <div class="row">
@@ -208,6 +197,7 @@
 
   <div class="row">
     <button id="register" class="primary" type="button" disabled>등록</button>
+    <button id="cancel" type="button" hidden>취소</button>
     <span class="muted" id="changes"></span>
   </div>
   <div class="status" id="status" role="status"></div>

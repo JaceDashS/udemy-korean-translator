@@ -4,8 +4,12 @@
 - Terms are read from the `dictionary` branch of this repository (`dictionary.json`, version 2) on each Udemy page load, so a change takes effect without reloading the extension
 - The file is data only. It must be `{ "version": 2, "terms": [...] }`, with at most 10000 rows. Each row needs a word of at most 200 characters, may have a string meaning of at most 200 characters, and may have a boolean `exact` flag. Anything else is rejected
 - If the download fails, times out (3 seconds), or the file is invalid, the terms bundled in `dictionary-terms.js` are used
-- The editor sends the full file to a local helper (`tools/dictionary-helper.js`, listening on 127.0.0.1 only). The helper uses the git and gh logins already on the PC. No token is stored in the browser or on a server
-- The helper accepts requests only from the editor origin (https://jacedashs.github.io) and checks that the file is version 2 before running git
+- Registering happens only in the extension's side panel. The GitHub Pages copy of the editor is read-only
+- The editor sends the full file to a local helper that uses the GitHub CLI (`gh`) login already on the PC. No token is stored in the browser or on a server. The helper needs only Windows PowerShell and GitHub CLI
+- One click on 등록 / PR 제안 runs the whole chain: helper registered → GitHub CLI installed → logged in → submit. A finished step goes straight on to the next check
+- The chain stops only where the user must approve: installing GitHub CLI and logging in. The button then shows that step (GitHub CLI 설치, GitHub 로그인) and nothing runs until it is clicked
+- The first time on a PC, the helper must be registered with Chrome once, outside Chrome. The editor opens a guide tab with a one-line command; the chain continues by itself once the helper answers
+- The helper keeps running in the background after the panel closes. It stops with 도우미 끄기, or when the extension is turned off or reloaded, or Chrome exits
 - A user with push permission commits directly to the `dictionary` branch
 - Anyone else: the helper forks the repository, commits to a new branch, and opens a pull request to the `dictionary` branch. GitHub notifies the owner, who reviews and merges it
 

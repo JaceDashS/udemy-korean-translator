@@ -5,7 +5,11 @@
 - `dictionary-terms.js` — Developer term list, loaded first. Sets `window.__udemyQuizTranslatorTerms`.
 - `dictionary.js` — Builds the term matcher. Sets `window.__udemyQuizTranslatorDictionary` (`protect`, `restore`, `configure`).
 - `dictionary.json` (on the `dictionary` branch, not on `main`) — Terms (version 2) loaded on each page load. Written by `editor/index.html`.
-- `editor/index.html` — Static page (GitHub Pages) that edits and registers `dictionary.json`.
+- `editor/index.html`, `editor/app.js` — The dictionary editor. In the side panel it registers `dictionary.json`; on GitHub Pages it is read-only.
+- `editor/setup.html`, `editor/setup.js` — One-time registration guide tab, opened by the editor.
+- `background.js` — Service worker. Opens the side panel on the toolbar icon and holds the native messaging port to the helper.
+- `tools/dictionary-host.ps1` — Helper on the user's PC (native messaging host). Installs GitHub CLI and opens the login window on request; commits or opens pull requests through `gh api`.
+- `tools/register.ps1` — One-time registration of the helper with Chrome.
 - `content.js` — Single IIFE. Detects the quiz, translates it with the Chrome Translator API, and renders the result.
 
 ## Translation Flow
@@ -28,6 +32,15 @@ Scenario:
 
 ## Dictionary Sync
 - Each page load fetches `dictionary.json` from the `dictionary` branch and falls back to the bundled list. See [Dictionary Sync](../design/translation/30-dictionary-sync.md)
+- Writing: side panel editor → `background.js` (native port) → `tools/dictionary-host.ps1` → `gh api` → a commit on `dictionary` (owner) or a pull request (others). See [Register Chain](../design/translation/30-dictionary-sync.md#register-chain)
+
+```mermaid
+flowchart LR
+    E[Side panel editor] -->|chrome.runtime message| B[background.js]
+    B -->|native messaging| H[dictionary-host.ps1]
+    H -->|gh api| G[(GitHub: dictionary branch)]
+    G -->|raw file on page load| C[content.js]
+```
 
 ## Modules Inside content.js
 - Startup — `autoStart()`, `startOnFirstGesture()`, `initialize()`; see [Startup](../design/translation/10-startup.md)

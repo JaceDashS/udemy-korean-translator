@@ -35,9 +35,18 @@
 - Avoid: "sync branch"
 
 ## Editor
-- Definition: The static page that edits the terms as a table and registers them to the dictionary branch
-- Code: `editor/index.html`, `register()`
+- Definition: The page that edits the terms as a table. In the extension's side panel it registers them to the dictionary branch; on GitHub Pages it is read-only
+- Code: `editor/index.html`, `editor/app.js`
 - Avoid: "admin page"
+
+## Helper
+- Definition: The PowerShell program on the user's PC that Chrome starts for the editor. It installs GitHub CLI and opens the login window on request, and commits or opens pull requests with the user's gh login
+- Code: `tools/dictionary-host.ps1`, native host name `com.udemy.dictionary_helper`, `background.js`
+- Avoid: "server", "agent"
+
+## Register Chain
+- Definition: The steps one click on 등록 / PR 제안 runs in order: helper registered, GitHub CLI installed, logged in, submit. It pauses only for the user's approval
+- Code: `startChain()` in `editor/app.js`
 
 ## Placeholder
 - Definition: A `[[n]]` token that replaces a dictionary term during translation

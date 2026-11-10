@@ -3,18 +3,17 @@
     const REPO = "JaceDashS/udemy-quiz-translator";
     const BRANCH = "dictionary";
     const RAW_URL = `https://raw.githubusercontent.com/${REPO}/${BRANCH}/dictionary.json`;
-    // GitHub Pages: the helper started from a terminal (HTTP).
-    const HELPER_URL = "http://127.0.0.1:8787";
-    // Side panel: an extension page, so Chrome starts the helper through native messaging.
-    const NATIVE_HOST = "com.udemy.dictionary_helper";
-    const IS_EXTENSION = typeof chrome !== "undefined" && Boolean(chrome.runtime?.connectNative);
+    // Registering works only in the extension's side panel, where background.js
+    // reaches the helper. The GitHub Pages copy of this page is read-only.
+    const IS_EXTENSION = typeof chrome !== "undefined" && Boolean(chrome.runtime?.id);
+    const LOGIN_URL = "https://github.com/login/device";
+    const ROLE_KEY = "dictionaryHelperRole";
     const TRUE_VALUES = new Set(["y", "yes", "true", "1", "o", "x", "v", "○", "✓"]);
     const LIST_LIMIT = 100;
 
     const $ = id => document.getElementById(id);
     const ui = {
-      reload: $("reload"), helper: $("helper"), setup: $("setup"), copyJson: $("copyJson"),
-      setupCmd: $("setupCmd"), openSetup: $("openSetup"), checks: $("checks"),
+      reload: $("reload"), helper: $("helper"), helperStop: $("helperStop"), cancel: $("cancel"),
       search: $("search"), count: $("count"), problems: $("problems"),
       body: $("body"), register: $("register"), changes: $("changes"), status: $("status"),
       grid: $("grid"), newWord: $("newWord"), newMeaning: $("newMeaning"),
@@ -27,14 +26,15 @@
     let rows = [];
     // snapshot: word → { meaning, exact } as loaded from the branch.
     let snapshot = new Map();
-    // helper: { login, canPush } when tools/dictionary-helper.js is running, else null.
-    let helper = null;
-    // checks: { git, gh, ghAuth } from the last /health answer, or null when the helper is off.
-    let lastChecks = null;
-    // True when the helper is not installed (native messaging host not found).
-    let helperMissing = false;
-    // raw.githubusercontent.com serves the script as text, which irm reads as a string.
-    const SETUP_COMMAND = "irm https://raw.githubusercontent.com/JaceDashS/udemy-quiz-translator/main/tools/setup.ps1 | iex";
+    // helper: { login, canPush } from the last status answer (kept for the button
+    // label between visits), or null when unknown.
+    let helper = readRole();
+    let helperRunning = false;
+    // The step of the register chain the button shows:
+    // "" (idle), "busy", "register", "install", "login", "waitLogin".
+    let step = "";
+    // Incremented to abandon a chain that is waiting (cancel, helper turned off).
+    let chainId = 0;
     let nextId = 1;
     let query = "";
     let sort = { key: null, dir: 1 };
@@ -218,83 +218,180 @@
       ui.nextPage.disabled = ui.lastPage.disabled = page >= pages;
     }
 
-    // ---- Helper transport --------------------------------------------------
-    // Side panel: a native messaging port. Chrome starts the helper when the port
-    // opens and the helper exits when the port closes (the panel is closed).
-    // GitHub Pages: HTTP to the helper started from a terminal.
-    let nativePort = null;
-    const pendingRequests = new Map();
-    let nextRequestId = 1;
-
-    function connectNative() {
-      if (nativePort) return nativePort;
-      const port = chrome.runtime.connectNative(NATIVE_HOST);
-      port.onMessage.addListener(message => {
-        const resolve = pendingRequests.get(message.id);
-        if (resolve) {
-          pendingRequests.delete(message.id);
-          resolve(message);
-        }
-      });
-      port.onDisconnect.addListener(() => {
-        const error = chrome.runtime.lastError?.message || "The helper stopped.";
-        const missing = error.includes("not found");
-        for (const resolve of pendingRequests.values()) resolve({ ok: false, error, missing });
-        pendingRequests.clear();
-        nativePort = null;
-      });
-      nativePort = port;
-      return port;
-    }
-
-    // Sends one request to the helper and resolves with its answer.
-    function askHelper(request, timeoutMs = 8000) {
-      if (IS_EXTENSION) {
-        return new Promise(resolve => {
-          const id = nextRequestId++;
-          pendingRequests.set(id, resolve);
-          setTimeout(() => {
-            if (pendingRequests.delete(id)) resolve({ ok: false, error: "The helper did not answer." });
-          }, timeoutMs);
-          try {
-            connectNative().postMessage({ id, ...request });
-          } catch (error) {
-            pendingRequests.delete(id);
-            resolve({ ok: false, error: String(error.message) });
-          }
+    // ---- Helper ------------------------------------------------------------
+    // background.js holds the native messaging port, so the helper keeps
+    // running after the panel closes, until 도우미 끄기 or the extension stops.
+    function askHelper(request, timeoutMs = 30000) {
+      return chrome.runtime
+        .sendMessage({ target: "helper", action: "request", request, timeoutMs })
+        .then(answer => answer || { ok: false, error: "No answer from the extension." })
+        .catch(error => ({ ok: false, error: String(error.message) }))
+        .then(async answer => {
+          await refreshRunning();
+          return answer;
         });
-      }
-      const path = request.type === "submit" ? "/submit" : "/health";
-      const init = request.type === "submit"
-        ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(request) }
-        : { cache: "no-store", signal: AbortSignal.timeout(timeoutMs) };
-      return fetch(HELPER_URL + path, init)
-        .then(response => response.json())
-        .catch(() => ({ ok: false, error: "The helper is not running." }));
     }
 
-    function renderChecks() {
-      if (!lastChecks) {
-        ui.checks.textContent = "PC 상태: 확인 불가 (도우미가 꺼져 있습니다)";
-        return;
+    async function refreshRunning() {
+      try {
+        const state = await chrome.runtime.sendMessage({ target: "helper", action: "state" });
+        helperRunning = Boolean(state?.running);
+      } catch (_) {
+        helperRunning = false;
       }
-      const mark = ok => (ok ? "✓" : "✗");
-      ui.checks.textContent =
-        `PC 상태 — git ${mark(lastChecks.git)} · gh ${mark(lastChecks.gh)} · gh 로그인 ${mark(lastChecks.ghAuth)}`;
+      updateHelper();
+    }
+
+    function readRole() {
+      try {
+        const role = JSON.parse(localStorage.getItem(ROLE_KEY) || "null");
+        return role && typeof role.login === "string" ? role : null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function saveRole(role) {
+      try {
+        localStorage.setItem(ROLE_KEY, JSON.stringify(role));
+      } catch (_) {}
     }
 
     function updateHelper() {
-      renderChecks();
-      if (!helper) {
-        ui.helper.textContent = helperMissing ? "도우미 미설치" : "도우미 연결 안 됨";
+      if (!IS_EXTENSION) {
+        ui.helper.textContent = "읽기 전용: 등록과 PR 제안은 Chrome 확장의 사이드 패널에서 할 수 있습니다.";
         ui.helper.className = "helper off";
-        ui.setup.hidden = false;
-      } else {
-        const role = helper.canPush ? "소유자: 바로 등록" : "외부 계정: PR로 제안";
-        ui.helper.textContent = `도우미 연결됨 · ${helper.login} · ${role}`;
-        ui.helper.className = "helper ok";
-        ui.setup.hidden = true;
+        ui.helperStop.hidden = true;
+        return;
       }
+      const who = helper
+        ? ` · ${helper.login} · ${helper.canPush ? "소유자: 바로 등록" : "PR로 제안"}`
+        : "";
+      ui.helper.textContent = helperRunning ? `도우미 실행 중${who}` : `도우미 꺼짐${who}`;
+      ui.helper.className = helperRunning ? "helper ok" : "helper";
+      ui.helperStop.hidden = !helperRunning;
+    }
+
+    function setStep(next) {
+      step = next;
+      updateSummary();
+    }
+
+    function fail(message) {
+      setStep("");
+      say(`실패: ${message}`, "error");
+    }
+
+    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+    function openSetupTab() {
+      chrome.tabs.create({ url: chrome.runtime.getURL("editor/setup.html") });
+    }
+
+    function applyStatus(status) {
+      if (!status.ghAuth) return;
+      helper = { login: status.login, canPush: Boolean(status.canPush) };
+      saveRole(helper);
+    }
+
+    // One click runs the whole chain: registered → GitHub CLI installed →
+    // logged in → submit. A finished step goes straight on to the next check.
+    // The chain stops only where the user must approve (install, login); the
+    // button then shows that step, and its click resumes the chain.
+    async function startChain() {
+      const id = ++chainId;
+      setStep("busy");
+      say("도우미를 확인하는 중...");
+
+      let ping = await askHelper({ type: "ping" }, 20000);
+      if (id !== chainId) return;
+      if (!ping.ok) {
+        if (!ping.missing) return fail(ping.error);
+        openSetupTab();
+        setStep("register");
+        say("이 PC에서 처음 한 번 등록이 필요합니다. 열린 탭의 안내를 따라 주세요. 등록되면 자동으로 이어집니다.");
+        while (!ping.ok) {
+          await sleep(2000);
+          if (id !== chainId) return;
+          ping = await askHelper({ type: "ping" }, 20000);
+          if (id !== chainId) return;
+          if (!ping.ok && !ping.missing) return fail(ping.error);
+        }
+        setStep("busy");
+      }
+      await continueFromStatus(id);
+    }
+
+    async function continueFromStatus(id) {
+      say("GitHub CLI 상태를 확인하는 중...");
+      const status = await askHelper({ type: "status" }, 60000);
+      if (id !== chainId) return;
+      if (!status.ok) return fail(status.error);
+      applyStatus(status);
+
+      if (!status.gh) {
+        setStep("install");
+        say("GitHub CLI가 설치되어 있지 않습니다. 'GitHub CLI 설치'를 누르면 winget으로 설치합니다.");
+        return;
+      }
+      if (!status.ghAuth) {
+        setStep("login");
+        say("GitHub에 로그인되어 있지 않습니다. 'GitHub 로그인'을 누르세요.");
+        return;
+      }
+      await submit(id);
+    }
+
+    async function approveInstall() {
+      const id = chainId;
+      setStep("busy");
+      say("GitHub CLI를 설치하는 중... 1~2분 걸립니다. Windows 확인 창이 뜨면 허용하세요.");
+      const result = await askHelper({ type: "install" }, 10 * 60000);
+      if (id !== chainId) return;
+      if (!result.ok) {
+        setStep("install");
+        say(`설치하지 못했습니다: ${result.error}`, "error");
+        return;
+      }
+      await continueFromStatus(id);
+    }
+
+    async function approveLogin() {
+      const id = chainId;
+      setStep("busy");
+      const result = await askHelper({ type: "login" }, 30000);
+      if (id !== chainId) return;
+      if (!result.ok) {
+        setStep("login");
+        say(`로그인 창을 열지 못했습니다: ${result.error}`, "error");
+        return;
+      }
+      chrome.tabs.create({ url: LOGIN_URL });
+      setStep("waitLogin");
+      say("PowerShell 창의 일회용 코드를 열린 GitHub 탭에 입력하고 승인하세요. 로그인되면 자동으로 이어집니다.");
+
+      const deadline = Date.now() + 10 * 60000;
+      while (Date.now() < deadline) {
+        await sleep(3000);
+        if (id !== chainId) return;
+        const status = await askHelper({ type: "status" }, 60000);
+        if (id !== chainId) return;
+        if (status.ok && status.ghAuth) {
+          applyStatus(status);
+          setStep("busy");
+          await submit(id);
+          return;
+        }
+      }
+      setStep("login");
+      say("로그인을 확인하지 못했습니다. 'GitHub 로그인'을 다시 누르세요.", "error");
+    }
+
+    function onRegisterClick() {
+      if (step === "install") return approveInstall();
+      if (step === "login") return approveLogin();
+      if (step === "register") return openSetupTab();
+      if (!step) return startChain();
     }
 
     function updateSummary() {
@@ -311,9 +408,20 @@
         ? `추가 ${added.length} · 수정 ${changed.length} · 삭제 ${removed.length}`
         : "변경 없음";
 
-      // Owners commit directly; everyone else opens a pull request.
-      ui.register.textContent = helper?.canPush ? "등록" : "PR 제안";
-      ui.register.disabled = !helper || !dirty || Boolean(problem);
+      // Owners commit directly; everyone else opens a pull request. While the
+      // chain waits for approval, the button shows that step instead.
+      const labels = {
+        busy: "진행 중...",
+        register: "등록 안내 다시 열기",
+        install: "GitHub CLI 설치",
+        login: "GitHub 로그인",
+        waitLogin: "로그인 기다리는 중..."
+      };
+      ui.register.textContent = labels[step] || (helper?.canPush ? "등록" : "PR 제안");
+      ui.register.disabled = !IS_EXTENSION ||
+        step === "busy" || step === "waitLogin" ||
+        (!step && (!dirty || Boolean(problem)));
+      ui.cancel.hidden = !step || step === "busy";
     }
 
     function render() {
@@ -448,27 +556,14 @@
       render();
     }
 
-    // Asks the local helper who is logged in and whether that account can push.
-    async function checkHelper() {
-      const data = await askHelper({ type: "health" });
-      lastChecks = data.checks || null;
-      helper = data.ok ? { login: data.login, canPush: data.canPush } : null;
-      helperMissing = Boolean(data.missing);
-      if (!data.ok) console.warn("[Dictionary Editor]", data.error, data.detail || "");
-      updateHelper();
-      updateSummary();
-    }
-
-    // Sends the full file and the commit message to the helper. The helper decides
-    // between a direct commit (owner) and a pull request (everyone else).
-    async function submit() {
+    // Last step of the chain: sends the full file and the commit message to the
+    // helper. The helper decides between a direct commit (owner) and a pull
+    // request (everyone else). The rows are read now, so edits made while the
+    // chain waited are included.
+    async function submit(id) {
       const problem = problems();
       if (problem) {
-        say(problem, "error");
-        return;
-      }
-      if (!helper) {
-        say("도우미가 연결되어 있지 않습니다. 위 안내를 따라 실행하세요.", "error");
+        fail(problem);
         return;
       }
 
@@ -483,10 +578,11 @@
         ...list("Remove", removed)
       ].join("\n");
 
-      ui.register.disabled = true;
-      say(helper.canPush ? "등록 중..." : "PR을 만드는 중...");
+      setStep("busy");
+      say(helper?.canPush ? "등록 중..." : "PR을 만드는 중...");
       try {
-        const data = await askHelper({ type: "submit", message, content: buildFile() }, 120000);
+        const data = await askHelper({ type: "submit", message, content: buildFile() }, 180000);
+        if (id !== chainId) return;
         if (!data.ok) throw new Error(data.error || "The helper failed.");
 
         if (data.mode === "direct") {
@@ -501,7 +597,7 @@
       } catch (error) {
         say(`실패: ${error.message}`, "error");
       } finally {
-        updateSummary();
+        if (id === chainId) setStep("");
       }
     }
 
@@ -509,33 +605,17 @@
       if (isDirty() && !confirm("저장하지 않은 변경이 사라집니다. 계속할까요?")) return;
       load();
     });
-    ui.openSetup.addEventListener("click", async () => {
-      if (!IS_EXTENSION) {
-        say("PowerShell 열기는 확장 프로그램 사이드 패널에서 사용할 수 있습니다.", "error");
-        return;
-      }
-      const data = await askHelper({ type: "openSetup" });
-      if (data.ok) {
-        say("PowerShell 창을 열었습니다. 창의 안내를 따라 진행하세요.", "ok");
-      } else {
-        say("도우미가 아직 등록되지 않았습니다. 저장소 루트의 setup.cmd를 한 번 더블클릭하세요.", "error");
-      }
+    ui.helperStop.addEventListener("click", async () => {
+      chainId++;
+      setStep("");
+      await chrome.runtime.sendMessage({ target: "helper", action: "stop" });
+      await refreshRunning();
+      say("도우미를 껐습니다. 등록 버튼을 누르면 다시 켜집니다.", "ok");
     });
-    ui.setupCmd.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(SETUP_COMMAND);
-        say("준비 명령을 복사했습니다. PowerShell 창에 붙여넣고 Enter를 누르세요. 설치 여부는 창에서 물어봅니다.", "ok");
-      } catch (_) {
-        say(`복사하지 못했습니다. 직접 입력하세요: ${SETUP_COMMAND}`, "error");
-      }
-    });
-    ui.copyJson.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(buildFile());
-        say("JSON을 복사했습니다.", "ok");
-      } catch (_) {
-        say("복사하지 못했습니다.", "error");
-      }
+    ui.cancel.addEventListener("click", () => {
+      chainId++;
+      setStep("");
+      say("취소했습니다.");
     });
     ui.search.addEventListener("input", () => {
       query = ui.search.value;
@@ -560,7 +640,7 @@
         }
       });
     }
-    ui.register.addEventListener("click", submit);
+    ui.register.addEventListener("click", onRegisterClick);
     for (const th of document.querySelectorAll("th.sortable")) {
       th.addEventListener("click", () => {
         const key = th.dataset.key;
@@ -579,12 +659,6 @@
       if (isDirty()) e.preventDefault();
     });
 
-    // Closing the side panel disconnects the port, which stops the helper.
-    window.addEventListener("pagehide", () => {
-      nativePort?.disconnect();
-      nativePort = null;
-    });
-
     load();
-    checkHelper();
-  
+    if (IS_EXTENSION) refreshRunning();
+    else updateHelper();

@@ -1,18 +1,23 @@
 # Dictionary Editor
 
-The editor is at `https://jacedashs.github.io/udemy-quiz-translator/editor/`. Saving needs a local helper that runs on your PC. The helper uses your own git and gh logins, so no token is stored in the browser or on a server.
+Click the extension icon in the Chrome toolbar; the editor opens in the side panel. Registering and proposing work only there. The GitHub Pages copy (`https://jacedashs.github.io/udemy-quiz-translator/editor/`) is read-only.
 
-## Setup (once per PC)
-1. Open the editor page. If the helper is not running, the setup panel appears.
-2. Press **준비 명령 복사** (copy setup command). The panel shows which tools were found (git, gh, gh login).
-3. Open PowerShell, paste the command, and press Enter. The script:
-   - checks Node.js 18+, git, and GitHub CLI (`gh`), and asks before installing any that are missing (through winget);
-   - runs `gh auth login` if you are not logged in, and sets up Git authentication;
-   - downloads `tools/dictionary-helper.js` to `%USERPROFILE%\.udemy-dictionary-helper` and starts it.
-4. Keep that PowerShell window open while you edit. It listens only on `127.0.0.1:8787`. Stop it with Ctrl+C.
-5. Refresh the editor page. The top line should show "도우미 연결됨" with your login.
+Saving uses a small helper on your PC that borrows your GitHub CLI (`gh`) login, so no token is stored in the browser or on a server. You do not set it up in advance: the 등록 / PR 제안 button walks you through it the first time.
 
-The command only downloads and runs the script from this repository's `tools/setup.ps1`. Read it first if you want to check what it does.
+## First Submit on a New PC
+One click on **PR 제안** (or **등록**) runs every step in order. It stops only where your approval is needed, and the button shows that step:
+
+1. **Register the helper (once per PC).** A guide tab opens. Press **명령 복사**, open PowerShell (Windows key, type PowerShell, Enter), paste, and press Enter. When the window prints `Done.`, the tab and the editor continue by themselves. The command only saves the helper to `%USERPROFILE%\.udemy-dictionary-helper` and adds one registry key for Chrome; it installs nothing and needs no admin rights.
+2. **GitHub CLI 설치** (only if gh is missing). Click it to install GitHub CLI with winget. Allow the Windows prompt if one appears.
+3. **GitHub 로그인** (only if you are not logged in). Click it: a PowerShell window shows a one-time code, and a Chrome tab opens github.com/login/device. Press Enter in the window, enter the code in the tab, and approve.
+4. The change is submitted right away; you do not click 등록 / PR 제안 again.
+
+Example:
+- Input: New PC with Chrome and the extension only; one term added
+- Steps: PR 제안 → guide tab, paste the command → GitHub CLI 설치 → GitHub 로그인, approve in the tab
+- Result: The status line links to the new pull request
+
+Use **취소** to stop a waiting step. The helper keeps running in the background after you close the panel; **도우미 끄기** stops it. It also stops when the extension is turned off or reloaded, or Chrome exits.
 
 ## Edit
 Each row is one term:
@@ -31,10 +36,7 @@ The button shows one of two actions, depending on your GitHub permission:
 
 After the owner merges a change, it applies on the next Udemy quiz page load. The extension does not need a reload.
 
-## Open in the Chrome side panel
-The extension (version 1.6.0 or later) opens the same editor in the side panel. Click the extension icon in the Chrome toolbar. After updating the extension, reload it once at chrome://extensions.
-
 ## Notes
-- The first submit may ask Chrome for permission to reach devices on your local network. Allow it, or the editor cannot reach the helper.
-- The helper runs the commands `git` and `gh` only, and only for this repository.
+- The helper runs `gh` only (and `winget` for the GitHub CLI install), and only for this repository.
+- The register script can be read before you run it: `tools/register.ps1` in this repository.
 - Changing the bundled fallback (`dictionary-terms.js`) requires reloading the extension at chrome://extensions.
