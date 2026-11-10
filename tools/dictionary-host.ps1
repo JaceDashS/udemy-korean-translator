@@ -19,9 +19,9 @@ $ErrorActionPreference = "Stop"
 
 # Raise this whenever the requests or their answers change. The editor reads it
 # from the copy bundled in the extension and asks to update an older host.
-$HostVersion = 1
+$HostVersion = 2
 
-$Repo ="JaceDashS/udemy-quiz-translator"
+$Repo ="JaceDashS/udemy-korean-translator"
 $Branch = "dictionary"
 $File = "dictionary.json"
 $MaxWordLength = 200

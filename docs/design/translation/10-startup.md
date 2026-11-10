@@ -3,7 +3,8 @@
 ## Automatic Start
 - Input: Page load on a Udemy URL
 - Output: A ready `translator`, or a console message explaining why it did not start
-- Code: `content.js` → `autoStart()`, `startOnFirstGesture()`, `initialize()`
+- Code: `translator.js` → `autoStart()`, `startOnFirstGesture()`, `start()`, `onReady()`
+- The translator is shared: the quiz (`content.js`) and the captions (`caption.js`) wait for `onReady()` instead of creating their own
 - Architecture: [Overview](../../architecture/10-overview.md#translation-flow)
 
 `Translator.availability()` decides the path:
@@ -19,10 +20,10 @@ flowchart TD
     A[Page load] --> B{Translator API?}
     B -- No --> W[console.warn]
     B -- Yes --> C{availability}
-    C -- available --> I[initialize]
+    C -- available --> I[start]
     C -- downloadable --> G[Wait for first click or key] --> I
     C -- unavailable --> W
-    I --> S[schedule update]
+    I --> S[onReady: quiz update and captions start]
 ```
 
 Scenario:
@@ -31,4 +32,4 @@ Scenario:
 - Result: Inline translations appear after the download; progress is logged in the console
 
 ## Console Helpers
-`window.udemyLocalTranslator` exposes `start()`, `refresh()`, and `destroy()` for manual control from DevTools.
+`window.udemyKoreanQuiz` exposes `start()`, `refresh()`, `layoutInfo()`, and `destroy()`; `window.udemyKoreanCaption` exposes `start()`, `stop()`, and `destroy()`.

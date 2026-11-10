@@ -1,14 +1,19 @@
-# Udemy Quiz Translator (Chrome)
+# Korean Translator for Udemy (Chrome)
 
-Chrome 내장 Translator API (영어 → 한국어)를 사용해 Udemy 시험 문제, 선택지, 정답/오답 및 해설을 자동 번역합니다.
+Chrome 내장 Translator API (영어 → 한국어)를 사용해 Udemy를 PC 안에서 한국어로 번역합니다.
+
+- 퀴즈와 시험: 문제, 선택지, 정답/오답 피드백, 해설
+- 강의 영상: 영어 자막(CC)을 실시간 한국어 자막으로
+
+이 저장소는 `udemy-quiz-translator`와 `udemy-live-caption-translator`를 합친 것입니다.
 
 ## 새 PC에 설치
 
-1. ZIP을 압축 해제합니다. `manifest.json`, `dictionary-terms.js`, `dictionary.js`, `content.js`가 한 폴더에 있어야 합니다.
+1. 저장소를 내려받거나 ZIP을 압축 해제합니다. `manifest.json`과 스크립트들이 한 폴더에 있어야 합니다.
 2. 데스크톱 Chrome 138 이상에서 `chrome://extensions`를 엽니다.
 3. 오른쪽 위 **개발자 모드**를 켭니다.
-4. **압축해제된 확장 프로그램을 로드합니다**를 눌러 `udemy_local_translator` 폴더를 선택합니다.
-5. Udemy 퀴즈 페이지를 열거나 새로고침합니다.
+4. **압축해제된 확장 프로그램을 로드합니다**를 눌러 그 폴더를 선택합니다.
+5. Udemy 퀴즈나 강의 페이지를 열거나 새로고침합니다.
 6. 번역이 자동으로 시작됩니다. 새 PC에서 언어 모델이 아직 없으면, 페이지를 한 번 클릭하면 다운로드가 시작됩니다(진행률은 DevTools 콘솔에 표시).
 
 ## 동작
@@ -16,11 +21,12 @@ Chrome 내장 Translator API (영어 → 한국어)를 사용해 Udemy 시험 �
 - 화면에 별도 패널이나 버튼이 없습니다. 번역은 원래 문제와 각 선택지 오른쪽에 표시되며, 공간이 부족하면(좁은 창) 바로 아래에 표시됩니다.
 - 오른쪽 배치 시 가운데 정렬된 원문을 왼쪽으로 옮겨, 원문과 번역이 한 쌍으로 가운데 오도록 합니다.
 - 퀴즈가 변경되면 MutationObserver로 자동 갱신합니다.
-- 오류와 상태는 DevTools 콘솔에 `[Udemy Local Translator]`로 출력됩니다.
+- 강의 영상: 영어 자막이 켜져 있으면 한국어 자막이 자동으로 영상 위에 나옵니다. 영상 오른쪽 위 버튼으로 끄고 켤 수 있으며, 끈 상태는 기억됩니다.
+- 오류와 상태는 DevTools 콘솔에 `[Korean Translator]`로 출력됩니다.
 
 ## 개발자 용어 사전
 
-`dictionary-terms.js`에 등록된 용어(Claude, CCAR-F 시험 영역, AWS, 일반 개발 용어 약 1,600개)는 번역 결과에서 영어 원문 그대로 유지됩니다.
+개발자 용어(Claude, CCAR-F 시험 영역, AWS, 일반 개발 용어 약 1,600개)는 퀴즈와 자막 번역 모두에서 영어 원문 그대로 유지됩니다. 용어 목록은 이 저장소의 `dictionary` 브랜치에서 페이지를 열 때마다 받아 오며, 받지 못하면 `dictionary-terms.js`의 기본 목록을 씁니다.
 
 - 예: "Launch an EC2 instance in a private subnet" → "private subnet에서 EC2 instance를 시작합니다"
 - 용어 추가: 확장 아이콘을 눌러 사이드 패널의 편집기에서 행을 추가하고 등록(다른 사용자는 등록 신청)합니다. 처음 한 번은 버튼이 도우미 등록, GitHub CLI 설치, 로그인을 차례로 안내합니다. 다음 번역 페이지를 열 때 반영되며 확장 프로그램을 다시 로드할 필요가 없습니다. 설정 방법은 `docs/guides/10-dictionary-editor.md`를 참고하세요.
@@ -51,10 +57,12 @@ Chrome 내장 Translator API (영어 → 한국어)를 사용해 Udemy 시험 �
 Udemy 페이지 DevTools 콘솔에서:
 
 ```js
-window.udemyLocalTranslator.start()
-window.udemyLocalTranslator.refresh()
-window.udemyLocalTranslator.layoutInfo()
-window.udemyLocalTranslator.destroy()
+window.udemyKoreanQuiz.start()
+window.udemyKoreanQuiz.refresh()
+window.udemyKoreanQuiz.layoutInfo()
+window.udemyKoreanQuiz.destroy()
+window.udemyKoreanCaption.start()
+window.udemyKoreanCaption.stop()
 ```
 
 ## 문서

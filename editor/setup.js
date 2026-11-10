@@ -3,7 +3,7 @@
 // One-time registration guide, opened in a tab by the dictionary editor.
 // It shows the register command and waits until the helper answers.
 const SCRIPT_URL =
-  "https://raw.githubusercontent.com/JaceDashS/udemy-quiz-translator/main/tools/register.ps1";
+  "https://raw.githubusercontent.com/JaceDashS/udemy-korean-translator/main/tools/register.ps1";
 const COMMAND = `irm ${SCRIPT_URL} | iex`;
 const POLL_MS = 2000;
 

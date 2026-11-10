@@ -3,7 +3,7 @@
 ## Load and Register
 - Input: `GLOSSARY_URL` (raw `dictionary.json` on the `dictionary` branch); editor rows and the GitHub contents API
 - Output: `configure(rows)` on the dictionary matcher; a commit on the `dictionary` branch
-- Code: `content.js` → `loadGlossary()`, `isValidTerms()`; `dictionary.js` → `configure()`; `editor/app.js` → `load()`, `submit()`
+- Code: `translator.js` → `loadGlossary()`, `isValidTerms()`; `dictionary.js` → `configure()`; `editor/app.js` → `load()`, `submit()`
 - Spec: [Dictionary Sync](../../specs/translation/30-dictionary-sync.md#requirements)
 - Architecture: [Overview](../../architecture/10-overview.md#dictionary-sync)
 
@@ -12,7 +12,7 @@ Steps:
 2. The response must be OK JSON with `version` 2 and a valid `terms` array (`isValidTerms()`)
 3. `configure(terms)` replaces the bundled list entirely
 4. On any failure the bundled list stays in use and a warning is logged
-5. `autoStart()` runs after step 4, so the first translation uses the loaded terms
+5. `autoStart()` runs after step 4, and every translation awaits the load, so the first quiz or caption translation uses the loaded terms
 
 ```mermaid
 flowchart LR
@@ -31,7 +31,7 @@ Representative scenario:
 - All scenarios: [Dictionary Sync Scenarios](../../testing/scenarios/translation/30-dictionary-sync.md#dictionary-sync-scenarios)
 
 ## Editor
-- `editor/index.html` is a single static page (GitHub Pages). It reads `dictionary.json` from the branch and shows the rows in a spreadsheet-style table: 단어, 뜻, 대소문자 구분 (checkbox), with a row number column
+- `editor/index.html` is a single static page, opened in the extension's side panel. It reads `dictionary.json` from the branch and shows the rows in a spreadsheet-style table: 단어, 뜻, 대소문자 구분 (checkbox), with a row number column
 - Each row is one term. Edits change the row in memory; the table is rebuilt only for add, delete, sort, and search, so the cell being typed in keeps its focus
 - Enter moves to the same column in the next row. Pasting tab-separated text (word, meaning, Y) into a cell inserts one row per line after the current row
 - Headers sort the table. The search box filters by word or meaning
@@ -39,7 +39,7 @@ Representative scenario:
 - The layout uses only the width its content needs (`fit-content`)
 - Duplicate or empty words are highlighted and block registration
 - The commit message lists added, changed, and removed words. Rows are sorted by word, and empty meanings are omitted
-- Outside the extension (GitHub Pages) the editor is read-only: the button stays disabled and the status line says registering is in the side panel
+- Outside the extension (for example opened as a file) the editor is read-only: the button stays disabled and the status line says registering is in the side panel
 
 ## Register Chain
 - Input: The edited rows; a click on 등록 / 등록 신청

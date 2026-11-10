@@ -5,6 +5,11 @@
 - Code: `extractQuiz()` returns `{ number, question, answers, nodes }`
 - Avoid: "test", "exam" when referring to a single question
 
+## Caption
+- Definition: The English subtitle text Udemy shows over a lecture video, and the Korean overlay that replaces it
+- Code: `caption.js`, `CAPTION_SELECTOR` (`[data-purpose="captions-cue-text"]`)
+- Avoid: "subtitle track" (the extension reads the visible cue, not the track)
+
 ## Card
 - Definition: The Udemy DOM element that wraps one answer choice, including its radio/checkbox control and feedback text
 - Code: `cardOf()`, `quiz.nodes.cards`
@@ -12,7 +17,8 @@
 
 ## Translator
 - Definition: The Chrome built-in on-device Translator API instance (English to Korean)
-- Code: `translator`, `Translator.create()`, `translateCached()`
+- Code: `translator.js` → `start()`, `translate()`; `window.__udemyKoreanTranslator`
+- Note: One translator is shared by the quiz and the captions
 
 ## Dictionary
 - Definition: The list of developer terms kept in English in translations
@@ -31,11 +37,11 @@
 
 ## Dictionary Branch
 - Definition: The `dictionary` branch of this repository, which holds `dictionary.json` with the terms
-- Code: `GLOSSARY_URL` in `content.js`, `editor/index.html`
+- Code: `GLOSSARY_URL` in `translator.js`, `RAW_URL` in `editor/app.js`
 - Avoid: "sync branch"
 
 ## Editor
-- Definition: The page that edits the terms as a table. In the extension's side panel it registers them to the dictionary branch; on GitHub Pages it is read-only
+- Definition: The page that edits the terms as a table. In the extension's side panel it registers them to the dictionary branch; opened outside the extension it is read-only
 - Code: `editor/index.html`, `editor/app.js`
 - Avoid: "admin page"
 

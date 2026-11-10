@@ -1,8 +1,8 @@
 
 /*
- * Udemy Local Quiz Translator v1.5.1
- * Chrome 138+ / English -> Korean
- * On-device Translator API
+ * Korean Translator for Udemy: quiz and exam translation.
+ * Chrome 138+ / English -> Korean, on-device Translator API.
+ * The translator, the dictionary, and the cache live in translator.js.
  */
 (() => {
   "use strict";
@@ -15,17 +15,15 @@
     window.stopQuizTranslation?.();
   } catch (_) {}
 
-  const LOG = "[Udemy Local Translator]";
-  const LANGS = { sourceLanguage: "en", targetLanguage: "ko" };
+  const LOG = "[Korean Translator]";
+  const core = window.__udemyKoreanTranslator;
+  const translateCached = core.translate;
 
-  let translator = null;
-  let creating = null;
   let seq = 0;
   let lastKey = "";
   let debounceTimer;
   let lastUrl = location.href;
 
-  const cache = new Map();
   const INLINE_ATTRIBUTE = "data-udemy-quiz-inline";
   const INLINE_SELECTOR = `[${INLINE_ATTRIBUTE}]`;
   let inlineNodes = [];
@@ -499,131 +497,6 @@
       inlineNodes.every(node => node.isConnected);
   }
 
-  // A model download needs user activation, so it waits for the first page click.
-  function startOnFirstGesture() {
-    const start = () => {
-      document.removeEventListener("pointerdown", start, true);
-      document.removeEventListener("keydown", start, true);
-      void initialize();
-    };
-    document.addEventListener("pointerdown", start, true);
-    document.addEventListener("keydown", start, true);
-    console.info(LOG, "Waiting for a page click to download the translation model.");
-  }
-
-  async function initialize() {
-    if (translator) {
-      schedule(true);
-      return;
-    }
-
-    if (creating) return;
-
-    if (
-      typeof Translator === "undefined" ||
-      typeof Translator.create !== "function"
-    ) {
-      console.warn(LOG, "Translator API is unavailable. Chrome 138+ desktop is required.");
-      return;
-    }
-
-    try {
-      const promise = Translator.create({
-        ...LANGS,
-        monitor(m) {
-          m.addEventListener("downloadprogress", e => {
-            console.info(LOG, `Model download ${Math.round(e.loaded * 100)}%`);
-          });
-        }
-      });
-
-      creating = promise;
-      translator = await promise;
-
-      lastKey = "";
-      schedule(true);
-    } catch (error) {
-      console.error(LOG, "Failed to start the translator.", error);
-    } finally {
-      creating = null;
-    }
-  }
-
-  // Terms are loaded from the dictionary branch on each page load, so a change
-  // takes effect without reloading the extension. The bundled list in
-  // dictionary-terms.js stays in use when the download fails.
-  const GLOSSARY_URL =
-    "https://raw.githubusercontent.com/JaceDashS/udemy-quiz-translator/dictionary/dictionary.json";
-  const GLOSSARY_TIMEOUT_MS = 3000;
-  const GLOSSARY_LIMITS = { terms: 10000, length: 200 };
-
-  // The file is data only: every row needs a short word, and may have a string
-  // meaning and a boolean exact flag. Anything else is rejected.
-  function isValidTerms(terms) {
-    if (!Array.isArray(terms) || terms.length > GLOSSARY_LIMITS.terms) return false;
-
-    return terms.every(
-      row =>
-        row &&
-        typeof row === "object" &&
-        typeof row.word === "string" &&
-        row.word.trim().length > 0 &&
-        row.word.length <= GLOSSARY_LIMITS.length &&
-        (row.meaning == null ||
-          (typeof row.meaning === "string" && row.meaning.length <= GLOSSARY_LIMITS.length)) &&
-        (row.exact === undefined || typeof row.exact === "boolean")
-    );
-  }
-
-  async function loadGlossary() {
-    const dictionary = window.__udemyQuizTranslatorDictionary;
-    if (!dictionary) return;
-
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), GLOSSARY_TIMEOUT_MS);
-
-    try {
-      const response = await fetch(GLOSSARY_URL, {
-        cache: "no-store",
-        signal: controller.signal
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-      const data = await response.json();
-      if (data?.version !== 2 || !isValidTerms(data.terms)) {
-        throw new Error("Invalid dictionary file.");
-      }
-
-      dictionary.configure(data.terms);
-      console.info(LOG, `Loaded ${data.terms.length} dictionary terms.`);
-    } catch (error) {
-      console.warn(LOG, "Using the bundled dictionary terms.", error);
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-
-  async function autoStart() {
-    if (typeof Translator === "undefined") {
-      console.warn(LOG, "Translator API is unavailable. Chrome 138+ desktop is required.");
-      return;
-    }
-
-    try {
-      const availability = await Translator.availability(LANGS);
-
-      if (availability === "available") {
-        void initialize();
-      } else if (availability === "downloadable" || availability === "downloading") {
-        startOnFirstGesture();
-      } else {
-        console.warn(LOG, `English to Korean translation is ${availability}.`);
-      }
-    } catch (error) {
-      console.error(LOG, "Failed to check translator availability.", error);
-    }
-  }
-
   // Extract Udemy question and answer elements.
   const CONTROL =
     'input[type="radio"],input[type="checkbox"],' +
@@ -911,46 +784,6 @@
     };
   }
 
-  const dictionary = window.__udemyQuizTranslatorDictionary;
-
-  // Kept terms stay in English; pairs are replaced with their Korean meaning.
-  // If the translator drops a placeholder, fall back to a plain translation
-  // instead of showing a broken sentence.
-  async function translateWithDictionary(source) {
-    if (!dictionary) return translator.translate(source);
-
-    const { text, terms, meanings } = dictionary.protect(source);
-    if (!terms.length) return translator.translate(source);
-
-    const restored = dictionary.restore(await translator.translate(text), terms, meanings);
-    if (restored !== null) return restored;
-
-    console.debug(LOG, "Dictionary placeholder lost; using plain translation.", source);
-    return translator.translate(source);
-  }
-
-  function translateCached(source) {
-    if (!source) return Promise.resolve("");
-
-    if (cache.has(source)) {
-      return cache.get(source);
-    }
-
-    const p = translateWithDictionary(source)
-      .catch(err => {
-        cache.delete(source);
-        throw err;
-      });
-
-    cache.set(source, p);
-
-    if (cache.size > 350) {
-      cache.delete(cache.keys().next().value);
-    }
-
-    return p;
-  }
-
   // Exam result page (after submitting a practice exam). The selectors were
   // checked on one CCAR-F practice exam result page. Other exam types are not
   // verified, so these are the only result selectors used.
@@ -1122,7 +955,7 @@
   }
 
   async function update() {
-    if (!translator) return;
+    if (!core.isReady()) return;
 
     const quiz = extractQuiz();
 
@@ -1233,7 +1066,7 @@
   }
 
   const observer = new MutationObserver(mutations => {
-    if (!translator) return;
+    if (!core.isReady()) return;
     if (mutations.every(isOwnMutation)) return;
     schedule();
   });
@@ -1254,7 +1087,7 @@
     if (lastUrl !== location.href) {
       lastUrl = location.href;
 
-      if (translator) {
+      if (core.isReady()) {
         schedule(true);
       }
     }
@@ -1297,9 +1130,15 @@
     };
   }
 
+  // The first translation runs as soon as the shared translator is ready.
+  const stopWaitingForTranslator = core.onReady(() => {
+    lastKey = "";
+    schedule(true);
+  });
+
   // Development helpers.
-  window.udemyLocalTranslator = {
-    start: () => initialize(),
+  window.udemyKoreanQuiz = {
+    start: () => core.start(),
     layoutInfo,
     refresh: () => {
       lastKey = "";
@@ -1320,14 +1159,11 @@
       inlineStyles.remove();
       lastRendered = null;
 
-      try {
-        translator?.destroy();
-      } catch (_) {}
+      stopWaitingForTranslator();
 
       delete window[INSTANCE];
-      delete window.udemyLocalTranslator;
+      delete window.udemyKoreanQuiz;
     }
   };
 
-  void loadGlossary().then(autoStart);
 })();

@@ -1,6 +1,6 @@
 # Dictionary Editor
 
-Click the extension icon in the Chrome toolbar; the editor opens in the side panel. Registering and proposing work only there. The GitHub Pages copy (`https://jacedashs.github.io/udemy-quiz-translator/editor/`) is read-only.
+Click the extension icon in the Chrome toolbar; the editor opens in the side panel. Registering and proposing work only there. Opened outside the extension, the editor is read-only.
 
 Saving uses a small helper on your PC that borrows your GitHub CLI (`gh`) login, so no token is stored in the browser or on a server. You do not set it up in advance: the 등록 / 등록 신청 button walks you through it the first time.
 

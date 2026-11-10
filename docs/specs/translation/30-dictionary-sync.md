@@ -4,7 +4,7 @@
 - Terms are read from the `dictionary` branch of this repository (`dictionary.json`, version 2) on each Udemy page load, so a change takes effect without reloading the extension
 - The file is data only. It must be `{ "version": 2, "terms": [...] }`, with at most 10000 rows. Each row needs a word of at most 200 characters, may have a string meaning of at most 200 characters, and may have a boolean `exact` flag. Anything else is rejected
 - If the download fails, times out (3 seconds), or the file is invalid, the terms bundled in `dictionary-terms.js` are used
-- Registering happens only in the extension's side panel. The GitHub Pages copy of the editor is read-only
+- Registering happens only in the extension's side panel. The editor opened outside the extension is read-only. GitHub Pages is not used
 - The editor sends the full file to a local helper that uses the GitHub CLI (`gh`) login already on the PC. No token is stored in the browser or on a server. The helper needs only Windows PowerShell and GitHub CLI
 - One click on 등록 / 등록 신청 runs the whole chain: helper registered → GitHub CLI installed → logged in → submit. A finished step goes straight on to the next check
 - The chain stops only where the user must approve: installing GitHub CLI and logging in. The button then shows that step (GitHub CLI 설치, GitHub 로그인) and nothing runs until it is clicked

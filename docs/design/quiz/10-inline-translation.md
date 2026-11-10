@@ -40,7 +40,7 @@ Scenario:
 - Result: Original at 450px, translation right after it, both centered; no inline style left after `destroy()`
 
 ## Layout Diagnosis
-`window.udemyLocalTranslator.layoutInfo()` returns the mode, the shifted element, the scroll container, and each ancestor of the first card with width, gaps, display, justify-content, margins, and overflow. Use it when the side placement looks wrong on a real Udemy page.
+`window.udemyKoreanQuiz.layoutInfo()` returns the mode, the shifted element, the scroll container, and each ancestor of the first card with width, gaps, display, justify-content, margins, and overflow. Use it when the side placement looks wrong on a real Udemy page.
 
 ## Side Layout
 - Code: `showSideTranslations()`, `positionSide()`, `relayout()`, `requestRelayout()`

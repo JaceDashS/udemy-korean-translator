@@ -1,10 +1,10 @@
     "use strict";
 
-    const REPO = "JaceDashS/udemy-quiz-translator";
+    const REPO = "JaceDashS/udemy-korean-translator";
     const BRANCH = "dictionary";
     const RAW_URL = `https://raw.githubusercontent.com/${REPO}/${BRANCH}/dictionary.json`;
     // Registering works only in the extension's side panel, where background.js
-    // reaches the helper. The GitHub Pages copy of this page is read-only.
+    // reaches the helper. Opened anywhere else, this page is read-only.
     const IS_EXTENSION = typeof chrome !== "undefined" && Boolean(chrome.runtime?.id);
     const LOGIN_URL = "https://github.com/login/device";
     const ROLE_KEY = "dictionaryHelperRole";

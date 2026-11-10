@@ -7,12 +7,12 @@
 # It installs nothing. GitHub CLI is installed later from the editor, on approval.
 #
 # Run in PowerShell:
-#   irm https://raw.githubusercontent.com/JaceDashS/udemy-quiz-translator/main/tools/register.ps1 | iex
+#   irm https://raw.githubusercontent.com/JaceDashS/udemy-korean-translator/main/tools/register.ps1 | iex
 #
 # Kept ASCII-only so it runs the same through `irm | iex` and from a file.
 
 function Register-DictionaryHelper {
-  $repo = "JaceDashS/udemy-quiz-translator"
+  $repo = "JaceDashS/udemy-korean-translator"
   $hostName = "com.udemy.dictionary_helper"
   $extensionId = "mmmljckioegeobbebbmildgebfjfbbdo"
   $helperDir = Join-Path $HOME ".udemy-dictionary-helper"

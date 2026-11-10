@@ -3,7 +3,7 @@
 ## Placeholder Substitution
 - Input: Source English text
 - Output: Korean translation with terms without a meaning in their original English form, and terms with a meaning replaced by that meaning
-- Code: `dictionary.js` → `protect()`, `restore()`; `content.js` → `translateWithDictionary()`
+- Code: `dictionary.js` → `protect()`, `restore()`; `translator.js` → `translateWithDictionary()`, `translate()` (used by the quiz and the captions)
 - Data: rows from `dictionary.json` (dictionary branch, see [Dictionary Sync](30-dictionary-sync.md)), or the bundled list in `dictionary-terms.js` → `window.__udemyQuizTranslatorTerms` (`groups`, `caseSensitive`) when that file cannot be used
 - Spec: [Dictionary](../../specs/translation/20-dictionary.md#requirements)
 - Architecture: [Overview](../../architecture/10-overview.md#translation-flow)
