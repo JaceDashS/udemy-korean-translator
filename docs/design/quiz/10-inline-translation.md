@@ -13,9 +13,9 @@ flowchart TD
     S --> B{Free width >= 240px?}
     B -- Yes --> C[Side layout: fixed layer, boxes aligned to originals]
     B -- No --> R[restoreShift] --> D[Below layout: boxes inserted after originals]
-    E[scroll or content change] --> H[positionSide]
+    E[scroll, content, or width change] --> H[positionSide: syncShift, then move boxes]
     H -- no longer fits --> A
-    W[resize] --> A
+    W[width settled in below layout] --> A
 ```
 
 Representative scenario:
@@ -26,11 +26,11 @@ Representative scenario:
 
 ## Column Shift
 Udemy centers the quiz column, which leaves the left half of the free space unused.
-- Code: `centeredColumn()`, `shiftTarget()`, `shiftForSide()`, `shiftIsStale()`, `applyShift()`, `restoreShift()`
+- Code: `centeredColumn()`, `shiftTarget()`, `shiftForSide()`, `syncShift()`, `applyShift()`, `restoreShift()`
 - `centeredColumn()` walks up from the first card to the scroll container and picks the innermost ancestor that contains the header and all cards and whose left and right gaps inside its parent are equal (within 4px) and larger than 40px. This covers margin auto, flex, and grid centering
 - `shiftForSide()` sets only `margin-left` and `margin-right: auto` (inline, `!important`) so the original plus its translation are centered as a pair, with at least 24px left margin
 - The previous inline values are saved and restored by `clearInlineTranslations()`, the below fallback, and `destroy()`
-- `positionSide()` calls `shiftIsStale()` on every reposition and rebuilds the layout when the shift is missing or lost: Udemy may finish centering the column after the first render, or re-render the column and drop the override
+- `positionSide()` calls `syncShift()` on every reposition. When the free width changed, the margin is recalculated in place from the shifted column's current margin (the shifted column is no longer centered, so `centeredColumn()` cannot find it). With no shift yet, `shiftForSide()` applies one, for example when Udemy finishes centering after the first render. Only when Udemy re-rendered the column or dropped the override is the layout rebuilt
 
 Observed on Udemy (2026-11-04): `div.quiz-page-layout--scroll-container` is the scroll container; its child (860px) is centered with `margin: 24px auto`. With the curriculum sidebar closed (1751px area) the pair needs 1752px, so the column moves to the 24px minimum margin.
 
@@ -46,8 +46,10 @@ Scenario:
 - Code: `showSideTranslations()`, `positionSide()`, `relayout()`, `requestRelayout()`
 - A `position: fixed` layer (`.uqt-side-layer`, marked with `data-udemy-quiz-inline`) is clipped to the visible part of the scroll container, so boxes never cover a sidebar or the page header
 - Each box's top follows its original (`getBoundingClientRect().top`). When a box is taller than its original, the next box is pushed down 8px below it
-- Scroll (capture) and content changes reposition boxes once per animation frame; a resize rebuilds the layout from cached translations
-- A width change of the scroll container without a resize event (Udemy sidebar opened or closed) makes `positionSide()` return false, which rebuilds the layout so the column shift is recalculated
+- Scroll (capture), content changes, and width changes reposition boxes once per animation frame, without removing them
+- Width changes: `watchWidths()` puts a `ResizeObserver` on every ancestor of the first card, because the element that changes width when Udemy's sidebar opens or closes differs between pages. Only width changes count, so our own boxes (which change heights) do not trigger it. In the side layout each change calls `requestRelayout()`, so the shift and boxes follow the sidebar animation frame by frame. When the side layout no longer fits, `positionSide()` returns false and the layout is rebuilt as below
+- In the below layout the boxes flow with the page by themselves; the layout is rebuilt once, 150ms after the width stops changing, in case the side layout now fits
+- Window resize only repositions; its width change reaches the observer
 - An empty spacer (`data-udemy-quiz-inline="spacer"`) after the last answer grows by the amount the boxes overflow below it. Without it, boxes below a short quiz would be clipped and unreachable because the container had nothing to scroll
 - Udemy elements are never moved; only the column margins are overridden (see Column Shift) and our own nodes are added. Text color, font family, and font size are copied from the first card
 

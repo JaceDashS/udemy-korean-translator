@@ -267,15 +267,28 @@
     if (target !== null) applyShift(column.el, target);
   }
 
-  // Udemy can finish centering the column after the first render, or re-render
-  // the column and drop the override. Either way the layout must be rebuilt.
-  function shiftIsStale(quiz, scroller) {
-    if (shift) {
-      return !shift.el.isConnected ||
-        shift.el.style.getPropertyValue("margin-left") !== shift.applied;
+  // Keeps the pair centered while the free width changes (a sidebar opening,
+  // Udemy finishing its own centering) by updating the column margin in place.
+  // The shifted column is no longer centered, so its current margin is the base.
+  // Returns false when Udemy re-rendered the column or dropped the override;
+  // the layout must then be rebuilt.
+  function syncShift(quiz, scroller) {
+    if (!shift) {
+      shiftForSide(quiz, scroller);
+      return true;
     }
-    const column = centeredColumn(quiz, scroller);
-    return !!column && shiftTarget(column, scroller, quiz.nodes.cards) !== null;
+    if (!shift.el.isConnected ||
+        shift.el.style.getPropertyValue("margin-left") !== shift.applied) {
+      return false;
+    }
+
+    const column = { el: shift.el, ...horizontalGaps(shift.el) };
+    const target = shiftTarget(column, scroller, quiz.nodes.cards);
+    if (target !== null) {
+      shift.applied = `${Math.round(target)}px`;
+      shift.el.style.setProperty("margin-left", shift.applied, "important");
+    }
+    return true;
   }
 
   function showSideTranslations(quiz, questionKo, answersKo, scroller) {
@@ -324,18 +337,13 @@
     if (!sideLayout) return true;
     const { quiz, layer, items, cards, scroller, spacer } = sideLayout;
 
-    if (shiftIsStale(quiz, scroller)) return false;
+    if (!syncShift(quiz, scroller)) return false;
 
+    // Not enough room even after the shift: switch to the below layout.
     const column = sideColumn(cards, scroller);
     if (!column) return false;
 
-    // A sidebar opening or closing changes the width without a resize event;
-    // the column shift must then be recalculated.
     const clip = visibleRect(scroller);
-    const clipWidth = clip.right - clip.left;
-    if (sideLayout.clipWidth === undefined) sideLayout.clipWidth = clipWidth;
-    else if (Math.abs(sideLayout.clipWidth - clipWidth) > 1) return false;
-
     Object.assign(layer.style, {
       left: `${clip.left}px`,
       top: `${clip.top}px`,
@@ -360,8 +368,9 @@
     return true;
   }
 
-  // Scroll and content changes only reposition. A resize changes the free
-  // width, so the layout is rebuilt from the cached translations.
+  // Scroll, content, and width changes reposition the side layout in place.
+  // A full relayout (the width settled in the below layout, or the side layout
+  // no longer fits) rebuilds it from the cached translations.
   function relayout() {
     const full = relayoutFull;
     relayoutFrame = 0;
@@ -372,7 +381,13 @@
       if (examLast) renderExam(examLast.exam, examLast.translated);
       return;
     }
-    if (!lastRendered) return;
+    if (!lastRendered) {
+      // Exam results in the below layout: the side layout may fit now.
+      if (full && examLast && examNodes.some(node => node.isConnected)) {
+        renderExam(examLast.exam, examLast.translated);
+      }
+      return;
+    }
 
     const { quiz, questionKo, answersKo } = lastRendered;
     if (quiz.nodes.cards.some(card => !card.isConnected)) return;
@@ -391,7 +406,53 @@
   }
 
   addEventListener("scroll", requestRelayout, { capture: true, passive: true });
-  addEventListener("resize", requestFullRelayout, { passive: true });
+  // Width changes reach the width observer below; a height-only resize just
+  // repositions the side layer.
+  addEventListener("resize", requestRelayout, { passive: true });
+
+  /*
+   * A sidebar opening or closing changes the free width without a window
+   * resize. Which ancestor changes width differs between Udemy pages, so a
+   * ResizeObserver watches every ancestor of the quiz. It reports every
+   * animation frame, so the side layout follows the width
+   * in place. The below layout flows with the page by itself; it is rebuilt
+   * once after the width settles, in case the side layout now fits.
+   * Only width changes count: our boxes change heights, not widths.
+   */
+  const WIDTH_SETTLE_MS = 150;
+  const watchedWidths = new Map();
+  let widthSettleTimer;
+
+  const widthObserver = new ResizeObserver(entries => {
+    let changed = false;
+    for (const entry of entries) {
+      const width = Math.round(entry.contentRect.width);
+      const previous = watchedWidths.get(entry.target);
+      watchedWidths.set(entry.target, width);
+      if (previous !== undefined && previous !== width) changed = true;
+    }
+    if (!changed) return;
+
+    if (sideLayout || examSide) {
+      requestRelayout();
+      return;
+    }
+    clearTimeout(widthSettleTimer);
+    widthSettleTimer = setTimeout(requestFullRelayout, WIDTH_SETTLE_MS);
+  });
+
+  function watchWidths(anchor) {
+    const targets = [];
+    for (let el = anchor.parentElement; el && el !== document.documentElement; el = el.parentElement) {
+      targets.push(el);
+    }
+    if (targets.length === watchedWidths.size &&
+        targets.every(target => watchedWidths.has(target))) return;
+
+    widthObserver.disconnect();
+    watchedWidths.clear();
+    for (const target of targets) widthObserver.observe(target);
+  }
 
   function showInlineTranslations(quiz, questionKo, answersKo) {
     clearInlineTranslations();
@@ -399,6 +460,7 @@
     if (!cards.length || cards.some(card => !card.isConnected)) return;
 
     const scroller = scrollParentOf(cards[0]);
+    watchWidths(cards[0]);
     shiftForSide(quiz, scroller);
     if (sideColumn(cards, scroller)) {
       showSideTranslations(quiz, questionKo, answersKo, scroller);
@@ -947,6 +1009,7 @@
 
     const els = exam.blocks.map(block => block.el);
     const scroller = scrollParentOf(els[0]);
+    watchWidths(els[0]);
     // Same column shift as the quiz: the centered result column moves left to
     // make room, so each original and its translation sit side by side.
     const layout = { nodes: { cards: els, header: els[0] } };
@@ -1001,19 +1064,13 @@
     const { layer, items, els, scroller, spacer, layout } = examSide;
     if (els.some(el => !el.isConnected)) return false;
 
-    // Udemy can re-center the result column after the first render.
-    if (shiftIsStale(layout, scroller)) return false;
+    // Same as the quiz: the shift follows the free width in place.
+    if (!syncShift(layout, scroller)) return false;
 
     const column = sideColumn(els, scroller);
     if (!column) return false;
 
-    // A sidebar opening or closing changes the free width without a resize event.
-    // The column must then be centered again (the pair moves), like the quiz does.
     const clip = visibleRect(scroller);
-    const clipWidth = clip.right - clip.left;
-    if (examSide.clipWidth === undefined) examSide.clipWidth = clipWidth;
-    else if (Math.abs(examSide.clipWidth - clipWidth) > 1) return false;
-
     Object.assign(layer.style, {
       left: `${clip.left}px`,
       top: `${clip.top}px`,
@@ -1250,11 +1307,13 @@
     },
     destroy: () => {
       observer.disconnect();
+      widthObserver.disconnect();
+      clearTimeout(widthSettleTimer);
       clearTimeout(debounceTimer);
       clearInterval(interval);
       cancelAnimationFrame(relayoutFrame);
       removeEventListener("scroll", requestRelayout, { capture: true });
-      removeEventListener("resize", requestFullRelayout);
+      removeEventListener("resize", requestRelayout);
 
       ++seq;
       clearInlineTranslations();

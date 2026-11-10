@@ -36,8 +36,8 @@
 
 ### Sidebar Toggle Recalculates the Shift
 - Input: Side layout shown, user opens or closes Udemy's curriculum sidebar (no window resize)
-- Steps: Udemy DOM changes → `requestRelayout()` → `positionSide()` sees a different container width → rebuild
-- Result: Column margin is recalculated (mock: 443px → 24px → 443px)
+- Steps: An ancestor's width changes on each animation frame → `ResizeObserver` → `requestRelayout()` → `positionSide()` → `syncShift()` updates the margin in place → boxes move
+- Result: Column margin follows the sidebar during its animation (mock: 443px → 24px → 443px) without removing the boxes; if the free width drops below 240px, the layout switches to below
 
 ### Boxes Taller Than the Quiz
 - Input: Narrow side column, so the translations are taller than the original question and answers
@@ -56,8 +56,8 @@
 
 ### Switch on Resize
 - Input: Window or sidebar width changes while a quiz is shown
-- Steps: resize → `requestFullRelayout()` → `showInlineTranslations()` with cached translations
-- Result: Layout switches between side and below without a new translation call
+- Steps: Side layout: `positionSide()` returns false when it no longer fits → `showInlineTranslations()`. Below layout: width stops changing for 150ms → `requestFullRelayout()` → `showInlineTranslations()` with cached translations
+- Result: Layout switches between side and below without a new translation call; exam results switch the same way through `renderExam()`
 
 ### Follow Scroll
 - Input: User scrolls the quiz
