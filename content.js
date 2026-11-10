@@ -923,10 +923,15 @@
 
     const els = exam.blocks.map(block => block.el);
     const scroller = scrollParentOf(els[0]);
+    // Same column shift as the quiz: the centered result column moves left to
+    // make room, so each original and its translation sit side by side.
+    const layout = { nodes: { cards: els, header: els[0] } };
+    shiftForSide(layout, scroller);
     if (sideColumn(els, scroller)) {
-      renderExamSide(exam, translated, scroller);
+      renderExamSide(exam, translated, scroller, layout);
       return;
     }
+    restoreShift();
 
     exam.blocks.forEach((block, i) => {
       if (!block.el.isConnected) return;
@@ -936,7 +941,7 @@
     });
   }
 
-  function renderExamSide(exam, translated, scroller) {
+  function renderExamSide(exam, translated, scroller, layout) {
     const els = exam.blocks.map(block => block.el);
 
     const layer = document.createElement("div");
@@ -962,15 +967,18 @@
     els[els.length - 1].after(spacer);
 
     document.body.append(layer);
-    examSide = { layer, items, els, scroller, spacer };
+    examSide = { layer, items, els, scroller, spacer, layout };
     positionExamSide();
   }
 
   // Returns false when the side layout no longer fits, so the caller re-renders.
   function positionExamSide() {
     if (!examSide) return false;
-    const { layer, items, els, scroller, spacer } = examSide;
+    const { layer, items, els, scroller, spacer, layout } = examSide;
     if (els.some(el => !el.isConnected)) return false;
+
+    // Udemy can re-center the result column after the first render.
+    if (shiftIsStale(layout, scroller)) return false;
 
     const column = sideColumn(els, scroller);
     if (!column) return false;
@@ -1004,6 +1012,8 @@
       examNodes.length &&
       examNodes.every(node => node.isConnected)
     ) {
+      // The text is unchanged, but the layout may have moved (sidebar, resize).
+      requestRelayout();
       return;
     }
 
