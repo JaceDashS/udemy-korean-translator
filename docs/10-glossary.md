@@ -19,18 +19,23 @@
 - Code: `dictionary-terms.js`, `dictionary.js` → `protect()`, `restore()`, `configure()`
 - Avoid: "glossary" for this feature (the glossary is this document)
 
-## Pair
-- Definition: A dictionary entry of an English word and its Korean meaning; the meaning replaces the word in the translation
-- Code: `pairs` in `dictionary-terms.js`, `configure()`, `meaningFor()` in `dictionary.js`
-- Avoid: "translation pair" (a pair here is always word → meaning)
+## Term
+- Definition: One row of the dictionary: an English word, an optional Korean meaning, and an optional case-sensitive flag
+- Code: `configure()`, `normalizeRows()` in `dictionary.js`; `terms` in `dictionary.json`
+- Avoid: "pair", "entry" (use "term")
+
+## Meaning
+- Definition: The Korean text that replaces a term in the translation. A term without a meaning stays in English
+- Code: `meaningFor()`, `restore()` in `dictionary.js`
+- Avoid: "translation" for this text
 
 ## Dictionary Branch
-- Definition: The `dictionary` branch of this repository, which holds `dictionary.json` with the pairs
+- Definition: The `dictionary` branch of this repository, which holds `dictionary.json` with the terms
 - Code: `GLOSSARY_URL` in `content.js`, `editor/index.html`
 - Avoid: "sync branch"
 
 ## Editor
-- Definition: The static page that edits pairs and registers them to the dictionary branch
+- Definition: The static page that edits the terms as a table and registers them to the dictionary branch
 - Code: `editor/index.html`, `register()`
 - Avoid: "admin page"
 

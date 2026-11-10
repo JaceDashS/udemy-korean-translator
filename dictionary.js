@@ -1,14 +1,17 @@
 /*
  * Developer term dictionary.
- * - Terms listed in dictionary-terms.js are kept in English: they are replaced
- *   with [[n]] placeholders before translation and restored afterwards.
- * - Pairs (word → meaning) are replaced with the meaning instead of the word.
+ * Each row is a term with an optional Korean meaning:
+ * - A term without a meaning is kept in English: it is replaced with a [[n]]
+ *   placeholder before translation and restored afterwards.
+ * - A term with a meaning is replaced with that meaning instead of the word.
+ * Rows come from dictionary.json (dictionary branch). The bundled list in
+ * dictionary-terms.js is used when that file cannot be used.
  */
 (() => {
   "use strict";
 
   const root = typeof window !== "undefined" ? window : globalThis;
-  const data = root.__udemyQuizTranslatorTerms || {};
+  const bundled = root.__udemyQuizTranslatorTerms || {};
 
   // The translator sometimes adds a bracket ("[[[0]]"); absorb extras.
   const PLACEHOLDER = /\[*\[\[\s*(\d+)\s*\]\]\]*/g;
@@ -29,7 +32,7 @@
   // Acronyms ("SAM", "LAG") must not match ordinary words ("Sam", "lag").
   const isAcronym = term => !/[a-z]/.test(term);
 
-  // Pair keys are compared case-insensitively with collapsed whitespace.
+  // Lookups ignore case and collapse whitespace.
   const normalize = text => text.trim().toLowerCase().replace(/\s+/g, " ");
 
   // One regex for all terms, longest first, so "IAM role" wins over "IAM"
@@ -50,50 +53,68 @@
     );
   }
 
-  // Later sources override earlier ones: groups < caseSensitive < pairs.
-  function collectEntries(pairs) {
-    const entries = new Map();
-    const add = (term, sensitive) => {
-      const trimmed = term.trim();
-      if (trimmed) entries.set(trimmed, sensitive);
-    };
+  // Rows from the bundled list. Groups match case-insensitively; caseSensitive
+  // entries match only with the exact casing.
+  function bundledRows() {
+    const rows = [];
+    for (const word of Object.values(bundled.groups || {}).flat()) rows.push({ word });
+    for (const word of bundled.caseSensitive || []) rows.push({ word, exact: true });
+    return rows;
+  }
 
-    for (const term of Object.values(data.groups || {}).flat()) {
-      add(term, isAcronym(term));
+  // One row per word. Duplicates are merged: exact wins, and a meaning is kept
+  // if any duplicate has one.
+  function normalizeRows(rows) {
+    const byWord = new Map();
+    for (const row of rows) {
+      const word = typeof row.word === "string" ? row.word.trim() : "";
+      if (!word) continue;
+
+      const previous = byWord.get(word);
+      const meaning = typeof row.meaning === "string" ? row.meaning.trim() : "";
+      byWord.set(word, {
+        word,
+        exact: Boolean(previous?.exact || row.exact === true),
+        meaning: meaning || previous?.meaning || ""
+      });
     }
-    for (const term of data.caseSensitive || []) add(term, true);
-    for (const term of Object.keys(pairs)) add(term, isAcronym(term));
-
-    return entries;
+    return [...byWord.values()];
   }
 
   let termRegex = null;
-  let meaningOf = new Map();
+  let exactMeaning = new Map();
+  let normalizedMeaning = new Map();
   let size = 0;
 
   /**
-   * Rebuild the matcher. `pairs` maps an English word to its Korean meaning.
-   * Calling it again replaces the previous pairs (used for remote updates).
+   * Rebuild the matcher from rows: [{ word, meaning?, exact? }].
+   * Called with no argument, it uses the bundled list.
    */
-  function configure(pairs = data.pairs || {}) {
-    const pairEntries = Object.entries(pairs).filter(
-      ([term, meaning]) => term.trim() && typeof meaning === "string" && meaning.trim()
-    );
+  function configure(rows = bundledRows()) {
+    const terms = normalizeRows(rows);
+    const entries = new Map();
+    exactMeaning = new Map();
+    normalizedMeaning = new Map();
 
-    meaningOf = new Map(
-      pairEntries.map(([term, meaning]) => [normalize(term), meaning.trim()])
-    );
+    for (const { word, exact, meaning } of terms) {
+      entries.set(word, exact || isAcronym(word));
+      if (meaning) {
+        exactMeaning.set(word, meaning);
+        normalizedMeaning.set(normalize(word), meaning);
+      }
+    }
 
-    const entries = collectEntries(Object.fromEntries(pairEntries));
     termRegex = buildRegex(entries);
     size = entries.size;
   }
 
-  // "subnets" finds the pair for "subnet" when the plural itself is not listed.
+  // "subnets" finds the meaning of "subnet" when the plural itself is not listed.
   function meaningFor(surface) {
+    const exact = exactMeaning.get(surface.trim());
+    if (exact) return exact;
+
     const key = normalize(surface);
-    if (meaningOf.has(key)) return meaningOf.get(key);
-    return meaningOf.get(key.replace(/es$|s$/, ""));
+    return normalizedMeaning.get(key) ?? normalizedMeaning.get(key.replace(/es$|s$/, ""));
   }
 
   configure();
@@ -101,7 +122,7 @@
   /**
    * Replace dictionary terms with [[n]] placeholders.
    * Returns { text, terms, meanings } where terms[n] is the original surface text
-   * and meanings[n] is the Korean meaning for a pair (undefined for kept terms).
+   * and meanings[n] is the Korean meaning (undefined for terms kept in English).
    */
   function protect(source) {
     const terms = [];
@@ -122,9 +143,9 @@
   }
 
   /**
-   * Put the terms back: a pair becomes its meaning, a kept term its English text.
-   * Returns null when any placeholder was lost, so the caller can fall back
-   * to a plain translation.
+   * Put the terms back: a term with a meaning becomes its meaning, a kept term
+   * its English text. Returns null when any placeholder was lost, so the caller
+   * can fall back to a plain translation.
    */
   function restore(translated, terms, meanings = []) {
     if (!terms.length) return translated;
@@ -134,7 +155,7 @@
       const index = Number(n);
       if (index >= terms.length) return match;
       seen.add(index);
-      return meanings[index] ?? terms[index];
+      return meanings[index] || terms[index];
     });
 
     return seen.size === terms.length ? restored : null;
@@ -144,6 +165,8 @@
     protect,
     restore,
     configure,
+    bundledRows,
+    normalizeRows,
     get size() {
       return size;
     }

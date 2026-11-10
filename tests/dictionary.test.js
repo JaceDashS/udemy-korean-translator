@@ -88,7 +88,7 @@ test("ordinary English verbs and nouns are still translated", () => {
 
 test("pairs are replaced with their meaning", () => {
   const { configure } = window.__udemyQuizTranslatorDictionary;
-  configure({ "private subnet": "프라이빗 서브넷", lag: "지연" });
+  configure([{ word: "private subnet", meaning: "프라이빗 서브넷" }, { word: "lag", meaning: "지연" }]);
   try {
     const { text, terms, meanings } = protect("Create a private subnet with lag.");
     assert.equal(text, "Create a [[0]] with [[1]].");
@@ -99,29 +99,29 @@ test("pairs are replaced with their meaning", () => {
       "프라이빗 서브넷을 생성하고 지연을 확인합니다."
     );
   } finally {
-    configure({});
+    configure();
   }
 });
 
 test("pair lookup accepts a plural of the listed word", () => {
   const { configure } = window.__udemyQuizTranslatorDictionary;
-  configure({ "private subnet": "프라이빗 서브넷" });
+  configure([{ word: "private subnet", meaning: "프라이빗 서브넷" }]);
   try {
     assert.deepEqual(protect("Two private subnets.").meanings, ["프라이빗 서브넷"]);
   } finally {
-    configure({});
+    configure();
   }
 });
 
 test("a pair overrides a kept term with the same spelling", () => {
   const { configure } = window.__udemyQuizTranslatorDictionary;
-  configure({ "Private Subnet": "프라이빗 서브넷" });
+  configure([{ word: "Private Subnet", meaning: "프라이빗 서브넷" }]);
   try {
     const { terms, meanings } = protect("a private subnet");
     assert.deepEqual(terms, ["private subnet"]);
     assert.deepEqual(meanings, ["프라이빗 서브넷"]);
   } finally {
-    configure({});
+    configure();
   }
 });
 
@@ -133,10 +133,54 @@ test("kept terms have no meaning and restore to English", () => {
 
 test("acronym pairs match case-sensitively", () => {
   const { configure } = window.__udemyQuizTranslatorDictionary;
-  configure({ SAM: "서버리스 애플리케이션 모델" });
+  configure([{ word: "SAM", meaning: "서버리스 애플리케이션 모델" }]);
   try {
     assert.deepEqual(protect("Sam and SAM.").terms, ["SAM"]);
   } finally {
-    configure({});
+    configure();
   }
+});
+
+test("a term without a meaning is kept in English", () => {
+  const { configure } = window.__udemyQuizTranslatorDictionary;
+  configure([{ word: "Lambda" }]);
+  try {
+    const { terms, meanings } = protect("Use Lambda here.");
+    assert.deepEqual(terms, ["Lambda"]);
+    assert.deepEqual(meanings, [undefined]);
+    assert.equal(restore("[[0]]를 씁니다.", terms, meanings), "Lambda를 씁니다.");
+  } finally {
+    configure();
+  }
+});
+
+test("an exact term matches only the given casing", () => {
+  const { configure } = window.__udemyQuizTranslatorDictionary;
+  configure([{ word: "haiku", exact: true }]);
+  try {
+    assert.deepEqual(protect("haiku and Haiku").terms, ["haiku"]);
+  } finally {
+    configure();
+  }
+});
+
+test("duplicate words are merged and keep the meaning", () => {
+  const { configure, normalizeRows } = window.__udemyQuizTranslatorDictionary;
+  assert.deepEqual(
+    normalizeRows([{ word: "Lambda" }, { word: " Lambda ", meaning: "람다", exact: true }]),
+    [{ word: "Lambda", exact: true, meaning: "람다" }]
+  );
+  configure([{ word: "Lambda" }, { word: "Lambda", meaning: "람다" }]);
+  try {
+    assert.deepEqual(protect("Use Lambda.").meanings, ["람다"]);
+  } finally {
+    configure();
+  }
+});
+
+test("the bundled rows match the migrated dictionary file", () => {
+  const { bundledRows, normalizeRows } = window.__udemyQuizTranslatorDictionary;
+  const rows = normalizeRows(bundledRows());
+  assert.equal(rows.length, 1583);
+  assert.equal(rows.filter(row => row.exact).length, 146);
 });

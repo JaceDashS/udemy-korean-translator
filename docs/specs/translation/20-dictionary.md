@@ -5,19 +5,20 @@
 - Scope: Claude / Anthropic, the CCAR-F exam domains (agentic architecture, tool design and MCP, Claude Code, prompt engineering, context management), AWS services, AWS concepts, and general development terms
 - Technical words that appear in exam text, such as "deterministic" and "session", stay in English; ordinary English words ("continue", "summary", "attention") are still translated
 - The longest matching term wins ("AWS Lambda function" over "AWS Lambda")
-- Acronyms (no lowercase letters) and names listed as case-sensitive match only with exact casing, so ordinary words are still translated ("Sam", "lag", "haiku")
+- Acronyms (no lowercase letters) and terms marked "case-sensitive" match only with exact casing, so ordinary words are still translated ("Sam", "lag", "haiku")
 - A term inside another word is not matched ("subnetwork" is not "subnet")
-- Pairs (English word → Korean meaning) are replaced with the meaning in the translation. The English word does not appear in the Korean text
-- A pair also matches its plural ("private subnets" uses the meaning of "private subnet")
-- A pair overrides a kept term with the same spelling
+- Each term is one row: a word, an optional Korean meaning, and an optional case-sensitive flag
+- A term with a meaning is replaced with that meaning in the translation. The English word does not appear in the Korean text
+- A term without a meaning stays in English
+- A term also matches its plural ("private subnets" uses the meaning of "private subnet")
 - If the dictionary cannot be applied safely, the text is still translated without it; a translation is never left broken
 
-Example (kept term):
+Example (term without meaning):
 - Input: "Attach an IAM role to the AWS Lambda function in a private subnet."
 - Result: Korean sentence where `IAM role`, `AWS Lambda function` stay English
 
-Example (pair):
-- Input: "Create a private subnet for the VPC." with pair `private subnet` → `프라이빗 서브넷`
+Example (term with meaning):
+- Input: "Create a private subnet for the VPC." with a row `private subnet` → `프라이빗 서브넷`
 - Result: Korean sentence where `private subnet` is replaced by `프라이빗 서브넷`
 
 - Design: [Dictionary Design](../../design/translation/20-dictionary.md#placeholder-substitution)

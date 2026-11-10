@@ -463,27 +463,29 @@
     }
   }
 
-  // Pairs (word → meaning) are loaded from the dictionary branch on each page
-  // load, so a push takes effect without reloading the extension. The bundled
-  // pairs in dictionary-terms.js stay in use when the download fails.
+  // Terms are loaded from the dictionary branch on each page load, so a change
+  // takes effect without reloading the extension. The bundled list in
+  // dictionary-terms.js stays in use when the download fails.
   const GLOSSARY_URL =
     "https://raw.githubusercontent.com/JaceDashS/udemy-quiz-translator/dictionary/dictionary.json";
   const GLOSSARY_TIMEOUT_MS = 3000;
-  const GLOSSARY_LIMITS = { entries: 5000, length: 200 };
+  const GLOSSARY_LIMITS = { terms: 10000, length: 200 };
 
-  // The file is data only: anything that is not a short string pair is rejected.
-  function isValidPairs(pairs) {
-    if (!pairs || typeof pairs !== "object" || Array.isArray(pairs)) return false;
+  // The file is data only: every row needs a short word, and may have a string
+  // meaning and a boolean exact flag. Anything else is rejected.
+  function isValidTerms(terms) {
+    if (!Array.isArray(terms) || terms.length > GLOSSARY_LIMITS.terms) return false;
 
-    const entries = Object.entries(pairs);
-    if (entries.length > GLOSSARY_LIMITS.entries) return false;
-
-    return entries.every(
-      ([word, meaning]) =>
-        typeof meaning === "string" &&
-        word.trim().length > 0 &&
-        word.length <= GLOSSARY_LIMITS.length &&
-        meaning.length <= GLOSSARY_LIMITS.length
+    return terms.every(
+      row =>
+        row &&
+        typeof row === "object" &&
+        typeof row.word === "string" &&
+        row.word.trim().length > 0 &&
+        row.word.length <= GLOSSARY_LIMITS.length &&
+        (row.meaning == null ||
+          (typeof row.meaning === "string" && row.meaning.length <= GLOSSARY_LIMITS.length)) &&
+        (row.exact === undefined || typeof row.exact === "boolean")
     );
   }
 
@@ -502,12 +504,14 @@
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       const data = await response.json();
-      if (!isValidPairs(data?.pairs)) throw new Error("Invalid dictionary file.");
+      if (data?.version !== 2 || !isValidTerms(data.terms)) {
+        throw new Error("Invalid dictionary file.");
+      }
 
-      dictionary.configure(data.pairs);
-      console.info(LOG, `Loaded ${Object.keys(data.pairs).length} dictionary pairs.`);
+      dictionary.configure(data.terms);
+      console.info(LOG, `Loaded ${data.terms.length} dictionary terms.`);
     } catch (error) {
-      console.warn(LOG, "Using the bundled dictionary pairs.", error);
+      console.warn(LOG, "Using the bundled dictionary terms.", error);
     } finally {
       clearTimeout(timer);
     }
