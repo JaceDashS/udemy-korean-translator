@@ -83,6 +83,24 @@ async function exists(file) {
   }
 }
 
+// Whether a command runs successfully (used for the setup checklist).
+async function succeeds(cmd, args) {
+  try {
+    await command(cmd, args);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+// What the editor shows in its setup checklist.
+async function setupChecks() {
+  const git = await succeeds("git", ["--version"]);
+  const gh = await succeeds("gh", ["--version"]);
+  const ghAuth = gh && (await succeeds("gh", ["auth", "status"]));
+  return { git, gh, ghAuth };
+}
+
 // Who is logged in to gh, and whether that account can push to the repository.
 async function whoAmI() {
   const login = await gh(["api", "user", "--jq", ".login"]);
@@ -214,11 +232,17 @@ const server = http.createServer(async (req, res) => {
 
   try {
     if (req.method === "GET" && req.url === "/health") {
+      const checks = await setupChecks();
       try {
         const { login, canPush } = await exclusive(whoAmI);
-        send(res, 200, { ok: true, login, canPush, repo: REPO });
+        send(res, 200, { ok: true, login, canPush, repo: REPO, checks });
       } catch (error) {
-        send(res, 200, { ok: false, error: "gh is not ready. Run `gh auth login`.", detail: String(error.message) });
+        send(res, 200, {
+          ok: false,
+          error: "gh is not ready. Run `gh auth login`.",
+          detail: String(error.message),
+          checks
+        });
       }
       return;
     }

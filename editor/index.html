@@ -162,14 +162,13 @@
   </div>
 
   <div class="panel" id="setup" hidden>
-    <p><b>도우미가 연결되지 않았습니다.</b> 등록하려면 PC에서 한 번 설정하세요.</p>
-    <ol>
-      <li>Node.js 18 이상, git, GitHub CLI(<code>gh</code>)를 설치합니다.</li>
-      <li>터미널에서 <code>gh auth login</code>을 실행합니다. Git 인증도 함께 설정하세요.</li>
-      <li>저장소를 받아 <code>node tools/dictionary-helper.js</code>를 실행합니다. 그 창은 편집하는 동안 열어 두세요.</li>
-      <li>이 페이지를 새로고침합니다.</li>
-    </ol>
-    <p><button id="copyJson" type="button">JSON 복사</button> 도우미 없이 내용을 복사해 직접 올릴 수도 있습니다.</p>
+    <p><b>도우미가 연결되지 않았습니다.</b> 아래 버튼으로 준비 명령을 복사해 PowerShell에 붙여넣고 Enter를 누르세요. 필요한 프로그램 확인과 설치, GitHub 로그인, 도우미 실행을 차례로 진행합니다.</p>
+    <p class="muted" id="checks"></p>
+    <p>
+      <button id="setupCmd" class="primary" type="button">준비 명령 복사</button>
+      <button id="copyJson" type="button">JSON 복사</button>
+    </p>
+    <p class="muted">복사되는 명령: <code>irm https://jacedashs.github.io/udemy-quiz-translator/tools/setup.ps1 | iex</code></p>
   </div>
 
   <div class="row">
@@ -239,6 +238,7 @@
     const $ = id => document.getElementById(id);
     const ui = {
       reload: $("reload"), helper: $("helper"), setup: $("setup"), copyJson: $("copyJson"),
+      setupCmd: $("setupCmd"), checks: $("checks"),
       search: $("search"), addRow: $("addRow"), count: $("count"), problems: $("problems"),
       body: $("body"), register: $("register"), changes: $("changes"), status: $("status"),
       grid: $("grid"), newWord: $("newWord"), newMeaning: $("newMeaning"),
@@ -253,6 +253,9 @@
     let snapshot = new Map();
     // helper: { login, canPush } when tools/dictionary-helper.js is running, else null.
     let helper = null;
+    // checks: { git, gh, ghAuth } from the last /health answer, or null when the helper is off.
+    let lastChecks = null;
+    const SETUP_COMMAND = "irm https://jacedashs.github.io/udemy-quiz-translator/tools/setup.ps1 | iex";
     let nextId = 1;
     let query = "";
     let sort = { key: null, dir: 1 };
@@ -436,7 +439,18 @@
       ui.nextPage.disabled = ui.lastPage.disabled = page >= pages;
     }
 
+    function renderChecks() {
+      if (!lastChecks) {
+        ui.checks.textContent = "PC 상태: 확인 불가 (도우미가 꺼져 있습니다)";
+        return;
+      }
+      const mark = ok => (ok ? "✓" : "✗");
+      ui.checks.textContent =
+        `PC 상태 — git ${mark(lastChecks.git)} · gh ${mark(lastChecks.gh)} · gh 로그인 ${mark(lastChecks.ghAuth)}`;
+    }
+
     function updateHelper() {
+      renderChecks();
       if (!helper) {
         ui.helper.textContent = "도우미 연결 안 됨";
         ui.helper.className = "helper off";
@@ -619,9 +633,11 @@
           signal: AbortSignal.timeout(2000)
         });
         const data = await response.json();
+        lastChecks = data.checks || null;
         helper = data.ok ? { login: data.login, canPush: data.canPush } : null;
         if (!data.ok) console.warn("[Dictionary Editor]", data.error, data.detail || "");
       } catch (_) {
+        lastChecks = null;
         helper = null;
       }
       updateHelper();
@@ -682,6 +698,14 @@
     ui.reload.addEventListener("click", () => {
       if (isDirty() && !confirm("저장하지 않은 변경이 사라집니다. 계속할까요?")) return;
       load();
+    });
+    ui.setupCmd.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(SETUP_COMMAND);
+        say("준비 명령을 복사했습니다. PowerShell 창에 붙여넣고 Enter를 누르세요. 설치 여부는 창에서 물어봅니다.", "ok");
+      } catch (_) {
+        say(`복사하지 못했습니다. 직접 입력하세요: ${SETUP_COMMAND}`, "error");
+      }
     });
     ui.copyJson.addEventListener("click", async () => {
       try {
