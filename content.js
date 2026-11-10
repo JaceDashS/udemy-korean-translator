@@ -193,6 +193,10 @@
     return { left: r.left - contentLeft, right: contentRight - r.right, contentLeft, width: r.width };
   }
 
+  // A vertical scrollbar (about 10-17px) on the scroll container makes a centered
+  // column look 10px off-center, so the tolerance allows one scrollbar width.
+  const CENTERED_TOLERANCE = 16;
+
   // Innermost ancestor holding the whole quiz that is centered in its parent
   // (margin auto, flex, or grid centering all look the same geometrically).
   function centeredColumn(quiz, scroller) {
@@ -203,7 +207,7 @@
       if (!cards.every(card => el.contains(card))) continue;
 
       const gaps = horizontalGaps(el);
-      if (gaps.left > CENTERED_MIN_GAP && Math.abs(gaps.left - gaps.right) <= 4) {
+      if (gaps.left > CENTERED_MIN_GAP && Math.abs(gaps.left - gaps.right) <= CENTERED_TOLERANCE) {
         return { el, ...gaps };
       }
     }
