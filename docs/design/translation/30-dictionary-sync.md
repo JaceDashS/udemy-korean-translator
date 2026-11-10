@@ -67,7 +67,8 @@ flowchart TD
 - Too old to update (`registerThenContinue(id, true)`): a helper that answers `Unknown request.` to `ping` or `update` predates these requests. The guide tab opens; the editor and the tab stop the running helper before each `ping`, because a running process keeps its old code, and wait until a helper of the bundled version answers
 - `chainId` is incremented by 취소 and 도우미 끄기, so a waiting loop ends instead of continuing an abandoned chain
 - The rows are read at submit time, so edits made while the chain waited are included
-- The last known login and push permission are kept in the page's `localStorage` only to label the button (등록 or 등록 신청) before the helper runs again
+- The button reads 등록 until the helper has reported the push permission once; after that, 등록 (owner) or 등록 신청 (others). The last known login and permission are kept in the page's `localStorage` only for this label. The helper decides between a commit and a pull request at submit time, so the label never changes what happens
+- Scenario: First click on a new PC by a non-owner → button 등록 → chain → status says no push permission → 등록 신청 중... → 등록 신청 완료; the next visit shows 등록 신청
 - Scenario: Clean PC, helper registered, no GitHub CLI → click 등록 신청 → button GitHub CLI 설치 → click → installed → button GitHub 로그인 → click → login window and tab → approved → pull request opened without another click
 - All scenarios: [Dictionary Sync Scenarios](../../testing/scenarios/translation/30-dictionary-sync.md#register-chain-scenarios)
 

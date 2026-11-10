@@ -514,7 +514,9 @@
         login: "GitHub 로그인",
         waitLogin: "로그인 기다리는 중..."
       };
-      ui.register.textContent = labels[step] || (helper?.canPush ? "등록" : "등록 신청");
+      // Until the helper has reported the permission once, the label is 등록;
+      // the helper decides between a commit and a request either way.
+      ui.register.textContent = labels[step] || (helper && !helper.canPush ? "등록 신청" : "등록");
       ui.register.disabled = !IS_EXTENSION ||
         step === "busy" || step === "waitLogin" ||
         (!step && (!dirty || Boolean(problem)));
