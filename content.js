@@ -237,14 +237,14 @@
     shift = null;
   }
 
-  // Left margin that centers original + translation as a pair, or null when
-  // the column is already at least that far left.
+  // Left margin that centers original + translation as a pair, or null when the
+  // column is already there. The margin can move the column left or right.
   function shiftTarget(column, scroller) {
     const room = visibleRect(scroller).right - column.contentLeft;
     const translationWidth = Math.max(SIDE_MAX_WIDTH, column.width);
     const pair = column.width + SIDE_GAP * 2 + translationWidth;
     const target = Math.max(SHIFT_MIN_MARGIN, (room - pair) / 2);
-    return target < column.left - 1 ? target : null;
+    return Math.abs(target - column.left) > 1 ? target : null;
   }
 
   // Move the centered column left so original + translation are centered together.
