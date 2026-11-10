@@ -239,16 +239,21 @@
 
   // Left margin that centers original + translation as a pair, or null when the
   // column is already there. The margin can move the column left or right.
-  function shiftTarget(column, scroller) {
+  function shiftTarget(column, scroller, cards = null) {
     const clip = visibleRect(scroller);
-    const translationWidth = Math.max(SIDE_MAX_WIDTH, column.width);
-    const pair = column.width + SIDE_GAP * 2 + translationWidth;
+
+    // The pair is measured from the real originals (cards), which can be
+    // narrower than the element that holds them.
+    const rects = cards ? cards.map(card => card.getBoundingClientRect()) : null;
+    const left = rects ? Math.min(...rects.map(r => r.left)) : column.contentLeft + column.left;
+    const width = rects ? Math.max(...rects.map(r => r.right)) - left : column.width;
+    const translationWidth = Math.max(SIDE_MAX_WIDTH, width);
+    const pair = width + SIDE_GAP * 2 + translationWidth;
 
     // Where the pair's left edge must be to center it in the visible area, and
-    // where the column is now. The margin moves by the difference.
+    // where the originals are now. The margin moves by the difference.
     const desiredLeft = clip.left + (clip.right - clip.left - pair) / 2;
-    const currentLeft = column.contentLeft + column.left;
-    const target = Math.max(SHIFT_MIN_MARGIN, column.left + (desiredLeft - currentLeft));
+    const target = Math.max(SHIFT_MIN_MARGIN, column.left + (desiredLeft - left));
     return Math.abs(target - column.left) > 1 ? target : null;
   }
 
@@ -257,7 +262,7 @@
     const column = centeredColumn(quiz, scroller);
     if (!column) return;
 
-    const target = shiftTarget(column, scroller);
+    const target = shiftTarget(column, scroller, quiz.nodes.cards);
     if (target !== null) applyShift(column.el, target);
   }
 
@@ -269,7 +274,7 @@
         shift.el.style.getPropertyValue("margin-left") !== shift.applied;
     }
     const column = centeredColumn(quiz, scroller);
-    return !!column && shiftTarget(column, scroller) !== null;
+    return !!column && shiftTarget(column, scroller, quiz.nodes.cards) !== null;
   }
 
   function showSideTranslations(quiz, questionKo, answersKo, scroller) {
