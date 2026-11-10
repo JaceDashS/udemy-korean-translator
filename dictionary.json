@@ -1,4 +1,4900 @@
 {
-  "version": 1,
-  "pairs": {}
+  "version": 2,
+  "terms": [
+    {
+      "word": "--allowedTools"
+    },
+    {
+      "word": "--dangerously-skip-permissions"
+    },
+    {
+      "word": "--max-turns"
+    },
+    {
+      "word": "--output-format"
+    },
+    {
+      "word": "--permission-mode"
+    },
+    {
+      "word": "--print"
+    },
+    {
+      "word": "-p flag"
+    },
+    {
+      "word": ".claude/agents"
+    },
+    {
+      "word": ".claude/commands"
+    },
+    {
+      "word": ".claude/settings.json"
+    },
+    {
+      "word": ".claude/skills"
+    },
+    {
+      "word": ".mcp.json"
+    },
+    {
+      "word": "@import"
+    },
+    {
+      "word": "/agents"
+    },
+    {
+      "word": "/clear"
+    },
+    {
+      "word": "/compact"
+    },
+    {
+      "word": "/config"
+    },
+    {
+      "word": "/context"
+    },
+    {
+      "word": "/cost"
+    },
+    {
+      "word": "/hooks"
+    },
+    {
+      "word": "/init"
+    },
+    {
+      "word": "/mcp"
+    },
+    {
+      "word": "/memory"
+    },
+    {
+      "word": "/model"
+    },
+    {
+      "word": "/permissions"
+    },
+    {
+      "word": "/resume"
+    },
+    {
+      "word": "/review"
+    },
+    {
+      "word": "<answer>"
+    },
+    {
+      "word": "<thinking>"
+    },
+    {
+      "word": "~/.claude/settings.json"
+    },
+    {
+      "word": "A record"
+    },
+    {
+      "word": "A/B test"
+    },
+    {
+      "word": "A/B testing"
+    },
+    {
+      "word": "AAAA record"
+    },
+    {
+      "word": "ABAC"
+    },
+    {
+      "word": "abstention"
+    },
+    {
+      "word": "acceptEdits"
+    },
+    {
+      "word": "access key"
+    },
+    {
+      "word": "access point"
+    },
+    {
+      "word": "access scope"
+    },
+    {
+      "word": "access token"
+    },
+    {
+      "word": "ACID"
+    },
+    {
+      "word": "ACL"
+    },
+    {
+      "word": "ACM"
+    },
+    {
+      "word": "active-active"
+    },
+    {
+      "word": "active-passive"
+    },
+    {
+      "word": "AD Connector"
+    },
+    {
+      "word": "adaptive thinking"
+    },
+    {
+      "word": "additionalContext"
+    },
+    {
+      "word": "Admin API"
+    },
+    {
+      "word": "agent"
+    },
+    {
+      "word": "agent architecture"
+    },
+    {
+      "word": "agent definition"
+    },
+    {
+      "word": "agent handoff"
+    },
+    {
+      "word": "agent loop"
+    },
+    {
+      "word": "agent orchestration"
+    },
+    {
+      "word": "Agent SDK",
+      "exact": true
+    },
+    {
+      "word": "agent skills"
+    },
+    {
+      "word": "agent team"
+    },
+    {
+      "word": "AgentDefinition"
+    },
+    {
+      "word": "agentic"
+    },
+    {
+      "word": "agentic architecture"
+    },
+    {
+      "word": "agentic loop"
+    },
+    {
+      "word": "agentic session"
+    },
+    {
+      "word": "agentic system"
+    },
+    {
+      "word": "agentic workflow"
+    },
+    {
+      "word": "ALB"
+    },
+    {
+      "word": "alias record"
+    },
+    {
+      "word": "all at once"
+    },
+    {
+      "word": "allow rule"
+    },
+    {
+      "word": "allowed_tools"
+    },
+    {
+      "word": "allowedTools"
+    },
+    {
+      "word": "allowlist"
+    },
+    {
+      "word": "Amazon",
+      "exact": true
+    },
+    {
+      "word": "Amazon API Gateway"
+    },
+    {
+      "word": "Amazon AppStream 2.0"
+    },
+    {
+      "word": "Amazon Athena"
+    },
+    {
+      "word": "Amazon Aurora"
+    },
+    {
+      "word": "Amazon Bedrock"
+    },
+    {
+      "word": "Amazon CloudFront"
+    },
+    {
+      "word": "Amazon CloudWatch"
+    },
+    {
+      "word": "Amazon CodeGuru"
+    },
+    {
+      "word": "Amazon Cognito"
+    },
+    {
+      "word": "Amazon Comprehend"
+    },
+    {
+      "word": "Amazon Connect"
+    },
+    {
+      "word": "Amazon Data Firehose"
+    },
+    {
+      "word": "Amazon Detective"
+    },
+    {
+      "word": "Amazon DocumentDB"
+    },
+    {
+      "word": "Amazon DynamoDB"
+    },
+    {
+      "word": "Amazon EBS"
+    },
+    {
+      "word": "Amazon EC2"
+    },
+    {
+      "word": "Amazon ECR"
+    },
+    {
+      "word": "Amazon ECS"
+    },
+    {
+      "word": "Amazon EFS"
+    },
+    {
+      "word": "Amazon EKS"
+    },
+    {
+      "word": "Amazon ElastiCache"
+    },
+    {
+      "word": "Amazon EMR"
+    },
+    {
+      "word": "Amazon EventBridge"
+    },
+    {
+      "word": "Amazon Forecast"
+    },
+    {
+      "word": "Amazon FSx"
+    },
+    {
+      "word": "Amazon GuardDuty"
+    },
+    {
+      "word": "Amazon Inspector"
+    },
+    {
+      "word": "Amazon Kendra"
+    },
+    {
+      "word": "Amazon Keyspaces"
+    },
+    {
+      "word": "Amazon Kinesis"
+    },
+    {
+      "word": "Amazon Lex"
+    },
+    {
+      "word": "Amazon Lightsail"
+    },
+    {
+      "word": "Amazon Machine Image"
+    },
+    {
+      "word": "Amazon Macie"
+    },
+    {
+      "word": "Amazon MemoryDB"
+    },
+    {
+      "word": "Amazon MQ"
+    },
+    {
+      "word": "Amazon MSK"
+    },
+    {
+      "word": "Amazon Neptune"
+    },
+    {
+      "word": "Amazon OpenSearch Service"
+    },
+    {
+      "word": "Amazon Personalize"
+    },
+    {
+      "word": "Amazon Pinpoint"
+    },
+    {
+      "word": "Amazon Polly"
+    },
+    {
+      "word": "Amazon Q"
+    },
+    {
+      "word": "Amazon QLDB"
+    },
+    {
+      "word": "Amazon QuickSight"
+    },
+    {
+      "word": "Amazon RDS"
+    },
+    {
+      "word": "Amazon Redshift"
+    },
+    {
+      "word": "Amazon Rekognition"
+    },
+    {
+      "word": "Amazon Route 53"
+    },
+    {
+      "word": "Amazon S3"
+    },
+    {
+      "word": "Amazon SageMaker"
+    },
+    {
+      "word": "Amazon SES"
+    },
+    {
+      "word": "Amazon SNS"
+    },
+    {
+      "word": "Amazon SQS"
+    },
+    {
+      "word": "Amazon Textract"
+    },
+    {
+      "word": "Amazon Timestream"
+    },
+    {
+      "word": "Amazon Transcribe"
+    },
+    {
+      "word": "Amazon Translate"
+    },
+    {
+      "word": "Amazon VPC"
+    },
+    {
+      "word": "Amazon WorkSpaces"
+    },
+    {
+      "word": "AMI"
+    },
+    {
+      "word": "Amplify",
+      "exact": true
+    },
+    {
+      "word": "anomaly detection"
+    },
+    {
+      "word": "Anthropic",
+      "exact": true
+    },
+    {
+      "word": "Anthropic API"
+    },
+    {
+      "word": "Apache Parquet"
+    },
+    {
+      "word": "API"
+    },
+    {
+      "word": "API call"
+    },
+    {
+      "word": "API Gateway"
+    },
+    {
+      "word": "API key"
+    },
+    {
+      "word": "API request"
+    },
+    {
+      "word": "App Runner",
+      "exact": true
+    },
+    {
+      "word": "Application Load Balancer"
+    },
+    {
+      "word": "Application Migration Service",
+      "exact": true
+    },
+    {
+      "word": "approval gate"
+    },
+    {
+      "word": "approval step"
+    },
+    {
+      "word": "AppStream",
+      "exact": true
+    },
+    {
+      "word": "AppSync",
+      "exact": true
+    },
+    {
+      "word": "Artifact",
+      "exact": true
+    },
+    {
+      "word": "Artifacts",
+      "exact": true
+    },
+    {
+      "word": "ASG"
+    },
+    {
+      "word": "ask rule"
+    },
+    {
+      "word": "assistant prefill"
+    },
+    {
+      "word": "assistant turn"
+    },
+    {
+      "word": "AssumeRole"
+    },
+    {
+      "word": "asynchronous"
+    },
+    {
+      "word": "Athena",
+      "exact": true
+    },
+    {
+      "word": "atomic tool"
+    },
+    {
+      "word": "audit log"
+    },
+    {
+      "word": "audit logging"
+    },
+    {
+      "word": "Audit Manager",
+      "exact": true
+    },
+    {
+      "word": "audit trail"
+    },
+    {
+      "word": "Aurora",
+      "exact": true
+    },
+    {
+      "word": "Aurora cluster"
+    },
+    {
+      "word": "Aurora Global Database"
+    },
+    {
+      "word": "Aurora Replica"
+    },
+    {
+      "word": "Aurora Serverless"
+    },
+    {
+      "word": "authentication"
+    },
+    {
+      "word": "authorization"
+    },
+    {
+      "word": "authorization server"
+    },
+    {
+      "word": "Auto Mode",
+      "exact": true
+    },
+    {
+      "word": "Auto Scaling"
+    },
+    {
+      "word": "Auto Scaling group"
+    },
+    {
+      "word": "auto-accept"
+    },
+    {
+      "word": "auto-compact"
+    },
+    {
+      "word": "auto-compaction"
+    },
+    {
+      "word": "automated backup"
+    },
+    {
+      "word": "autonomous agent"
+    },
+    {
+      "word": "autonomy"
+    },
+    {
+      "word": "Availability Zone"
+    },
+    {
+      "word": "AWS",
+      "exact": true
+    },
+    {
+      "word": "AWS Amplify"
+    },
+    {
+      "word": "AWS App Runner"
+    },
+    {
+      "word": "AWS Application Migration Service"
+    },
+    {
+      "word": "AWS AppSync"
+    },
+    {
+      "word": "AWS Artifact"
+    },
+    {
+      "word": "AWS Audit Manager"
+    },
+    {
+      "word": "AWS Auto Scaling"
+    },
+    {
+      "word": "AWS Backup"
+    },
+    {
+      "word": "AWS Batch"
+    },
+    {
+      "word": "AWS Budgets"
+    },
+    {
+      "word": "AWS CDK"
+    },
+    {
+      "word": "AWS Certificate Manager"
+    },
+    {
+      "word": "AWS CLI"
+    },
+    {
+      "word": "AWS Client VPN"
+    },
+    {
+      "word": "AWS Cloud9"
+    },
+    {
+      "word": "AWS CloudFormation"
+    },
+    {
+      "word": "AWS CloudHSM"
+    },
+    {
+      "word": "AWS CloudShell"
+    },
+    {
+      "word": "AWS CloudTrail"
+    },
+    {
+      "word": "AWS CodeArtifact"
+    },
+    {
+      "word": "AWS CodeBuild"
+    },
+    {
+      "word": "AWS CodeCommit"
+    },
+    {
+      "word": "AWS CodeDeploy"
+    },
+    {
+      "word": "AWS CodePipeline"
+    },
+    {
+      "word": "AWS CodeStar"
+    },
+    {
+      "word": "AWS Compute Optimizer"
+    },
+    {
+      "word": "AWS Config"
+    },
+    {
+      "word": "AWS Control Tower"
+    },
+    {
+      "word": "AWS Cost and Usage Report"
+    },
+    {
+      "word": "AWS Cost Explorer"
+    },
+    {
+      "word": "AWS DataSync"
+    },
+    {
+      "word": "AWS Direct Connect"
+    },
+    {
+      "word": "AWS Directory Service"
+    },
+    {
+      "word": "AWS DMS"
+    },
+    {
+      "word": "AWS Elastic Beanstalk"
+    },
+    {
+      "word": "AWS Elastic Disaster Recovery"
+    },
+    {
+      "word": "AWS Fargate"
+    },
+    {
+      "word": "AWS Firewall Manager"
+    },
+    {
+      "word": "AWS Free Tier"
+    },
+    {
+      "word": "AWS Global Accelerator"
+    },
+    {
+      "word": "AWS Glue"
+    },
+    {
+      "word": "AWS Graviton"
+    },
+    {
+      "word": "AWS Health Dashboard"
+    },
+    {
+      "word": "AWS IAM"
+    },
+    {
+      "word": "AWS Inferentia"
+    },
+    {
+      "word": "AWS IoT Core"
+    },
+    {
+      "word": "AWS KMS"
+    },
+    {
+      "word": "AWS Lake Formation"
+    },
+    {
+      "word": "AWS Lambda"
+    },
+    {
+      "word": "AWS Lambda function"
+    },
+    {
+      "word": "AWS License Manager"
+    },
+    {
+      "word": "AWS Local Zones"
+    },
+    {
+      "word": "AWS managed key"
+    },
+    {
+      "word": "AWS Managed Microsoft AD"
+    },
+    {
+      "word": "AWS managed policy"
+    },
+    {
+      "word": "AWS Management Console"
+    },
+    {
+      "word": "AWS Marketplace"
+    },
+    {
+      "word": "AWS MGN"
+    },
+    {
+      "word": "AWS Migration Hub"
+    },
+    {
+      "word": "AWS Network Firewall"
+    },
+    {
+      "word": "AWS Nitro System"
+    },
+    {
+      "word": "AWS Organizations"
+    },
+    {
+      "word": "AWS Outposts"
+    },
+    {
+      "word": "AWS owned key"
+    },
+    {
+      "word": "AWS Personal Health Dashboard"
+    },
+    {
+      "word": "AWS Pricing Calculator"
+    },
+    {
+      "word": "AWS PrivateLink"
+    },
+    {
+      "word": "AWS RAM"
+    },
+    {
+      "word": "AWS Resource Access Manager"
+    },
+    {
+      "word": "AWS SAM"
+    },
+    {
+      "word": "AWS Schema Conversion Tool"
+    },
+    {
+      "word": "AWS SCT"
+    },
+    {
+      "word": "AWS SDK"
+    },
+    {
+      "word": "AWS Secrets Manager"
+    },
+    {
+      "word": "AWS Security Hub"
+    },
+    {
+      "word": "AWS Service Catalog"
+    },
+    {
+      "word": "AWS Shield"
+    },
+    {
+      "word": "AWS Site-to-Site VPN"
+    },
+    {
+      "word": "AWS Snowball"
+    },
+    {
+      "word": "AWS Snowball Edge"
+    },
+    {
+      "word": "AWS Snowcone"
+    },
+    {
+      "word": "AWS SSO"
+    },
+    {
+      "word": "AWS Step Functions"
+    },
+    {
+      "word": "AWS Storage Gateway"
+    },
+    {
+      "word": "AWS STS"
+    },
+    {
+      "word": "AWS Support"
+    },
+    {
+      "word": "AWS Systems Manager"
+    },
+    {
+      "word": "AWS Trainium"
+    },
+    {
+      "word": "AWS Transfer Family"
+    },
+    {
+      "word": "AWS Transit Gateway"
+    },
+    {
+      "word": "AWS Trusted Advisor"
+    },
+    {
+      "word": "AWS WAF"
+    },
+    {
+      "word": "AWS Wavelength"
+    },
+    {
+      "word": "AWS Well-Architected Framework"
+    },
+    {
+      "word": "AWS X-Ray"
+    },
+    {
+      "word": "AZ"
+    },
+    {
+      "word": "background task"
+    },
+    {
+      "word": "Backup",
+      "exact": true
+    },
+    {
+      "word": "backup and restore"
+    },
+    {
+      "word": "backup policy"
+    },
+    {
+      "word": "Base64"
+    },
+    {
+      "word": "baseline"
+    },
+    {
+      "word": "Bash",
+      "exact": true
+    },
+    {
+      "word": "Bash command"
+    },
+    {
+      "word": "bash tool"
+    },
+    {
+      "word": "Bash tool"
+    },
+    {
+      "word": "Basic Support",
+      "exact": true
+    },
+    {
+      "word": "bastion host"
+    },
+    {
+      "word": "Batch",
+      "exact": true
+    },
+    {
+      "word": "batch processing"
+    },
+    {
+      "word": "Batches",
+      "exact": true
+    },
+    {
+      "word": "Bedrock",
+      "exact": true
+    },
+    {
+      "word": "Bedrock Agents"
+    },
+    {
+      "word": "Bedrock Guardrails"
+    },
+    {
+      "word": "Bedrock Knowledge Bases"
+    },
+    {
+      "word": "benchmark"
+    },
+    {
+      "word": "BGP"
+    },
+    {
+      "word": "Billing Conductor",
+      "exact": true
+    },
+    {
+      "word": "blast radius"
+    },
+    {
+      "word": "BLEU"
+    },
+    {
+      "word": "Block Public Access"
+    },
+    {
+      "word": "blocklist"
+    },
+    {
+      "word": "blue/green"
+    },
+    {
+      "word": "blue/green deployment"
+    },
+    {
+      "word": "BM25"
+    },
+    {
+      "word": "branch"
+    },
+    {
+      "word": "bucket"
+    },
+    {
+      "word": "bucket policy"
+    },
+    {
+      "word": "budget_tokens"
+    },
+    {
+      "word": "Budgets",
+      "exact": true
+    },
+    {
+      "word": "built-in tool"
+    },
+    {
+      "word": "built-in tools"
+    },
+    {
+      "word": "burst balance"
+    },
+    {
+      "word": "Business Support",
+      "exact": true
+    },
+    {
+      "word": "bypassPermissions"
+    },
+    {
+      "word": "byte-range fetch"
+    },
+    {
+      "word": "cache"
+    },
+    {
+      "word": "cache breakpoint"
+    },
+    {
+      "word": "cache hit"
+    },
+    {
+      "word": "cache miss"
+    },
+    {
+      "word": "cache read"
+    },
+    {
+      "word": "cache write"
+    },
+    {
+      "word": "cache_control"
+    },
+    {
+      "word": "cache-aside"
+    },
+    {
+      "word": "caching"
+    },
+    {
+      "word": "calibration"
+    },
+    {
+      "word": "callback"
+    },
+    {
+      "word": "can_use_tool"
+    },
+    {
+      "word": "canary deployment"
+    },
+    {
+      "word": "canUseTool"
+    },
+    {
+      "word": "capability negotiation"
+    },
+    {
+      "word": "Capacity Reservation"
+    },
+    {
+      "word": "CapEx"
+    },
+    {
+      "word": "cascading failure"
+    },
+    {
+      "word": "CDK"
+    },
+    {
+      "word": "CDN"
+    },
+    {
+      "word": "certificate"
+    },
+    {
+      "word": "Certificate Manager",
+      "exact": true
+    },
+    {
+      "word": "chain of thought"
+    },
+    {
+      "word": "chain-of-thought"
+    },
+    {
+      "word": "change set"
+    },
+    {
+      "word": "chargeback"
+    },
+    {
+      "word": "checkpoint"
+    },
+    {
+      "word": "checkpoint rewind"
+    },
+    {
+      "word": "checkpointing"
+    },
+    {
+      "word": "chunking"
+    },
+    {
+      "word": "CI pipeline"
+    },
+    {
+      "word": "CI/CD"
+    },
+    {
+      "word": "CI/CD pipeline"
+    },
+    {
+      "word": "CIDR"
+    },
+    {
+      "word": "CIDR block"
+    },
+    {
+      "word": "circuit breaker"
+    },
+    {
+      "word": "citation"
+    },
+    {
+      "word": "citations"
+    },
+    {
+      "word": "Classic Load Balancer"
+    },
+    {
+      "word": "Claude",
+      "exact": true
+    },
+    {
+      "word": "Claude Agent SDK"
+    },
+    {
+      "word": "Claude API"
+    },
+    {
+      "word": "Claude Code"
+    },
+    {
+      "word": "Claude Code GitHub Actions"
+    },
+    {
+      "word": "Claude Code SDK"
+    },
+    {
+      "word": "Claude Desktop"
+    },
+    {
+      "word": "Claude Developer Platform"
+    },
+    {
+      "word": "Claude for Chrome"
+    },
+    {
+      "word": "Claude in Chrome"
+    },
+    {
+      "word": "Claude.ai"
+    },
+    {
+      "word": "CLAUDE.local.md"
+    },
+    {
+      "word": "CLAUDE.md"
+    },
+    {
+      "word": "ClaudeAgentOptions"
+    },
+    {
+      "word": "ClaudeSDKClient"
+    },
+    {
+      "word": "CLB"
+    },
+    {
+      "word": "CLI"
+    },
+    {
+      "word": "CLI flag"
+    },
+    {
+      "word": "client tool"
+    },
+    {
+      "word": "Client VPN"
+    },
+    {
+      "word": "client-side encryption"
+    },
+    {
+      "word": "Cloud Adoption Framework",
+      "exact": true
+    },
+    {
+      "word": "cloud-native"
+    },
+    {
+      "word": "Cloud9",
+      "exact": true
+    },
+    {
+      "word": "CloudFormation"
+    },
+    {
+      "word": "CloudFormation stack"
+    },
+    {
+      "word": "CloudFront",
+      "exact": true
+    },
+    {
+      "word": "CloudFront Functions"
+    },
+    {
+      "word": "CloudHSM"
+    },
+    {
+      "word": "CloudShell",
+      "exact": true
+    },
+    {
+      "word": "CloudTrail"
+    },
+    {
+      "word": "CloudTrail Lake"
+    },
+    {
+      "word": "CloudWatch"
+    },
+    {
+      "word": "CloudWatch agent"
+    },
+    {
+      "word": "CloudWatch Alarms"
+    },
+    {
+      "word": "CloudWatch Logs"
+    },
+    {
+      "word": "CloudWatch Logs Insights"
+    },
+    {
+      "word": "CloudWatch metrics"
+    },
+    {
+      "word": "CloudWatch Synthetics"
+    },
+    {
+      "word": "cluster"
+    },
+    {
+      "word": "cluster placement group"
+    },
+    {
+      "word": "CMK"
+    },
+    {
+      "word": "CNAME"
+    },
+    {
+      "word": "code execution tool"
+    },
+    {
+      "word": "code review"
+    },
+    {
+      "word": "code-graded eval"
+    },
+    {
+      "word": "CodeBuild"
+    },
+    {
+      "word": "CodeCommit"
+    },
+    {
+      "word": "CodeDeploy"
+    },
+    {
+      "word": "CodePipeline"
+    },
+    {
+      "word": "CodeWhisperer",
+      "exact": true
+    },
+    {
+      "word": "Cognito",
+      "exact": true
+    },
+    {
+      "word": "Cognito identity pool"
+    },
+    {
+      "word": "Cognito user pool"
+    },
+    {
+      "word": "coherence"
+    },
+    {
+      "word": "cold start"
+    },
+    {
+      "word": "columnar storage"
+    },
+    {
+      "word": "commit"
+    },
+    {
+      "word": "compaction"
+    },
+    {
+      "word": "compliance"
+    },
+    {
+      "word": "composite alarm"
+    },
+    {
+      "word": "composite key"
+    },
+    {
+      "word": "composite tool"
+    },
+    {
+      "word": "Comprehend",
+      "exact": true
+    },
+    {
+      "word": "Compute Optimizer",
+      "exact": true
+    },
+    {
+      "word": "Compute Savings Plan"
+    },
+    {
+      "word": "computer use"
+    },
+    {
+      "word": "concurrency"
+    },
+    {
+      "word": "conditional write"
+    },
+    {
+      "word": "confidence score"
+    },
+    {
+      "word": "confidence threshold"
+    },
+    {
+      "word": "config"
+    },
+    {
+      "word": "Config",
+      "exact": true
+    },
+    {
+      "word": "config file"
+    },
+    {
+      "word": "Config rules"
+    },
+    {
+      "word": "configuration"
+    },
+    {
+      "word": "confused deputy"
+    },
+    {
+      "word": "confusion matrix"
+    },
+    {
+      "word": "Connect",
+      "exact": true
+    },
+    {
+      "word": "connection draining"
+    },
+    {
+      "word": "connector"
+    },
+    {
+      "word": "Console",
+      "exact": true
+    },
+    {
+      "word": "consolidated billing"
+    },
+    {
+      "word": "Constitutional AI"
+    },
+    {
+      "word": "constrained decoding"
+    },
+    {
+      "word": "container"
+    },
+    {
+      "word": "container image"
+    },
+    {
+      "word": "Container Insights"
+    },
+    {
+      "word": "context budget"
+    },
+    {
+      "word": "context compaction"
+    },
+    {
+      "word": "context editing"
+    },
+    {
+      "word": "context engineering"
+    },
+    {
+      "word": "context handoff"
+    },
+    {
+      "word": "context injection"
+    },
+    {
+      "word": "context isolation"
+    },
+    {
+      "word": "context length"
+    },
+    {
+      "word": "context limit"
+    },
+    {
+      "word": "context management"
+    },
+    {
+      "word": "context overflow"
+    },
+    {
+      "word": "context poisoning"
+    },
+    {
+      "word": "context pollution"
+    },
+    {
+      "word": "context rot"
+    },
+    {
+      "word": "context sharing"
+    },
+    {
+      "word": "context window"
+    },
+    {
+      "word": "contextual retrieval"
+    },
+    {
+      "word": "continuous delivery"
+    },
+    {
+      "word": "continuous deployment"
+    },
+    {
+      "word": "continuous integration"
+    },
+    {
+      "word": "Control Tower",
+      "exact": true
+    },
+    {
+      "word": "conversation history"
+    },
+    {
+      "word": "Convertible Reserved Instance"
+    },
+    {
+      "word": "cooldown period"
+    },
+    {
+      "word": "coordinator"
+    },
+    {
+      "word": "coordinator agent"
+    },
+    {
+      "word": "cost allocation tag"
+    },
+    {
+      "word": "cost budget"
+    },
+    {
+      "word": "Cost Explorer",
+      "exact": true
+    },
+    {
+      "word": "cost optimization"
+    },
+    {
+      "word": "credential"
+    },
+    {
+      "word": "cron"
+    },
+    {
+      "word": "cron expression"
+    },
+    {
+      "word": "cross-account access"
+    },
+    {
+      "word": "cross-account role"
+    },
+    {
+      "word": "Cross-Region Replication"
+    },
+    {
+      "word": "cross-session"
+    },
+    {
+      "word": "cross-session memory"
+    },
+    {
+      "word": "cross-site scripting"
+    },
+    {
+      "word": "cross-zone load balancing"
+    },
+    {
+      "word": "CSV"
+    },
+    {
+      "word": "CUR"
+    },
+    {
+      "word": "custom endpoint"
+    },
+    {
+      "word": "custom slash command"
+    },
+    {
+      "word": "custom slash commands"
+    },
+    {
+      "word": "custom tool"
+    },
+    {
+      "word": "customer gateway"
+    },
+    {
+      "word": "customer managed key"
+    },
+    {
+      "word": "customer managed policy"
+    },
+    {
+      "word": "dashboard"
+    },
+    {
+      "word": "data center"
+    },
+    {
+      "word": "data key"
+    },
+    {
+      "word": "data lake"
+    },
+    {
+      "word": "Data Lifecycle Manager"
+    },
+    {
+      "word": "data transfer"
+    },
+    {
+      "word": "data warehouse"
+    },
+    {
+      "word": "Database Migration Service",
+      "exact": true
+    },
+    {
+      "word": "DataSync",
+      "exact": true
+    },
+    {
+      "word": "DAX"
+    },
+    {
+      "word": "DDoS"
+    },
+    {
+      "word": "dead-letter queue"
+    },
+    {
+      "word": "deadlock"
+    },
+    {
+      "word": "debugging"
+    },
+    {
+      "word": "decision control"
+    },
+    {
+      "word": "decoupling"
+    },
+    {
+      "word": "decryption"
+    },
+    {
+      "word": "Dedicated Host"
+    },
+    {
+      "word": "Dedicated Hosts",
+      "exact": true
+    },
+    {
+      "word": "Dedicated Instance"
+    },
+    {
+      "word": "Dedicated Instances",
+      "exact": true
+    },
+    {
+      "word": "delegation"
+    },
+    {
+      "word": "deny rule"
+    },
+    {
+      "word": "denylist"
+    },
+    {
+      "word": "dependency"
+    },
+    {
+      "word": "deployment"
+    },
+    {
+      "word": "deregistration delay"
+    },
+    {
+      "word": "deserialization"
+    },
+    {
+      "word": "desired capacity"
+    },
+    {
+      "word": "destructiveHint"
+    },
+    {
+      "word": "Detective",
+      "exact": true
+    },
+    {
+      "word": "determinism"
+    },
+    {
+      "word": "deterministic"
+    },
+    {
+      "word": "deterministically"
+    },
+    {
+      "word": "dev environment"
+    },
+    {
+      "word": "developer message"
+    },
+    {
+      "word": "Developer Support",
+      "exact": true
+    },
+    {
+      "word": "Direct Connect",
+      "exact": true
+    },
+    {
+      "word": "Direct Connect gateway"
+    },
+    {
+      "word": "Directory Service",
+      "exact": true
+    },
+    {
+      "word": "disallowed_tools"
+    },
+    {
+      "word": "disallowedTools"
+    },
+    {
+      "word": "disaster recovery"
+    },
+    {
+      "word": "DLQ"
+    },
+    {
+      "word": "DMS"
+    },
+    {
+      "word": "DNS"
+    },
+    {
+      "word": "Docker"
+    },
+    {
+      "word": "DocumentDB",
+      "exact": true
+    },
+    {
+      "word": "DR"
+    },
+    {
+      "word": "drift detection"
+    },
+    {
+      "word": "DSSE-KMS"
+    },
+    {
+      "word": "dynamic client registration"
+    },
+    {
+      "word": "DynamoDB",
+      "exact": true
+    },
+    {
+      "word": "DynamoDB Accelerator"
+    },
+    {
+      "word": "DynamoDB Streams"
+    },
+    {
+      "word": "EBS"
+    },
+    {
+      "word": "EBS snapshot"
+    },
+    {
+      "word": "EBS volume"
+    },
+    {
+      "word": "EC2"
+    },
+    {
+      "word": "EC2 Auto Scaling"
+    },
+    {
+      "word": "EC2 Image Builder"
+    },
+    {
+      "word": "EC2 Instance Connect"
+    },
+    {
+      "word": "EC2 Instance Savings Plan"
+    },
+    {
+      "word": "ECR"
+    },
+    {
+      "word": "ECS"
+    },
+    {
+      "word": "ECS service"
+    },
+    {
+      "word": "ECS task"
+    },
+    {
+      "word": "edge case"
+    },
+    {
+      "word": "edge cases"
+    },
+    {
+      "word": "edge location"
+    },
+    {
+      "word": "Edit tool"
+    },
+    {
+      "word": "effort parameter"
+    },
+    {
+      "word": "EFS"
+    },
+    {
+      "word": "egress-only internet gateway"
+    },
+    {
+      "word": "EIP"
+    },
+    {
+      "word": "EKS"
+    },
+    {
+      "word": "Elastic Beanstalk",
+      "exact": true
+    },
+    {
+      "word": "Elastic Disaster Recovery",
+      "exact": true
+    },
+    {
+      "word": "Elastic IP"
+    },
+    {
+      "word": "Elastic Load Balancing"
+    },
+    {
+      "word": "elastic network interface"
+    },
+    {
+      "word": "ElastiCache",
+      "exact": true
+    },
+    {
+      "word": "ElastiCache for Memcached"
+    },
+    {
+      "word": "ElastiCache for Redis"
+    },
+    {
+      "word": "elasticity"
+    },
+    {
+      "word": "ELB"
+    },
+    {
+      "word": "elicitation"
+    },
+    {
+      "word": "embedding"
+    },
+    {
+      "word": "embeddings"
+    },
+    {
+      "word": "EMR"
+    },
+    {
+      "word": "encoding"
+    },
+    {
+      "word": "encryption"
+    },
+    {
+      "word": "encryption at rest"
+    },
+    {
+      "word": "encryption in transit"
+    },
+    {
+      "word": "end-to-end test"
+    },
+    {
+      "word": "endpoint"
+    },
+    {
+      "word": "endpoint service"
+    },
+    {
+      "word": "enhanced fan-out"
+    },
+    {
+      "word": "ENI"
+    },
+    {
+      "word": "Enterprise On-Ramp",
+      "exact": true
+    },
+    {
+      "word": "enterprise policy"
+    },
+    {
+      "word": "Enterprise Support",
+      "exact": true
+    },
+    {
+      "word": "envelope encryption"
+    },
+    {
+      "word": "environment variable"
+    },
+    {
+      "word": "error handling"
+    },
+    {
+      "word": "error propagation"
+    },
+    {
+      "word": "escalation"
+    },
+    {
+      "word": "escalation path"
+    },
+    {
+      "word": "ETL"
+    },
+    {
+      "word": "eval"
+    },
+    {
+      "word": "eval set"
+    },
+    {
+      "word": "evals"
+    },
+    {
+      "word": "evaluation"
+    },
+    {
+      "word": "evaluation dataset"
+    },
+    {
+      "word": "evaluator-optimizer"
+    },
+    {
+      "word": "event notification"
+    },
+    {
+      "word": "event source mapping"
+    },
+    {
+      "word": "event-driven"
+    },
+    {
+      "word": "event-driven architecture"
+    },
+    {
+      "word": "EventBridge",
+      "exact": true
+    },
+    {
+      "word": "EventBridge Pipes"
+    },
+    {
+      "word": "EventBridge Scheduler"
+    },
+    {
+      "word": "eventually consistent read"
+    },
+    {
+      "word": "exact match"
+    },
+    {
+      "word": "example selection"
+    },
+    {
+      "word": "exception"
+    },
+    {
+      "word": "execution role"
+    },
+    {
+      "word": "exit code"
+    },
+    {
+      "word": "exit code 0"
+    },
+    {
+      "word": "exit code 2"
+    },
+    {
+      "word": "explicit deny"
+    },
+    {
+      "word": "exponential backoff"
+    },
+    {
+      "word": "extended thinking"
+    },
+    {
+      "word": "extended thinking budget"
+    },
+    {
+      "word": "external memory"
+    },
+    {
+      "word": "F1"
+    },
+    {
+      "word": "F1 score"
+    },
+    {
+      "word": "FaaS"
+    },
+    {
+      "word": "Fable",
+      "exact": true
+    },
+    {
+      "word": "fail fast"
+    },
+    {
+      "word": "fail-closed"
+    },
+    {
+      "word": "fail-open"
+    },
+    {
+      "word": "fail-safe"
+    },
+    {
+      "word": "failover routing"
+    },
+    {
+      "word": "failure mode"
+    },
+    {
+      "word": "failure modes"
+    },
+    {
+      "word": "fallback"
+    },
+    {
+      "word": "fallback strategy"
+    },
+    {
+      "word": "false negative"
+    },
+    {
+      "word": "false positive"
+    },
+    {
+      "word": "fan-in"
+    },
+    {
+      "word": "fan-out"
+    },
+    {
+      "word": "Fargate",
+      "exact": true
+    },
+    {
+      "word": "Fast Snapshot Restore"
+    },
+    {
+      "word": "fault tolerance"
+    },
+    {
+      "word": "fault tolerant"
+    },
+    {
+      "word": "few-shot"
+    },
+    {
+      "word": "few-shot examples"
+    },
+    {
+      "word": "few-shot prompting"
+    },
+    {
+      "word": "FIFO queue"
+    },
+    {
+      "word": "File Gateway"
+    },
+    {
+      "word": "Files API",
+      "exact": true
+    },
+    {
+      "word": "fine-tuning"
+    },
+    {
+      "word": "Firewall Manager",
+      "exact": true
+    },
+    {
+      "word": "flow log"
+    },
+    {
+      "word": "forced tool use"
+    },
+    {
+      "word": "Forecast",
+      "exact": true
+    },
+    {
+      "word": "fork_session"
+    },
+    {
+      "word": "foundation model"
+    },
+    {
+      "word": "framework"
+    },
+    {
+      "word": "Fraud Detector",
+      "exact": true
+    },
+    {
+      "word": "Free Tier",
+      "exact": true
+    },
+    {
+      "word": "frontmatter"
+    },
+    {
+      "word": "FSx"
+    },
+    {
+      "word": "FSx for Lustre"
+    },
+    {
+      "word": "FSx for NetApp ONTAP"
+    },
+    {
+      "word": "FSx for OpenZFS"
+    },
+    {
+      "word": "FSx for Windows File Server"
+    },
+    {
+      "word": "function calling"
+    },
+    {
+      "word": "function URL"
+    },
+    {
+      "word": "gateway endpoint"
+    },
+    {
+      "word": "Gateway Load Balancer"
+    },
+    {
+      "word": "GDPR"
+    },
+    {
+      "word": "geolocation routing"
+    },
+    {
+      "word": "geoproximity routing"
+    },
+    {
+      "word": "Git"
+    },
+    {
+      "word": "git hook"
+    },
+    {
+      "word": "git worktree"
+    },
+    {
+      "word": "GitHub"
+    },
+    {
+      "word": "GitHub Actions"
+    },
+    {
+      "word": "GitHub App"
+    },
+    {
+      "word": "Glob"
+    },
+    {
+      "word": "Global Accelerator",
+      "exact": true
+    },
+    {
+      "word": "global secondary index"
+    },
+    {
+      "word": "Global Tables"
+    },
+    {
+      "word": "Glue",
+      "exact": true
+    },
+    {
+      "word": "Glue crawler"
+    },
+    {
+      "word": "Glue Data Catalog"
+    },
+    {
+      "word": "goal drift"
+    },
+    {
+      "word": "golden AMI"
+    },
+    {
+      "word": "golden answer"
+    },
+    {
+      "word": "golden dataset"
+    },
+    {
+      "word": "Google Drive"
+    },
+    {
+      "word": "gp2"
+    },
+    {
+      "word": "gp3"
+    },
+    {
+      "word": "graceful degradation"
+    },
+    {
+      "word": "GraphQL"
+    },
+    {
+      "word": "Graviton"
+    },
+    {
+      "word": "greedy decoding"
+    },
+    {
+      "word": "Grep"
+    },
+    {
+      "word": "ground truth"
+    },
+    {
+      "word": "grounded"
+    },
+    {
+      "word": "grounded generation"
+    },
+    {
+      "word": "grounding"
+    },
+    {
+      "word": "gRPC"
+    },
+    {
+      "word": "GSI"
+    },
+    {
+      "word": "GuardDuty"
+    },
+    {
+      "word": "guardrail"
+    },
+    {
+      "word": "guardrails"
+    },
+    {
+      "word": "GWLB"
+    },
+    {
+      "word": "Haiku",
+      "exact": true
+    },
+    {
+      "word": "hallucination"
+    },
+    {
+      "word": "handoff"
+    },
+    {
+      "word": "hash"
+    },
+    {
+      "word": "hashing"
+    },
+    {
+      "word": "headless"
+    },
+    {
+      "word": "headless mode"
+    },
+    {
+      "word": "health check"
+    },
+    {
+      "word": "Health Dashboard",
+      "exact": true
+    },
+    {
+      "word": "hibernation"
+    },
+    {
+      "word": "high availability"
+    },
+    {
+      "word": "HIPAA"
+    },
+    {
+      "word": "HITL"
+    },
+    {
+      "word": "hook"
+    },
+    {
+      "word": "hook event"
+    },
+    {
+      "word": "hook events"
+    },
+    {
+      "word": "hook matcher"
+    },
+    {
+      "word": "hook script"
+    },
+    {
+      "word": "Hooks",
+      "exact": true
+    },
+    {
+      "word": "horizontal scaling"
+    },
+    {
+      "word": "host-based routing"
+    },
+    {
+      "word": "hosted zone"
+    },
+    {
+      "word": "hot partition"
+    },
+    {
+      "word": "HTTP"
+    },
+    {
+      "word": "HTTP API"
+    },
+    {
+      "word": "HTTP+SSE"
+    },
+    {
+      "word": "HTTPS"
+    },
+    {
+      "word": "hub-and-spoke"
+    },
+    {
+      "word": "human approval"
+    },
+    {
+      "word": "human oversight"
+    },
+    {
+      "word": "human review"
+    },
+    {
+      "word": "human-graded eval"
+    },
+    {
+      "word": "human-in-the-loop"
+    },
+    {
+      "word": "hybrid cloud"
+    },
+    {
+      "word": "hybrid search"
+    },
+    {
+      "word": "hypervisor"
+    },
+    {
+      "word": "IaaS"
+    },
+    {
+      "word": "IaC"
+    },
+    {
+      "word": "IAM"
+    },
+    {
+      "word": "IAM Access Analyzer"
+    },
+    {
+      "word": "IAM group"
+    },
+    {
+      "word": "IAM Identity Center"
+    },
+    {
+      "word": "IAM policy"
+    },
+    {
+      "word": "IAM role"
+    },
+    {
+      "word": "IAM user"
+    },
+    {
+      "word": "IDE"
+    },
+    {
+      "word": "idempotency"
+    },
+    {
+      "word": "idempotency key"
+    },
+    {
+      "word": "idempotent"
+    },
+    {
+      "word": "idempotentHint"
+    },
+    {
+      "word": "Identity Center",
+      "exact": true
+    },
+    {
+      "word": "identity federation"
+    },
+    {
+      "word": "identity pool"
+    },
+    {
+      "word": "identity provider"
+    },
+    {
+      "word": "identity-based policy"
+    },
+    {
+      "word": "IdP"
+    },
+    {
+      "word": "IGW"
+    },
+    {
+      "word": "IMDSv2"
+    },
+    {
+      "word": "immutable deployment"
+    },
+    {
+      "word": "implicit deny"
+    },
+    {
+      "word": "import syntax"
+    },
+    {
+      "word": "in-place deployment"
+    },
+    {
+      "word": "inbound rule"
+    },
+    {
+      "word": "inference"
+    },
+    {
+      "word": "infinite loop"
+    },
+    {
+      "word": "Infrastructure as Code"
+    },
+    {
+      "word": "inline policy"
+    },
+    {
+      "word": "input tokens"
+    },
+    {
+      "word": "input_schema"
+    },
+    {
+      "word": "inputSchema"
+    },
+    {
+      "word": "Inspector",
+      "exact": true
+    },
+    {
+      "word": "instance"
+    },
+    {
+      "word": "instance family"
+    },
+    {
+      "word": "instance metadata"
+    },
+    {
+      "word": "instance profile"
+    },
+    {
+      "word": "instance store"
+    },
+    {
+      "word": "instance type"
+    },
+    {
+      "word": "instruction following"
+    },
+    {
+      "word": "instruction hierarchy"
+    },
+    {
+      "word": "integration test"
+    },
+    {
+      "word": "inter-rater agreement"
+    },
+    {
+      "word": "interface endpoint"
+    },
+    {
+      "word": "interleaved thinking"
+    },
+    {
+      "word": "internet gateway"
+    },
+    {
+      "word": "io1"
+    },
+    {
+      "word": "io2"
+    },
+    {
+      "word": "io2 Block Express"
+    },
+    {
+      "word": "IOPS"
+    },
+    {
+      "word": "IP address"
+    },
+    {
+      "word": "IPsec"
+    },
+    {
+      "word": "IPv4"
+    },
+    {
+      "word": "IPv6"
+    },
+    {
+      "word": "isError"
+    },
+    {
+      "word": "ISO 27001"
+    },
+    {
+      "word": "jailbreak"
+    },
+    {
+      "word": "JavaScript"
+    },
+    {
+      "word": "Jira"
+    },
+    {
+      "word": "jitter"
+    },
+    {
+      "word": "JSON"
+    },
+    {
+      "word": "JSON mode"
+    },
+    {
+      "word": "JSON output"
+    },
+    {
+      "word": "JSON output format"
+    },
+    {
+      "word": "JSON schema"
+    },
+    {
+      "word": "JSON-RPC"
+    },
+    {
+      "word": "JSON-RPC 2.0"
+    },
+    {
+      "word": "jump box"
+    },
+    {
+      "word": "JWT"
+    },
+    {
+      "word": "Kafka"
+    },
+    {
+      "word": "Kendra",
+      "exact": true
+    },
+    {
+      "word": "key policy"
+    },
+    {
+      "word": "key rotation"
+    },
+    {
+      "word": "key-value"
+    },
+    {
+      "word": "key-value store"
+    },
+    {
+      "word": "keybindings"
+    },
+    {
+      "word": "Keyspaces",
+      "exact": true
+    },
+    {
+      "word": "kill switch"
+    },
+    {
+      "word": "Kinesis",
+      "exact": true
+    },
+    {
+      "word": "Kinesis Data Analytics"
+    },
+    {
+      "word": "Kinesis Data Firehose"
+    },
+    {
+      "word": "Kinesis Data Streams"
+    },
+    {
+      "word": "Kinesis Video Streams"
+    },
+    {
+      "word": "KMS"
+    },
+    {
+      "word": "KMS key"
+    },
+    {
+      "word": "knowledge base"
+    },
+    {
+      "word": "knowledge cutoff"
+    },
+    {
+      "word": "Kubernetes"
+    },
+    {
+      "word": "LAG"
+    },
+    {
+      "word": "Lake Formation",
+      "exact": true
+    },
+    {
+      "word": "Lambda",
+      "exact": true
+    },
+    {
+      "word": "Lambda function"
+    },
+    {
+      "word": "Lambda layer"
+    },
+    {
+      "word": "Lambda URL"
+    },
+    {
+      "word": "Lambda@Edge"
+    },
+    {
+      "word": "landing zone"
+    },
+    {
+      "word": "large language model"
+    },
+    {
+      "word": "latency"
+    },
+    {
+      "word": "latency-based routing"
+    },
+    {
+      "word": "launch configuration"
+    },
+    {
+      "word": "launch template"
+    },
+    {
+      "word": "lazy loading"
+    },
+    {
+      "word": "lead agent"
+    },
+    {
+      "word": "least privilege"
+    },
+    {
+      "word": "Lex",
+      "exact": true
+    },
+    {
+      "word": "library"
+    },
+    {
+      "word": "License Manager",
+      "exact": true
+    },
+    {
+      "word": "lifecycle hook"
+    },
+    {
+      "word": "lifecycle policy"
+    },
+    {
+      "word": "lifecycle rule"
+    },
+    {
+      "word": "lift and shift"
+    },
+    {
+      "word": "Lightsail",
+      "exact": true
+    },
+    {
+      "word": "linear deployment"
+    },
+    {
+      "word": "linter"
+    },
+    {
+      "word": "list_changed"
+    },
+    {
+      "word": "LLM"
+    },
+    {
+      "word": "LLM-as-a-judge"
+    },
+    {
+      "word": "LLM-as-judge"
+    },
+    {
+      "word": "load balancer"
+    },
+    {
+      "word": "load balancing"
+    },
+    {
+      "word": "local scope"
+    },
+    {
+      "word": "local secondary index"
+    },
+    {
+      "word": "local settings"
+    },
+    {
+      "word": "Local Zone"
+    },
+    {
+      "word": "Local Zones",
+      "exact": true
+    },
+    {
+      "word": "log group"
+    },
+    {
+      "word": "log stream"
+    },
+    {
+      "word": "logging"
+    },
+    {
+      "word": "long context"
+    },
+    {
+      "word": "long polling"
+    },
+    {
+      "word": "long-context"
+    },
+    {
+      "word": "long-form output"
+    },
+    {
+      "word": "long-running agent"
+    },
+    {
+      "word": "long-running task"
+    },
+    {
+      "word": "long-term memory"
+    },
+    {
+      "word": "loose coupling"
+    },
+    {
+      "word": "loosely coupled"
+    },
+    {
+      "word": "lost in the middle"
+    },
+    {
+      "word": "LSI"
+    },
+    {
+      "word": "Macie",
+      "exact": true
+    },
+    {
+      "word": "managed policy"
+    },
+    {
+      "word": "managed rule"
+    },
+    {
+      "word": "Managed Service for Apache Flink"
+    },
+    {
+      "word": "managed settings"
+    },
+    {
+      "word": "managed-settings.json"
+    },
+    {
+      "word": "management account"
+    },
+    {
+      "word": "manual compaction"
+    },
+    {
+      "word": "manual snapshot"
+    },
+    {
+      "word": "Markdown"
+    },
+    {
+      "word": "Marketplace",
+      "exact": true
+    },
+    {
+      "word": "matcher"
+    },
+    {
+      "word": "max iterations"
+    },
+    {
+      "word": "max turns"
+    },
+    {
+      "word": "max_tokens"
+    },
+    {
+      "word": "maximum capacity"
+    },
+    {
+      "word": "MCP"
+    },
+    {
+      "word": "MCP client"
+    },
+    {
+      "word": "MCP connector"
+    },
+    {
+      "word": "MCP host"
+    },
+    {
+      "word": "MCP Inspector"
+    },
+    {
+      "word": "MCP prompt"
+    },
+    {
+      "word": "MCP registry"
+    },
+    {
+      "word": "MCP resource"
+    },
+    {
+      "word": "MCP server"
+    },
+    {
+      "word": "MCP tool"
+    },
+    {
+      "word": "MCP transport"
+    },
+    {
+      "word": "member account"
+    },
+    {
+      "word": "Memory",
+      "exact": true
+    },
+    {
+      "word": "memory file"
+    },
+    {
+      "word": "memory hierarchy"
+    },
+    {
+      "word": "memory tool"
+    },
+    {
+      "word": "MemoryDB",
+      "exact": true
+    },
+    {
+      "word": "merge"
+    },
+    {
+      "word": "Message Batches",
+      "exact": true
+    },
+    {
+      "word": "Message Batches API"
+    },
+    {
+      "word": "message history"
+    },
+    {
+      "word": "message queue"
+    },
+    {
+      "word": "Messages API"
+    },
+    {
+      "word": "meta-prompt"
+    },
+    {
+      "word": "meta-prompting"
+    },
+    {
+      "word": "metadata filtering"
+    },
+    {
+      "word": "metric"
+    },
+    {
+      "word": "metric filter"
+    },
+    {
+      "word": "MFA"
+    },
+    {
+      "word": "MFA Delete"
+    },
+    {
+      "word": "microservices"
+    },
+    {
+      "word": "Migration Hub",
+      "exact": true
+    },
+    {
+      "word": "minimum capacity"
+    },
+    {
+      "word": "model"
+    },
+    {
+      "word": "model card"
+    },
+    {
+      "word": "Model Context Protocol"
+    },
+    {
+      "word": "model-graded eval"
+    },
+    {
+      "word": "Models API"
+    },
+    {
+      "word": "MongoDB"
+    },
+    {
+      "word": "monitoring"
+    },
+    {
+      "word": "monolith"
+    },
+    {
+      "word": "MQ",
+      "exact": true
+    },
+    {
+      "word": "MSK",
+      "exact": true
+    },
+    {
+      "word": "multi-agent"
+    },
+    {
+      "word": "multi-agent failure"
+    },
+    {
+      "word": "Multi-AZ"
+    },
+    {
+      "word": "Multi-AZ deployment"
+    },
+    {
+      "word": "multi-factor authentication"
+    },
+    {
+      "word": "multi-site"
+    },
+    {
+      "word": "multi-tenant"
+    },
+    {
+      "word": "MultiEdit"
+    },
+    {
+      "word": "multimodal"
+    },
+    {
+      "word": "multipart upload"
+    },
+    {
+      "word": "multishot prompting"
+    },
+    {
+      "word": "multivalue answer routing"
+    },
+    {
+      "word": "MySQL"
+    },
+    {
+      "word": "NACL"
+    },
+    {
+      "word": "namespace"
+    },
+    {
+      "word": "NAT gateway"
+    },
+    {
+      "word": "NAT instance"
+    },
+    {
+      "word": "near real-time"
+    },
+    {
+      "word": "needle in a haystack"
+    },
+    {
+      "word": "negative examples"
+    },
+    {
+      "word": "Neptune",
+      "exact": true
+    },
+    {
+      "word": "network ACL"
+    },
+    {
+      "word": "Network Firewall",
+      "exact": true
+    },
+    {
+      "word": "Network Load Balancer"
+    },
+    {
+      "word": "Nitro Enclaves"
+    },
+    {
+      "word": "NLB"
+    },
+    {
+      "word": "node group"
+    },
+    {
+      "word": "Node.js"
+    },
+    {
+      "word": "non-deterministic"
+    },
+    {
+      "word": "non-zero exit code"
+    },
+    {
+      "word": "nondeterministic"
+    },
+    {
+      "word": "NoSQL"
+    },
+    {
+      "word": "NotebookEdit"
+    },
+    {
+      "word": "Notification event"
+    },
+    {
+      "word": "Notification hook"
+    },
+    {
+      "word": "Notion"
+    },
+    {
+      "word": "nucleus sampling"
+    },
+    {
+      "word": "OAC"
+    },
+    {
+      "word": "OAI"
+    },
+    {
+      "word": "OAuth"
+    },
+    {
+      "word": "OAuth 2.1"
+    },
+    {
+      "word": "object key"
+    },
+    {
+      "word": "observability"
+    },
+    {
+      "word": "OIDC"
+    },
+    {
+      "word": "OLAP"
+    },
+    {
+      "word": "OLTP"
+    },
+    {
+      "word": "On-Demand"
+    },
+    {
+      "word": "on-demand capacity"
+    },
+    {
+      "word": "On-Demand Instances",
+      "exact": true
+    },
+    {
+      "word": "on-prem"
+    },
+    {
+      "word": "on-premises"
+    },
+    {
+      "word": "one-shot"
+    },
+    {
+      "word": "OpenID Connect"
+    },
+    {
+      "word": "OpenSearch",
+      "exact": true
+    },
+    {
+      "word": "openWorldHint"
+    },
+    {
+      "word": "operational excellence"
+    },
+    {
+      "word": "OpEx"
+    },
+    {
+      "word": "Opus",
+      "exact": true
+    },
+    {
+      "word": "orchestration"
+    },
+    {
+      "word": "orchestration layer"
+    },
+    {
+      "word": "orchestrator"
+    },
+    {
+      "word": "orchestrator agent"
+    },
+    {
+      "word": "orchestrator-workers"
+    },
+    {
+      "word": "organizational unit"
+    },
+    {
+      "word": "Organizations",
+      "exact": true
+    },
+    {
+      "word": "origin access control"
+    },
+    {
+      "word": "origin access identity"
+    },
+    {
+      "word": "OU"
+    },
+    {
+      "word": "outbound rule"
+    },
+    {
+      "word": "Outposts",
+      "exact": true
+    },
+    {
+      "word": "output format"
+    },
+    {
+      "word": "output parsing"
+    },
+    {
+      "word": "output schema"
+    },
+    {
+      "word": "output style"
+    },
+    {
+      "word": "Output Styles",
+      "exact": true
+    },
+    {
+      "word": "output tokens"
+    },
+    {
+      "word": "outputSchema"
+    },
+    {
+      "word": "override"
+    },
+    {
+      "word": "PaaS"
+    },
+    {
+      "word": "package"
+    },
+    {
+      "word": "pagination"
+    },
+    {
+      "word": "parallel execution"
+    },
+    {
+      "word": "parallel tool use"
+    },
+    {
+      "word": "parallelization"
+    },
+    {
+      "word": "Parameter Store",
+      "exact": true
+    },
+    {
+      "word": "Parquet"
+    },
+    {
+      "word": "parser"
+    },
+    {
+      "word": "partition key"
+    },
+    {
+      "word": "partition placement group"
+    },
+    {
+      "word": "Patch Manager"
+    },
+    {
+      "word": "path-based routing"
+    },
+    {
+      "word": "pattern matching"
+    },
+    {
+      "word": "pay-as-you-go"
+    },
+    {
+      "word": "payload"
+    },
+    {
+      "word": "PCI DSS"
+    },
+    {
+      "word": "PDF support"
+    },
+    {
+      "word": "performance efficiency"
+    },
+    {
+      "word": "permission"
+    },
+    {
+      "word": "permission mode"
+    },
+    {
+      "word": "permission_mode"
+    },
+    {
+      "word": "permissionDecision"
+    },
+    {
+      "word": "permissionMode"
+    },
+    {
+      "word": "PermissionRequest"
+    },
+    {
+      "word": "permissions boundary"
+    },
+    {
+      "word": "persistent memory"
+    },
+    {
+      "word": "persona"
+    },
+    {
+      "word": "Personalize",
+      "exact": true
+    },
+    {
+      "word": "pilot light"
+    },
+    {
+      "word": "Pinpoint",
+      "exact": true
+    },
+    {
+      "word": "pipeline"
+    },
+    {
+      "word": "PITR"
+    },
+    {
+      "word": "PKCE"
+    },
+    {
+      "word": "placement group"
+    },
+    {
+      "word": "plan mode"
+    },
+    {
+      "word": "Plan Mode",
+      "exact": true
+    },
+    {
+      "word": "plan-and-execute"
+    },
+    {
+      "word": "plan-then-execute"
+    },
+    {
+      "word": "plugin"
+    },
+    {
+      "word": "Plugins",
+      "exact": true
+    },
+    {
+      "word": "point of presence"
+    },
+    {
+      "word": "point-in-time recovery"
+    },
+    {
+      "word": "polling"
+    },
+    {
+      "word": "Polly",
+      "exact": true
+    },
+    {
+      "word": "positive examples"
+    },
+    {
+      "word": "PostgreSQL"
+    },
+    {
+      "word": "PostToolUse"
+    },
+    {
+      "word": "pre-commit hook"
+    },
+    {
+      "word": "PreCompact"
+    },
+    {
+      "word": "predictive scaling"
+    },
+    {
+      "word": "prefill"
+    },
+    {
+      "word": "prefilling"
+    },
+    {
+      "word": "presigned URL"
+    },
+    {
+      "word": "PreToolUse"
+    },
+    {
+      "word": "primacy bias"
+    },
+    {
+      "word": "primary key"
+    },
+    {
+      "word": "principle of least privilege"
+    },
+    {
+      "word": "print mode"
+    },
+    {
+      "word": "private subnet"
+    },
+    {
+      "word": "PrivateLink",
+      "exact": true
+    },
+    {
+      "word": "probabilistic"
+    },
+    {
+      "word": "programmatic tool calling"
+    },
+    {
+      "word": "progress notification"
+    },
+    {
+      "word": "progressive disclosure"
+    },
+    {
+      "word": "project memory"
+    },
+    {
+      "word": "project scope"
+    },
+    {
+      "word": "project settings"
+    },
+    {
+      "word": "Projects",
+      "exact": true
+    },
+    {
+      "word": "prompt"
+    },
+    {
+      "word": "prompt caching"
+    },
+    {
+      "word": "prompt chaining"
+    },
+    {
+      "word": "prompt clarity"
+    },
+    {
+      "word": "prompt engineering"
+    },
+    {
+      "word": "prompt generator"
+    },
+    {
+      "word": "prompt improver"
+    },
+    {
+      "word": "prompt injection"
+    },
+    {
+      "word": "prompt instructions"
+    },
+    {
+      "word": "prompt library"
+    },
+    {
+      "word": "prompt specificity"
+    },
+    {
+      "word": "prompt structure"
+    },
+    {
+      "word": "prompt template"
+    },
+    {
+      "word": "prompt versioning"
+    },
+    {
+      "word": "prompts/get"
+    },
+    {
+      "word": "prompts/list"
+    },
+    {
+      "word": "Proton",
+      "exact": true
+    },
+    {
+      "word": "provenance"
+    },
+    {
+      "word": "provisioned capacity"
+    },
+    {
+      "word": "provisioned concurrency"
+    },
+    {
+      "word": "Provisioned IOPS"
+    },
+    {
+      "word": "pub/sub"
+    },
+    {
+      "word": "public subnet"
+    },
+    {
+      "word": "publish/subscribe"
+    },
+    {
+      "word": "pull request"
+    },
+    {
+      "word": "Python"
+    },
+    {
+      "word": "Q Business",
+      "exact": true
+    },
+    {
+      "word": "Q Developer",
+      "exact": true
+    },
+    {
+      "word": "QLDB",
+      "exact": true
+    },
+    {
+      "word": "query string"
+    },
+    {
+      "word": "query()"
+    },
+    {
+      "word": "QuickSight",
+      "exact": true
+    },
+    {
+      "word": "race condition"
+    },
+    {
+      "word": "RAG"
+    },
+    {
+      "word": "rate limit"
+    },
+    {
+      "word": "rate limiting"
+    },
+    {
+      "word": "rate limits"
+    },
+    {
+      "word": "rate-based rule"
+    },
+    {
+      "word": "RBAC"
+    },
+    {
+      "word": "RCP"
+    },
+    {
+      "word": "RCU"
+    },
+    {
+      "word": "RDP"
+    },
+    {
+      "word": "RDS"
+    },
+    {
+      "word": "RDS Proxy"
+    },
+    {
+      "word": "ReAct"
+    },
+    {
+      "word": "read capacity unit"
+    },
+    {
+      "word": "read replica"
+    },
+    {
+      "word": "Read tool"
+    },
+    {
+      "word": "reader endpoint"
+    },
+    {
+      "word": "readOnlyHint"
+    },
+    {
+      "word": "real-time"
+    },
+    {
+      "word": "reasoning effort"
+    },
+    {
+      "word": "reasoning trace"
+    },
+    {
+      "word": "recency bias"
+    },
+    {
+      "word": "recovery point objective"
+    },
+    {
+      "word": "recovery time objective"
+    },
+    {
+      "word": "red teaming"
+    },
+    {
+      "word": "redacted thinking"
+    },
+    {
+      "word": "Redis"
+    },
+    {
+      "word": "Redshift",
+      "exact": true
+    },
+    {
+      "word": "Redshift Spectrum"
+    },
+    {
+      "word": "refresh token"
+    },
+    {
+      "word": "regex"
+    },
+    {
+      "word": "Region"
+    },
+    {
+      "word": "regional edge cache"
+    },
+    {
+      "word": "regression test"
+    },
+    {
+      "word": "regression testing"
+    },
+    {
+      "word": "regular expression"
+    },
+    {
+      "word": "rehost"
+    },
+    {
+      "word": "Rekognition",
+      "exact": true
+    },
+    {
+      "word": "remote MCP server"
+    },
+    {
+      "word": "replatform"
+    },
+    {
+      "word": "replication"
+    },
+    {
+      "word": "repository"
+    },
+    {
+      "word": "reproducibility"
+    },
+    {
+      "word": "requester pays"
+    },
+    {
+      "word": "reranking"
+    },
+    {
+      "word": "Research",
+      "exact": true
+    },
+    {
+      "word": "reserved concurrency"
+    },
+    {
+      "word": "Reserved Instance"
+    },
+    {
+      "word": "Reserved Instances",
+      "exact": true
+    },
+    {
+      "word": "Resource Access Manager",
+      "exact": true
+    },
+    {
+      "word": "resource control policy"
+    },
+    {
+      "word": "resource server"
+    },
+    {
+      "word": "resource-based policy"
+    },
+    {
+      "word": "resources/list"
+    },
+    {
+      "word": "resources/read"
+    },
+    {
+      "word": "response format"
+    },
+    {
+      "word": "response prefill"
+    },
+    {
+      "word": "REST"
+    },
+    {
+      "word": "REST API"
+    },
+    {
+      "word": "RESTful"
+    },
+    {
+      "word": "retrieval"
+    },
+    {
+      "word": "retrieval-augmented generation"
+    },
+    {
+      "word": "retriever"
+    },
+    {
+      "word": "retry"
+    },
+    {
+      "word": "retry logic"
+    },
+    {
+      "word": "retry loop"
+    },
+    {
+      "word": "retry policy"
+    },
+    {
+      "word": "retry with backoff"
+    },
+    {
+      "word": "reverse proxy"
+    },
+    {
+      "word": "rewind"
+    },
+    {
+      "word": "RI"
+    },
+    {
+      "word": "right-sizing"
+    },
+    {
+      "word": "rightsizing"
+    },
+    {
+      "word": "RLAIF"
+    },
+    {
+      "word": "RLHF"
+    },
+    {
+      "word": "role assignment"
+    },
+    {
+      "word": "role prompting"
+    },
+    {
+      "word": "rollback"
+    },
+    {
+      "word": "rolling deployment"
+    },
+    {
+      "word": "rolling summary"
+    },
+    {
+      "word": "root user"
+    },
+    {
+      "word": "ROUGE"
+    },
+    {
+      "word": "Route 53",
+      "exact": true
+    },
+    {
+      "word": "route table"
+    },
+    {
+      "word": "router agent"
+    },
+    {
+      "word": "routing policy"
+    },
+    {
+      "word": "RPO"
+    },
+    {
+      "word": "RTO"
+    },
+    {
+      "word": "rubric"
+    },
+    {
+      "word": "Run Command"
+    },
+    {
+      "word": "runtime"
+    },
+    {
+      "word": "S3"
+    },
+    {
+      "word": "S3 bucket"
+    },
+    {
+      "word": "S3 Express One Zone"
+    },
+    {
+      "word": "S3 Glacier"
+    },
+    {
+      "word": "S3 Glacier Deep Archive"
+    },
+    {
+      "word": "S3 Glacier Flexible Retrieval"
+    },
+    {
+      "word": "S3 Glacier Instant Retrieval"
+    },
+    {
+      "word": "S3 Intelligent-Tiering"
+    },
+    {
+      "word": "S3 Lifecycle"
+    },
+    {
+      "word": "S3 Object Lock"
+    },
+    {
+      "word": "S3 One Zone-IA"
+    },
+    {
+      "word": "S3 Replication"
+    },
+    {
+      "word": "S3 Standard"
+    },
+    {
+      "word": "S3 Standard-IA"
+    },
+    {
+      "word": "S3 Transfer Acceleration"
+    },
+    {
+      "word": "SaaS"
+    },
+    {
+      "word": "SageMaker",
+      "exact": true
+    },
+    {
+      "word": "SageMaker AI"
+    },
+    {
+      "word": "SAM"
+    },
+    {
+      "word": "Same-Region Replication"
+    },
+    {
+      "word": "SAML"
+    },
+    {
+      "word": "SAML 2.0"
+    },
+    {
+      "word": "sampling"
+    },
+    {
+      "word": "sandbox"
+    },
+    {
+      "word": "sandbox environment"
+    },
+    {
+      "word": "Savings Plan"
+    },
+    {
+      "word": "Savings Plans",
+      "exact": true
+    },
+    {
+      "word": "sc1"
+    },
+    {
+      "word": "scalability"
+    },
+    {
+      "word": "scale down"
+    },
+    {
+      "word": "scale in"
+    },
+    {
+      "word": "scale out"
+    },
+    {
+      "word": "scale up"
+    },
+    {
+      "word": "scaling policy"
+    },
+    {
+      "word": "scheduled scaling"
+    },
+    {
+      "word": "schema"
+    },
+    {
+      "word": "Schema Conversion Tool",
+      "exact": true
+    },
+    {
+      "word": "schema enforcement"
+    },
+    {
+      "word": "schema validation"
+    },
+    {
+      "word": "SCP"
+    },
+    {
+      "word": "scratchpad"
+    },
+    {
+      "word": "script"
+    },
+    {
+      "word": "SDK"
+    },
+    {
+      "word": "search results"
+    },
+    {
+      "word": "secret access key"
+    },
+    {
+      "word": "Secrets Manager",
+      "exact": true
+    },
+    {
+      "word": "security group"
+    },
+    {
+      "word": "Security Hub",
+      "exact": true
+    },
+    {
+      "word": "security pillar"
+    },
+    {
+      "word": "self-consistency"
+    },
+    {
+      "word": "self-correction"
+    },
+    {
+      "word": "self-critique"
+    },
+    {
+      "word": "self-reflection"
+    },
+    {
+      "word": "semantic search"
+    },
+    {
+      "word": "semantic similarity"
+    },
+    {
+      "word": "sequential execution"
+    },
+    {
+      "word": "serialization"
+    },
+    {
+      "word": "server tool"
+    },
+    {
+      "word": "server-sent events"
+    },
+    {
+      "word": "server-side encryption"
+    },
+    {
+      "word": "serverless"
+    },
+    {
+      "word": "Service Catalog",
+      "exact": true
+    },
+    {
+      "word": "service control policy"
+    },
+    {
+      "word": "SES"
+    },
+    {
+      "word": "session"
+    },
+    {
+      "word": "session fork"
+    },
+    {
+      "word": "session history"
+    },
+    {
+      "word": "session management"
+    },
+    {
+      "word": "Session Manager"
+    },
+    {
+      "word": "session persistence"
+    },
+    {
+      "word": "session resume"
+    },
+    {
+      "word": "session state"
+    },
+    {
+      "word": "session token"
+    },
+    {
+      "word": "session_id"
+    },
+    {
+      "word": "SessionEnd"
+    },
+    {
+      "word": "SessionStart"
+    },
+    {
+      "word": "settings.json"
+    },
+    {
+      "word": "settings.local.json"
+    },
+    {
+      "word": "shard"
+    },
+    {
+      "word": "sharding"
+    },
+    {
+      "word": "Shared Responsibility Model",
+      "exact": true
+    },
+    {
+      "word": "shell"
+    },
+    {
+      "word": "Shield",
+      "exact": true
+    },
+    {
+      "word": "Shield Advanced"
+    },
+    {
+      "word": "Shield Standard"
+    },
+    {
+      "word": "short polling"
+    },
+    {
+      "word": "short-term memory"
+    },
+    {
+      "word": "showback"
+    },
+    {
+      "word": "side effect"
+    },
+    {
+      "word": "side effects"
+    },
+    {
+      "word": "signed cookie"
+    },
+    {
+      "word": "signed URL"
+    },
+    {
+      "word": "Simple AD"
+    },
+    {
+      "word": "simple routing"
+    },
+    {
+      "word": "simple scaling"
+    },
+    {
+      "word": "single point of failure"
+    },
+    {
+      "word": "single sign-on"
+    },
+    {
+      "word": "Site-to-Site VPN"
+    },
+    {
+      "word": "skill"
+    },
+    {
+      "word": "skill description"
+    },
+    {
+      "word": "skill metadata"
+    },
+    {
+      "word": "SKILL.md"
+    },
+    {
+      "word": "Skills",
+      "exact": true
+    },
+    {
+      "word": "SLA"
+    },
+    {
+      "word": "Slack"
+    },
+    {
+      "word": "Slack channel"
+    },
+    {
+      "word": "slash command"
+    },
+    {
+      "word": "Slash Commands",
+      "exact": true
+    },
+    {
+      "word": "sliding window"
+    },
+    {
+      "word": "SNI"
+    },
+    {
+      "word": "Snow Family",
+      "exact": true
+    },
+    {
+      "word": "Snowball",
+      "exact": true
+    },
+    {
+      "word": "Snowcone",
+      "exact": true
+    },
+    {
+      "word": "Snowmobile",
+      "exact": true
+    },
+    {
+      "word": "SNS"
+    },
+    {
+      "word": "SNS topic"
+    },
+    {
+      "word": "SOC 2"
+    },
+    {
+      "word": "Sonnet",
+      "exact": true
+    },
+    {
+      "word": "sort key"
+    },
+    {
+      "word": "source attribution"
+    },
+    {
+      "word": "specialist agent"
+    },
+    {
+      "word": "Spot Fleet"
+    },
+    {
+      "word": "Spot Instance"
+    },
+    {
+      "word": "Spot Instances",
+      "exact": true
+    },
+    {
+      "word": "Spot price"
+    },
+    {
+      "word": "spread placement group"
+    },
+    {
+      "word": "SQL"
+    },
+    {
+      "word": "SQL injection"
+    },
+    {
+      "word": "SQLite"
+    },
+    {
+      "word": "SQS"
+    },
+    {
+      "word": "SQS FIFO"
+    },
+    {
+      "word": "SSE"
+    },
+    {
+      "word": "SSE-C"
+    },
+    {
+      "word": "SSE-KMS"
+    },
+    {
+      "word": "SSE-S3"
+    },
+    {
+      "word": "SSH"
+    },
+    {
+      "word": "SSL"
+    },
+    {
+      "word": "SSM"
+    },
+    {
+      "word": "SSM Parameter Store"
+    },
+    {
+      "word": "SSO"
+    },
+    {
+      "word": "st1"
+    },
+    {
+      "word": "stack trace"
+    },
+    {
+      "word": "StackSets"
+    },
+    {
+      "word": "staging"
+    },
+    {
+      "word": "standard queue"
+    },
+    {
+      "word": "Standard Reserved Instance"
+    },
+    {
+      "word": "standby instance"
+    },
+    {
+      "word": "state machine"
+    },
+    {
+      "word": "stateful"
+    },
+    {
+      "word": "stateless"
+    },
+    {
+      "word": "stateless application"
+    },
+    {
+      "word": "static website hosting"
+    },
+    {
+      "word": "status code"
+    },
+    {
+      "word": "status line"
+    },
+    {
+      "word": "statusline"
+    },
+    {
+      "word": "stderr"
+    },
+    {
+      "word": "stdin"
+    },
+    {
+      "word": "stdio"
+    },
+    {
+      "word": "stdout"
+    },
+    {
+      "word": "Step Functions",
+      "exact": true
+    },
+    {
+      "word": "step scaling"
+    },
+    {
+      "word": "step-by-step reasoning"
+    },
+    {
+      "word": "sticky sessions"
+    },
+    {
+      "word": "stochastic"
+    },
+    {
+      "word": "stop condition"
+    },
+    {
+      "word": "Stop hook"
+    },
+    {
+      "word": "stop sequence"
+    },
+    {
+      "word": "stop_reason"
+    },
+    {
+      "word": "stop_sequences"
+    },
+    {
+      "word": "storage class"
+    },
+    {
+      "word": "Storage Gateway",
+      "exact": true
+    },
+    {
+      "word": "stream-json"
+    },
+    {
+      "word": "Streamable HTTP"
+    },
+    {
+      "word": "streaming"
+    },
+    {
+      "word": "strict mode"
+    },
+    {
+      "word": "strict tool use"
+    },
+    {
+      "word": "string match"
+    },
+    {
+      "word": "strongly consistent read"
+    },
+    {
+      "word": "structured output"
+    },
+    {
+      "word": "structured outputs"
+    },
+    {
+      "word": "structuredContent"
+    },
+    {
+      "word": "STS"
+    },
+    {
+      "word": "subagent"
+    },
+    {
+      "word": "subagent definition"
+    },
+    {
+      "word": "Subagents",
+      "exact": true
+    },
+    {
+      "word": "SubagentStop"
+    },
+    {
+      "word": "subnet"
+    },
+    {
+      "word": "subprocess"
+    },
+    {
+      "word": "subscription filter"
+    },
+    {
+      "word": "success criteria"
+    },
+    {
+      "word": "summarization"
+    },
+    {
+      "word": "Support",
+      "exact": true
+    },
+    {
+      "word": "synchronous"
+    },
+    {
+      "word": "system message"
+    },
+    {
+      "word": "system prompt"
+    },
+    {
+      "word": "system_prompt"
+    },
+    {
+      "word": "Systems Manager",
+      "exact": true
+    },
+    {
+      "word": "tag policy"
+    },
+    {
+      "word": "Tape Gateway"
+    },
+    {
+      "word": "target group"
+    },
+    {
+      "word": "target tracking"
+    },
+    {
+      "word": "task decomposition"
+    },
+    {
+      "word": "task definition"
+    },
+    {
+      "word": "task delegation"
+    },
+    {
+      "word": "task drift"
+    },
+    {
+      "word": "Task tool"
+    },
+    {
+      "word": "TCO"
+    },
+    {
+      "word": "TCP"
+    },
+    {
+      "word": "telemetry"
+    },
+    {
+      "word": "temperature"
+    },
+    {
+      "word": "temperature sampling"
+    },
+    {
+      "word": "temporary credentials"
+    },
+    {
+      "word": "terminal"
+    },
+    {
+      "word": "termination condition"
+    },
+    {
+      "word": "test cases"
+    },
+    {
+      "word": "test set"
+    },
+    {
+      "word": "text editor tool"
+    },
+    {
+      "word": "Textract",
+      "exact": true
+    },
+    {
+      "word": "thinking block"
+    },
+    {
+      "word": "thinking budget"
+    },
+    {
+      "word": "thinking tags"
+    },
+    {
+      "word": "throttling"
+    },
+    {
+      "word": "throughput"
+    },
+    {
+      "word": "throughput mode"
+    },
+    {
+      "word": "tightly coupled"
+    },
+    {
+      "word": "timeout"
+    },
+    {
+      "word": "Timestream",
+      "exact": true
+    },
+    {
+      "word": "TLS"
+    },
+    {
+      "word": "TodoWrite"
+    },
+    {
+      "word": "token"
+    },
+    {
+      "word": "token budget"
+    },
+    {
+      "word": "token count"
+    },
+    {
+      "word": "token counting"
+    },
+    {
+      "word": "Token Counting API"
+    },
+    {
+      "word": "token limit"
+    },
+    {
+      "word": "token passthrough"
+    },
+    {
+      "word": "token usage"
+    },
+    {
+      "word": "token-based authentication"
+    },
+    {
+      "word": "tokenization"
+    },
+    {
+      "word": "tokenizer"
+    },
+    {
+      "word": "tool annotations"
+    },
+    {
+      "word": "tool call"
+    },
+    {
+      "word": "tool calling"
+    },
+    {
+      "word": "tool definition"
+    },
+    {
+      "word": "tool description"
+    },
+    {
+      "word": "tool design"
+    },
+    {
+      "word": "tool error"
+    },
+    {
+      "word": "tool granularity"
+    },
+    {
+      "word": "tool interface"
+    },
+    {
+      "word": "tool name"
+    },
+    {
+      "word": "tool output"
+    },
+    {
+      "word": "tool overload"
+    },
+    {
+      "word": "tool parameter"
+    },
+    {
+      "word": "tool parameters"
+    },
+    {
+      "word": "tool permission"
+    },
+    {
+      "word": "tool permissions"
+    },
+    {
+      "word": "tool poisoning"
+    },
+    {
+      "word": "tool response"
+    },
+    {
+      "word": "tool result"
+    },
+    {
+      "word": "tool routing"
+    },
+    {
+      "word": "tool schema"
+    },
+    {
+      "word": "tool search"
+    },
+    {
+      "word": "tool selection"
+    },
+    {
+      "word": "tool sprawl"
+    },
+    {
+      "word": "tool use"
+    },
+    {
+      "word": "tool_choice"
+    },
+    {
+      "word": "tool_result"
+    },
+    {
+      "word": "tool_use"
+    },
+    {
+      "word": "tools/call"
+    },
+    {
+      "word": "tools/list"
+    },
+    {
+      "word": "top_k"
+    },
+    {
+      "word": "top_p"
+    },
+    {
+      "word": "top-k"
+    },
+    {
+      "word": "top-p"
+    },
+    {
+      "word": "total cost of ownership"
+    },
+    {
+      "word": "tracing"
+    },
+    {
+      "word": "training data"
+    },
+    {
+      "word": "Transcribe",
+      "exact": true
+    },
+    {
+      "word": "Transfer Family",
+      "exact": true
+    },
+    {
+      "word": "transformer"
+    },
+    {
+      "word": "Transit Gateway",
+      "exact": true
+    },
+    {
+      "word": "Translate",
+      "exact": true
+    },
+    {
+      "word": "transport"
+    },
+    {
+      "word": "true negative"
+    },
+    {
+      "word": "true positive"
+    },
+    {
+      "word": "truncation"
+    },
+    {
+      "word": "trust policy"
+    },
+    {
+      "word": "Trusted Advisor",
+      "exact": true
+    },
+    {
+      "word": "TTL"
+    },
+    {
+      "word": "TTL attribute"
+    },
+    {
+      "word": "TypeScript"
+    },
+    {
+      "word": "UDP"
+    },
+    {
+      "word": "uncertainty"
+    },
+    {
+      "word": "uncertainty estimation"
+    },
+    {
+      "word": "unit test"
+    },
+    {
+      "word": "URI"
+    },
+    {
+      "word": "URL"
+    },
+    {
+      "word": "Usage API"
+    },
+    {
+      "word": "user data"
+    },
+    {
+      "word": "user memory"
+    },
+    {
+      "word": "user pool"
+    },
+    {
+      "word": "user prompt"
+    },
+    {
+      "word": "user scope"
+    },
+    {
+      "word": "user settings"
+    },
+    {
+      "word": "user turn"
+    },
+    {
+      "word": "UserPromptSubmit"
+    },
+    {
+      "word": "UTF-8"
+    },
+    {
+      "word": "validation loop"
+    },
+    {
+      "word": "vector database"
+    },
+    {
+      "word": "vector search"
+    },
+    {
+      "word": "vector store"
+    },
+    {
+      "word": "versioning"
+    },
+    {
+      "word": "vertical scaling"
+    },
+    {
+      "word": "virtual machine"
+    },
+    {
+      "word": "virtual private gateway"
+    },
+    {
+      "word": "visibility timeout"
+    },
+    {
+      "word": "VM"
+    },
+    {
+      "word": "Volume Gateway"
+    },
+    {
+      "word": "VPC"
+    },
+    {
+      "word": "VPC endpoint"
+    },
+    {
+      "word": "VPC Flow Logs"
+    },
+    {
+      "word": "VPC peering"
+    },
+    {
+      "word": "VPN"
+    },
+    {
+      "word": "WAF"
+    },
+    {
+      "word": "warm pool"
+    },
+    {
+      "word": "warm standby"
+    },
+    {
+      "word": "Wavelength",
+      "exact": true
+    },
+    {
+      "word": "WCU"
+    },
+    {
+      "word": "web ACL"
+    },
+    {
+      "word": "web fetch tool"
+    },
+    {
+      "word": "web identity federation"
+    },
+    {
+      "word": "web search tool"
+    },
+    {
+      "word": "WebFetch"
+    },
+    {
+      "word": "webhook"
+    },
+    {
+      "word": "WebSearch"
+    },
+    {
+      "word": "WebSocket"
+    },
+    {
+      "word": "WebSocket API"
+    },
+    {
+      "word": "weighted routing"
+    },
+    {
+      "word": "Well-Architected",
+      "exact": true
+    },
+    {
+      "word": "Well-Architected Framework"
+    },
+    {
+      "word": "Well-Architected Tool",
+      "exact": true
+    },
+    {
+      "word": "Workbench",
+      "exact": true
+    },
+    {
+      "word": "worker agent"
+    },
+    {
+      "word": "workflow"
+    },
+    {
+      "word": "working memory"
+    },
+    {
+      "word": "WorkSpaces",
+      "exact": true
+    },
+    {
+      "word": "worktree"
+    },
+    {
+      "word": "worktrees"
+    },
+    {
+      "word": "write capacity unit"
+    },
+    {
+      "word": "Write tool"
+    },
+    {
+      "word": "write-through"
+    },
+    {
+      "word": "writer endpoint"
+    },
+    {
+      "word": "X-Ray"
+    },
+    {
+      "word": "XML"
+    },
+    {
+      "word": "XML tags"
+    },
+    {
+      "word": "XSS"
+    },
+    {
+      "word": "YAML"
+    },
+    {
+      "word": "YAML frontmatter"
+    },
+    {
+      "word": "zero-shot"
+    }
+  ]
 }
