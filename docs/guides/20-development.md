@@ -31,11 +31,11 @@ Status and errors are logged with the `[Korean Translator]` prefix.
 - All-capital acronyms (SAM, LAG) match only with the same case. Names that are ordinary words in lowercase (Projects, Haiku) need 대소문자 구분 in the editor
 - Do not add everyday words such as "object", "request", or "continue"; every sentence would keep them in English
 - Plurals (s/es) match automatically; other forms such as "deterministically" must be added separately
-- The terms are loaded from the `dictionary` branch on each page load; when that fails, `dictionary-terms.js` is used
+- Terms are supplied from the initialized local dictionary. Server checks preserve unsent edits; first use requires one successful download.
 - Design: [Dictionary](../design/translation/20-dictionary.md), [Dictionary Sync](../design/translation/30-dictionary-sync.md)
 
 ## Tests
-`node --test tests/dictionary.test.js tests/term-files.test.js`
+`node --test tests/*.test.js`
 
 ## Known Limits
 - Udemy DOM changes can break quiz or caption detection

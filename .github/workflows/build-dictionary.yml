@@ -1,5 +1,5 @@
 # Rebuilds dictionary.json from terms/*.json on the dictionary branch.
-# The extension keeps reading dictionary.json; people only change term files.
+# Legacy releases and migration tools read dictionary.json; version 3 uses the on premises API.
 # Pull requests are checked with the same build so a bad file is caught before merge.
 # The build script comes from main, so only this file lives on the dictionary branch.
 name: Build dictionary

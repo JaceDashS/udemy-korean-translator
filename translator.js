@@ -2,7 +2,7 @@
  * Korean Translator for Udemy: shared translation core.
  * Used by the quiz (content.js) and the captions (caption.js).
  * - One on-device Chrome Translator (English -> Korean) for the whole page
- * - Dictionary terms from the dictionary branch (bundled list as fallback)
+ * - A persistent dictionary supplied by the isolated extension bridge
  * - One translation cache
  */
 (() => {
@@ -24,12 +24,6 @@
 
   // ---- Dictionary terms ----------------------------------------------------
 
-  // Terms are loaded from the dictionary branch on each page load, so a change
-  // takes effect without reloading the extension. The bundled list in
-  // dictionary-terms.js stays in use when the download fails.
-  const GLOSSARY_URL =
-    "https://raw.githubusercontent.com/JaceDashS/udemy-korean-translator/dictionary/dictionary.json";
-  const GLOSSARY_TIMEOUT_MS = 3000;
   const GLOSSARY_LIMITS = { terms: 10000, length: 200 };
 
   // The file is data only: every row needs a short word, and may have a string
@@ -50,35 +44,21 @@
     );
   }
 
-  async function loadGlossary() {
-    if (!dictionary) return;
-
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), GLOSSARY_TIMEOUT_MS);
-
-    try {
-      const response = await fetch(GLOSSARY_URL, {
-        cache: "no-store",
-        signal: controller.signal
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-      const data = await response.json();
-      if (data?.version !== 2 || !isValidTerms(data.terms)) {
-        throw new Error("Invalid dictionary file.");
-      }
-
-      dictionary.configure(data.terms);
-      console.info(LOG, `Loaded ${data.terms.length} dictionary terms.`);
-    } catch (error) {
-      console.warn(LOG, "Using the bundled dictionary terms.", error);
-    } finally {
-      clearTimeout(timer);
+  // The page receives dictionary data only. Passwords and upload authority never cross this bridge.
+  let completeInitialLoad;
+  const glossaryReady = new Promise(resolve => { completeInitialLoad = resolve; });
+  window.addEventListener("message", event => {
+    if (event.source !== window || event.origin !== window.location.origin || event.data?.source !== "udemy-dictionary-extension") return;
+    const data = event.data;
+    if (!data.ok || !data.initialized || !isValidTerms(data.terms)) {
+      console.warn(LOG, "Open the dictionary side panel and complete the initial server synchronization.");
+      return;
     }
-  }
-
-  // Every translation waits for this, so the first one already uses the terms.
-  const glossaryReady = loadGlossary();
+    dictionary?.configure(data.terms);
+    cache.clear();
+    completeInitialLoad();
+  });
+  window.postMessage({ source: "udemy-dictionary-page", action: "read" }, window.location.origin);
 
   // ---- Translator ----------------------------------------------------------
 

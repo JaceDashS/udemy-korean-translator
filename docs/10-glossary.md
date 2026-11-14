@@ -36,12 +36,11 @@
 - Avoid: "translation" for this text
 
 ## Dictionary Branch
-- Definition: The `dictionary` branch of this repository, which holds `dictionary.json` with the terms
-- Code: `GLOSSARY_URL` in `translator.js`, `RAW_URL` in `editor/app.js`
-- Avoid: "sync branch"
+- Definition: Legacy source branch retained for migration and older releases; version 3 uses the on premises service and local state.
+- Code: `tools/build-dictionary.js`.
 
 ## Editor
-- Definition: The page that edits the terms as a table. In the extension's side panel it registers them to the dictionary branch; opened outside the extension it is read-only
+- Definition: The side panel that saves local terms and optionally uploads them through the authenticated on premises service.
 - Code: `editor/index.html`, `editor/app.js`
 - Avoid: "admin page"
 
@@ -50,18 +49,17 @@
 - Code: `fileName()`, `fileContent()` in `editor/term-files.js`; `tools/build-dictionary.js`
 
 ## Conflict
-- Definition: Someone else changed the same term since the editor loaded it (owner), or since a pull request was made (contributor). Settled by the user's pick in the conflict window
-- Code: `Compare-Changes` in `tools/dictionary-host.ps1`; `askConflicts()` in `editor/conflicts.js`
+- Definition: A changed server revision with a different proposed local value. The originating uploader explicitly resolves that item while others continue.
+- Code: `sync-core.js` drafts, `editor/app.js` conflicts.
 - Avoid: calling different terms changed at the same time a conflict; those merge without one
 
-## Helper
-- Definition: The PowerShell program on the user's PC that Chrome starts for the editor. It installs GitHub CLI and opens the login window on request, and commits or opens pull requests with the user's gh login
-- Code: `tools/dictionary-host.ps1`, native host name `com.udemy.dictionary_helper`, `background.js`
-- Avoid: "server", "agent"
+## Local Dictionary
+- Definition: Persisted server terms and effective local overlays, usable offline after the first successful synchronization.
+- Code: `sync-core.js` effective, `background.js`.
 
-## Register Chain
-- Definition: The steps one click on 등록 / 등록 신청 runs in order: helper registered, GitHub CLI installed, logged in, submit. It pauses only for the user's approval
-- Code: `startChain()` in `editor/app.js`
+## Local Only Revision
+- Definition: A local term deliberately excluded from automatic upload until edited or explicitly marked for sharing again.
+- Code: Draft mode local in `sync-core.js`.
 
 ## Placeholder
 - Definition: A `[[n]]` token that replaces a dictionary term during translation

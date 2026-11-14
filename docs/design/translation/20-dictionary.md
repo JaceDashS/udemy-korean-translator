@@ -4,7 +4,7 @@
 - Input: Source English text
 - Output: Korean translation with terms without a meaning in their original English form, and terms with a meaning replaced by that meaning
 - Code: `dictionary.js` → `protect()`, `restore()`; `translator.js` → `translateWithDictionary()`, `translate()` (used by the quiz and the captions)
-- Data: rows from `dictionary.json` (dictionary branch, see [Dictionary Sync](30-dictionary-sync.md)), or the bundled list in `dictionary-terms.js` → `window.__udemyQuizTranslatorTerms` (`groups`, `caseSensitive`) when that file cannot be used
+- Data: effective persisted terms from the isolated bridge after initial synchronization; see [Dictionary Sync](30-dictionary-sync.md). Bundled rows remain for legacy conversion and matching tests, not as a substitute for initialization.
 - Spec: [Dictionary](../../specs/translation/20-dictionary.md#requirements)
 - Architecture: [Overview](../../architecture/10-overview.md#translation-flow)
 
@@ -45,15 +45,15 @@ Representative scenario:
 - Boundaries: no letter, digit, or `_` on either side; spaces in a term match any whitespace
 - A trailing `s`/`es` is matched after a term ending in a letter
 
-## Data Format (version 2)
-`dictionary.json` on the `dictionary` branch:
+## Data Format Version 2
+Legacy migration input dictionary.json has this format. The server wraps equivalent term values in revisioned items; the local matcher still consumes the term array:
 ```json
 { "version": 2, "terms": [ { "word": "Claude", "exact": true }, { "word": "private subnet", "meaning": "프라이빗 서브넷" }, { "word": "Lambda" } ] }
 ```
 The bundled list in `dictionary-terms.js` was converted to this format once (1,597 entries in the bundled lists became 1,583 rows after merging duplicates). A comparison of 7 sample sentences showed identical output for the bundled list and the converted file.
 
 ## Term File Layout
-`dictionary-terms.js` has `caseSensitive` (product names that are ordinary words in lowercase) and `groups` (`claude`, `awsServices`, `awsConcepts`, `ccarF`, `general`). It is the fallback when `dictionary.json` cannot be used. Avoid everyday English words such as "object", "request", "continue", or "summary", which would stay untranslated everywhere. Add inflected forms that are not plurals explicitly ("deterministically").
+`dictionary-terms.js` has `caseSensitive` (product names that are ordinary words in lowercase) and `groups` (`claude`, `awsServices`, `awsConcepts`, `ccarF`, `general`). These remain for legacy conversion and matching tests; runtime translation waits for initialized persisted terms. Avoid everyday English words such as "object", "request", "continue", or "summary", which would stay untranslated everywhere. Add inflected forms that are not plurals explicitly ("deterministically").
 
 ## Known Limits
 Korean particles are chosen by the translator for the placeholder, so after restoring they may not match the English word's pronunciation (e.g. "Claude extended thinking를"). For terms with a meaning the meaning replaces the placeholder, so a particle the translator attached to the placeholder (e.g. "은/는") stays after the meaning and may read unnaturally when the meaning ends in a different sound.

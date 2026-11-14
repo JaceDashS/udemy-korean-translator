@@ -1,6 +1,8 @@
 # Startup
 
 ## Automatic Start
+
+Startup first waits for initialized terms from the isolated bridge. An initialized offline device uses saved terms; first use stays gated until successful download. See [Dictionary Sync](30-dictionary-sync.md).
 - Input: Page load on a Udemy URL
 - Output: A ready `translator`, or a console message explaining why it did not start
 - Code: `translator.js` → `autoStart()`, `startOnFirstGesture()`, `start()`, `onReady()`

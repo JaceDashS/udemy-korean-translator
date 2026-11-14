@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dictionary Editor</title>
   <style>
+    [hidden] { display: none !important; }
     :root {
       --bg: #ffffff;
       --fg: #1f2328;
@@ -177,9 +178,16 @@
   <div class="layout">
   <aside class="side">
   <div class="row">
-    <button id="reload" type="button">새로고침</button>
-    <span class="helper" id="helper"></span>
-    <button id="helperStop" class="link" type="button" hidden>도우미 끄기</button>
+    <button id="reload" type="button">최신 단어장 받기</button>
+    <span class="muted" id="syncInfo"></span>
+  </div>
+  <div id="loginForm" class="row">
+    <button id="login" type="button">사이트 계정으로 로그인</button>
+    <span class="muted">Google 등 기존 사이트 로그인 방식을 사용할 수 있습니다.</span>
+  </div>
+  <div class="row">
+    <span id="account"></span><button id="logout" type="button" hidden>로그아웃</button>
+    <label><input id="autoUpload" type="checkbox" checked> 자동 업로드</label>
   </div>
 
   <div class="row">
@@ -196,12 +204,12 @@
   </div>
 
   <div class="row">
-    <button id="register" class="primary" type="button" disabled>등록</button>
-    <button id="cancel" type="button" hidden>취소</button>
+    <button id="register" class="primary" type="button" disabled>지금 업로드</button>
     <span class="muted" id="changes"></span>
   </div>
   <div class="status" id="status" role="status"></div>
-  <div class="status" id="proposals" hidden></div>
+  <section aria-labelledby="conflictTitle"><h2 id="conflictTitle">충돌 <span id="conflictCount">0</span>개</h2><div id="conflicts"></div></section>
+  <details><summary>로컬에만 유지한 항목</summary><div id="localOnly"></div></details>
   <p class="muted">
     엑셀에서 행을 복사해 단어 칸에 붙여넣으면 여러 행이 한 번에 추가됩니다.
     열 순서는 <b>단어 · 뜻 · 대소문자구분(Y)</b>입니다. Enter는 아래 칸으로 이동합니다.
@@ -243,7 +251,6 @@
   </div>
 
   <script src="term-files.js"></script>
-  <script src="conflicts.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
