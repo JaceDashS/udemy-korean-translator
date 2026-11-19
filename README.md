@@ -2,6 +2,8 @@
 
 Udemy를 한국어로 보여 주는 Chrome 확장 프로그램입니다.
 
+[앱 소개와 사용 방법](https://jace-s.com/apps/udemy-korean-translator/)
+
 - **퀴즈와 시험**: 영어 문제와 보기 옆에 한국어 번역이 나옵니다.
 - **강의 영상**: 영어 자막이 한국어 자막으로 바뀝니다.
 
