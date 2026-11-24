@@ -31,7 +31,4 @@ flowchart TD
 Scenario:
 - Input: New PC, model not downloaded, user opens a Udemy quiz
 - Steps: `availability()` returns `downloadable` → listeners registered → user clicks an answer → `Translator.create()` downloads the model → `schedule(true)`
-- Result: Inline translations appear after the download; progress is logged in the console
-
-## Console Helpers
-`window.udemyKoreanQuiz` exposes `start()`, `refresh()`, `layoutInfo()`, and `destroy()`; `window.udemyKoreanCaption` exposes `start()`, `stop()`, and `destroy()`.
+- Result: Inline translations appear after the model download.

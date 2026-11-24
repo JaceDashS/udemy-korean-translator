@@ -27,7 +27,7 @@ The first successful synchronization gates translation. Afterwards the worker ca
 
 ## Caption Flow
 
-caption.js chooses a source language and uses sentences.js to map a caption track or transcript back to the displayed sentence. The diagnostic viewer uses local playback and translation state. See [Live Caption](../design/caption/10-live-caption.md).
+caption.js detects the source language and uses sentences.js to map a caption track or transcript back to the displayed sentence. See [Live Caption](../design/caption/10-live-caption.md).
 
 ## Example Scenario
 

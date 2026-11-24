@@ -33,7 +33,6 @@
   let dictionaryVersion;
   let preparing = false;
   let translating = "";
-  let diagnostic;
   let video;
   let mediaSource;
   let pagePath;
@@ -69,14 +68,6 @@
       background: #6855df; color: white; cursor: pointer;
     }
     #udemy-ko-caption-controls label { padding-right: 4px; cursor: pointer; }
-    #udemy-ko-caption-diagnostic {
-      width: min(740px, 90vw); border-radius: 8px; padding: 16px;
-      background: #24222b; color: white; border: 1px solid #777;
-    }
-    #udemy-ko-caption-diagnostic textarea {
-      display: block; box-sizing: border-box; width: 100%; height: min(55vh, 480px);
-      margin: 8px 0; font: 12px/1.4 monospace;
-    }
     #udemy-ko-caption-overlay {
       position: fixed; z-index: 2147483646; display: none;
       transform: translateY(-100%); pointer-events: none;
@@ -98,76 +89,11 @@
   showOriginal.type = "checkbox";
   showOriginal.checked = preference(originalKey);
   label.append(showOriginal, " 원문 함께 보기");
-  const diagnosticButton = document.createElement("button");
-  diagnosticButton.type = "button";
-  diagnosticButton.textContent = "자막 진단 시작";
-  const languagePicker = document.createElement("select");
-  languagePicker.setAttribute("aria-label", "자막 원문 언어");
-  const languageNames = new Intl.DisplayNames(["ko"], { type: "language" });
-  for (const language of ["auto", ...languages]) {
-    const option = document.createElement("option");
-    option.value = language;
-    option.textContent = language === "auto" ? "원문 언어 자동" : languageNames.of(language);
-    languagePicker.append(option);
-  }
-  languagePicker.value = "auto";
-  const logView = document.createElement("dialog");
-  logView.id = "udemy-ko-caption-diagnostic";
-  logView.setAttribute("aria-label", "자막 진단 로그");
-  const logOutput = document.createElement("textarea");
-  logOutput.readOnly = true;
-  logOutput.setAttribute("aria-label", "자막 진단 기록");
-  const closeLog = document.createElement("button");
-  closeLog.type = "button";
-  closeLog.textContent = "닫기";
-  closeLog.addEventListener("click", () => logView.close());
-  logView.append("자막 진단 로그", logOutput, closeLog);
-  controls.append(button, label, languagePicker, diagnosticButton, logView);
+  controls.append(button, label);
 
   const overlay = document.createElement("div");
   overlay.id = "udemy-ko-caption-overlay";
   document.body.append(controls, overlay);
-
-  function recordDiagnostic(mode, cues = []) {
-    if (!diagnostic) return;
-    if (diagnostic.events.length >= 1500) {
-      diagnostic.truncated = true;
-      return;
-    }
-    const idFor = text => {
-      if (!text) return null;
-      if (!diagnostic.ids.has(text)) diagnostic.ids.set(text, diagnostic.ids.size + 1);
-      return diagnostic.ids.get(text);
-    };
-    const state = {
-      mode, language: sourceLanguage, modelReady: Boolean(model),
-      paused: Boolean(video?.paused), seeking: Boolean(video?.seeking),
-      transcriptRows: transcript?.byCue.length ?? 0,
-      transcriptRow: mode === "transcript" && transcriptPosition >= 0 ? transcriptPosition + 1 : null,
-      cues: cues.map(idFor), wanted: wanted.map(idFor), ahead: ahead.map(idFor),
-      translating: idFor(translating), ready: wanted.filter(text => cache.has(text)).map(idFor),
-      failed: wanted.filter(text => failed.has(text)).map(idFor),
-      displayed: overlay.textContent ? displayed.map(idFor) : [],
-    };
-    const signature = JSON.stringify(state);
-    if (signature === diagnostic.previous) return;
-    diagnostic.previous = signature;
-    diagnostic.events.push({ videoSeconds: Math.round((video?.currentTime ?? 0) * 100) / 100,
-      elapsedMs: Math.round(performance.now() - diagnostic.started), ...state });
-  }
-
-  diagnosticButton.addEventListener("click", () => {
-    if (!diagnostic) {
-      diagnostic = { started: performance.now(), events: [], ids: new Map(), truncated: false };
-      diagnosticButton.textContent = "진단 중지 · 로그 보기";
-      return;
-    }
-    const { events, truncated } = diagnostic;
-    logOutput.value = JSON.stringify({ schema: 2, truncated, events }, null, 2);
-    logView.showModal();
-    diagnostic = undefined;
-    diagnosticButton.textContent = "자막 진단 시작";
-  });
 
   function render() {
     const usable = Boolean(active && model && (sourceLanguage !== "en" || dictionaryVersion) && video && overlayAvailable);
@@ -251,7 +177,6 @@
   }
 
   function captionLanguage(nativeTrack, cues) {
-    if (languagePicker.value !== "auto") return languagePicker.value;
     const local = document.querySelector(cueSelector);
     const declared = normalizeLanguage(nativeTrack?.language) ??
       normalizeLanguage(local?.getAttribute?.("lang"));
@@ -271,7 +196,7 @@
             detectedLanguage = normalizeLanguage(result.detectedLanguage) ?? detectedLanguage;
           }
         } catch {
-          // If detection is unavailable, the language picker remains usable.
+          // If detection is unavailable, use the declared language or English fallback.
         } finally { detecting = false; }
       })();
     }
@@ -435,7 +360,6 @@
     controls.style.display = visible ? "flex" : "none";
     if (!visible) {
       render();
-      recordDiagnostic("player-hidden");
       return;
     }
 
@@ -448,32 +372,25 @@
     overlay.style.left = `${Math.max(8, rect.left + (rect.width - width) / 2)}px`;
     overlay.style.width = `${width}px`;
 
-    let mode = "inactive";
-    let cues;
     if (active && !video.seeking && !video.ended) {
       const nativeTrack = selectedTrack();
-      cues = getDOMCues(rect);
+      const cues = getDOMCues(rect);
       setLanguage(captionLanguage(nativeTrack, cues));
       if (readTrack(nativeTrack)) {
-        mode = "track";
         selectTimedSentences(video.currentTime);
-      } else {
-        if (!selectTranscriptSentences(cues)) {
-          mode = "live";
-          if (showingTranscript) {
-            appendCues = liveSentences(sourceLanguage);
-            showingTranscript = false;
-            wanted = [];
-            ahead = [];
-            displayed = [];
-          }
-          pickLiveSentences(cues);
-        } else mode = "transcript";
+      } else if (!selectTranscriptSentences(cues)) {
+        if (showingTranscript) {
+          appendCues = liveSentences(sourceLanguage);
+          showingTranscript = false;
+          wanted = [];
+          ahead = [];
+          displayed = [];
+        }
+        pickLiveSentences(cues);
       }
       void translateNext();
     }
     showReady();
-    recordDiagnostic(mode, cues);
   }
 
   function pickLiveSentences(cues) {
@@ -530,10 +447,6 @@
     }
   }
 
-  languagePicker.addEventListener("change", () => {
-    setLanguage(captionLanguage(selectedTrack(), []));
-    update();
-  });
   button.addEventListener("click", () => {
     if (preparing) return;
     if (active && model) {

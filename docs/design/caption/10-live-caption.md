@@ -9,11 +9,11 @@
 - [Architecture](../../architecture/10-overview.md#caption-flow)
 - [Live Caption Test Cases](../../testing/test-cases/caption/10-live-caption.md)
 
-The extension uses an English video text track when one is available. For Udemy players that expose captions through page elements, it reads the loaded transcript and matches the current caption to one of its rows. The matching row selects the same sentence for every cue from its first to its last row. The last row leaving the video clears the overlay if no new caption has appeared. Without a matching transcript, the extension collects live captions until it sees a complete sentence.
+The extension prefers the selected video text track. Source detection uses language metadata first, recognizable script or Chrome's Language Detector when available, and English as a fallback. The caption toggle and original-text checkbox are the user controls. For Udemy players that expose captions through page elements, it reads the loaded transcript and matches the current caption to one of its rows. The matching row selects the same sentence for every cue from its first to its last row. The last row leaving the video clears the overlay if no new caption has appeared. Without a matching transcript, the extension collects live captions until it sees a complete sentence.
 
 ```mermaid
 flowchart LR
-    A[English caption track] --> B[Match playback time to sentence]
+    A[Selected caption track] --> B[Match playback time to sentence]
     C[Loaded transcript and current cue] --> D[Match cue to sentence]
     B --> E[Show translation for the active sentence]
     D --> E

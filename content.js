@@ -11,10 +11,6 @@
   if (window[INSTANCE]) return;
   window[INSTANCE] = true;
 
-  try {
-    window.stopQuizTranslation?.();
-  } catch (_) {}
-
   const LOG = "[Korean Translator]";
   const core = window.__udemyKoreanTranslator;
   const translateCached = core.translate;
@@ -577,17 +573,6 @@
     return best;
   }
 
-  let lastNoQuizReason = "";
-
-  // Logs why a quiz was not detected, once per reason, so new page layouts can be debugged.
-  function noQuiz(reason) {
-    if (reason !== lastNoQuizReason) {
-      lastNoQuizReason = reason;
-      console.info(LOG, "Quiz not detected:", reason);
-    }
-    return null;
-  }
-
   // Reads each answer's text, selection, and feedback from its card.
   function readAnswers(cards, controls) {
     return cards.map((card, i) => {
@@ -662,7 +647,7 @@
       if (first > 0 && first < 30) question = lines.slice(0, first).join(" ");
       container = container.parentElement;
     }
-    if (!question) return noQuiz("question text not found near the answer form");
+    if (!question) return null;
 
     return {
       number: "form",
@@ -720,14 +705,14 @@
       controls.length < 2 ||
       controls.length > 12
     ) {
-      return noQuiz(`${controls.length} answer controls after the question heading`);
+      return null;
     }
 
     const cards = controls.map(cardOf);
     const answers = readAnswers(cards, controls);
 
     if (answers.some(a => !a.source)) {
-      return noQuiz("an answer has no text");
+      return null;
     }
 
     let question = "";
@@ -1083,7 +1068,7 @@
     ]
   });
 
-  const interval = setInterval(() => {
+  setInterval(() => {
     if (lastUrl !== location.href) {
       lastUrl = location.href;
 
@@ -1093,77 +1078,9 @@
     }
   }, 1200);
 
-  // Describes the quiz layout so a wrong side placement can be diagnosed.
-  function layoutInfo() {
-    const quiz = lastRendered?.quiz || extractQuiz();
-    if (!quiz) return "No quiz found.";
-
-    const scroller = scrollParentOf(quiz.nodes.cards[0]);
-    const name = el => el
-      ? el.tagName.toLowerCase() +
-        (el.id ? `#${el.id}` : "") +
-        [...el.classList].slice(0, 2).map(c => `.${c}`).join("")
-      : "window";
-
-    const chain = [];
-    for (let el = quiz.nodes.cards[0]; el && el !== document.body; el = el.parentElement) {
-      const cs = getComputedStyle(el);
-      const g = el.parentElement ? horizontalGaps(el) : {};
-      chain.push({
-        el: name(el),
-        width: Math.round(el.getBoundingClientRect().width),
-        gapLeft: Math.round(g.left),
-        gapRight: Math.round(g.right),
-        display: cs.display,
-        justify: cs.justifyContent,
-        margin: `${cs.marginLeft} ${cs.marginRight}`,
-        overflowY: cs.overflowY
-      });
-    }
-
-    return {
-      mode: sideLayout ? "side" : inlineNodes.length ? "below" : "none",
-      shifted: shift ? name(shift.el) : null,
-      scroller: name(scroller),
-      viewport: innerWidth,
-      chain
-    };
-  }
-
   // The first translation runs as soon as the shared translator is ready.
-  const stopWaitingForTranslator = core.onReady(() => {
+  core.onReady(() => {
     lastKey = "";
     schedule(true);
   });
-
-  // Development helpers.
-  window.udemyKoreanQuiz = {
-    start: () => core.start(),
-    layoutInfo,
-    refresh: () => {
-      lastKey = "";
-      schedule(true);
-    },
-    destroy: () => {
-      observer.disconnect();
-      widthObserver.disconnect();
-      clearTimeout(widthSettleTimer);
-      clearTimeout(debounceTimer);
-      clearInterval(interval);
-      cancelAnimationFrame(relayoutFrame);
-      removeEventListener("scroll", requestRelayout, { capture: true });
-      removeEventListener("resize", requestRelayout);
-
-      ++seq;
-      clearInlineTranslations();
-      inlineStyles.remove();
-      lastRendered = null;
-
-      stopWaitingForTranslator();
-
-      delete window[INSTANCE];
-      delete window.udemyKoreanQuiz;
-    }
-  };
-
 })();

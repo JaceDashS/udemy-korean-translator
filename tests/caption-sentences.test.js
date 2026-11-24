@@ -45,8 +45,6 @@ test("the caption controller keeps the complete translation through the last tra
     getBoundingClientRect: () => rect,
     listeners: {}, addEventListener(name, callback) { this.listeners[name] = callback; },
     setAttribute(name, value) { this[name] = value; },
-    showModal() { this.open = true; },
-    close() { this.open = false; },
     remove() {},
     removeEventListener() {}, append(...children) {
       for (const child of children) if (typeof child === "object") child.parentElement = this;
@@ -66,7 +64,7 @@ test("the caption controller keeps the complete translation through the last tra
       return node;
     },
     addEventListener() {},
-    querySelector: () => panel,
+    querySelector: selector => selector.includes("transcript-panel") ? panel : cue,
     querySelectorAll: selector => selector === "video" ? [video] : [cue],
   };
   const core = {
@@ -79,7 +77,7 @@ test("the caption controller keeps the complete translation through the last tra
   };
   const ctx = vm.createContext({ document, __udemyKoreanTranslator: core,
     __udemyCaptionSentences: globalThis.__udemyCaptionSentences, location: { pathname: "/lecture" },
-    localStorage: { getItem: () => null }, innerWidth: 900, innerHeight: 700, console, performance,
+    localStorage: { getItem: () => null }, innerWidth: 900, innerHeight: 700, console,
     MutationObserver: class { observe() {} disconnect() {} }, setInterval: callback => { tick = callback; } });
   ctx.window = ctx;
   vm.runInContext(fs.readFileSync(require.resolve("../caption.js"), "utf8"), ctx);
@@ -88,8 +86,8 @@ test("the caption controller keeps the complete translation through the last tra
   await settle();
   tick();
   await settle();
-  const diagnosticButton = created.find(node => node.textContent === "자막 진단 시작");
-  diagnosticButton.listeners.click();
+  const controls = created.filter(node => ["button", "label", "input", "select", "dialog", "textarea"].includes(node.tag));
+  assert.deepEqual(controls.map(node => node.tag), ["button", "label", "input"]);
   for (const fragment of ["When you open", "", "the settings menu", "choose English."]) {
     cue.textContent = fragment;
     tick();
@@ -101,27 +99,24 @@ test("the caption controller keeps the complete translation through the last tra
   cue.textContent = "Now continue.";
   tick();
   assert.equal(overlay.textContent, "Translated: Now continue.");
-  const dialog = created.find(node => node.tag === "dialog");
-  assert.equal(dialog.open, undefined);
-  diagnosticButton.listeners.click();
-  assert.equal(dialog.open, true);
-  const exported = created.find(node => node.tag === "textarea").value;
-  assert.equal(exported.includes("When you open"), false);
-  const events = JSON.parse(exported).events.filter(event => event.cues.length);
-  assert.deepEqual(events.map(event => event.transcriptRow), [1, 2, 3, 4]);
-  assert.ok(events.slice(0, 3).every(event => event.displayed[0] === events[0].displayed[0]));
-  const picker = created.find(node => node.tag === "select");
   cue.textContent = "日本語の字幕です。";
   tick();
   await settle();
   tick();
   assert.deepEqual(languagesStarted, ["ja"]);
   assert.equal(overlay.textContent, "ja: 日本語の字幕です。");
-  picker.value = "es";
+  cue.getAttribute = name => name === "lang" ? "es-MX" : null;
   cue.textContent = "Esta es una prueba.";
-  picker.listeners.change();
+  tick();
   await settle();
   tick();
   assert.deepEqual(languagesStarted, ["ja", "es"]);
   assert.equal(overlay.textContent, "es: Esta es una prueba.");
+  const [toggle, , original] = controls;
+  original.checked = true;
+  original.listeners.change();
+  assert.equal(overlay.textContent, "Esta es una prueba.\nes: Esta es una prueba.");
+  toggle.listeners.click();
+  assert.equal(toggle.textContent, "한국어 CC 시작");
+  assert.equal(overlay.textContent, "");
 });

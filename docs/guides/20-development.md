@@ -10,19 +10,7 @@ Technical notes moved out of the README, which is written for users.
 Example:
 - Input: `caption.js` changed
 - Steps: Reload the extension card → refresh the lecture page
-- Result: The new caption code runs; the console shows `[Korean Translator]` messages
-
-## Console Helpers
-On a Udemy page, in the DevTools console:
-
-```js
-window.udemyKoreanQuiz.start()
-window.udemyKoreanQuiz.refresh()
-window.udemyKoreanQuiz.layoutInfo()
-window.udemyKoreanQuiz.destroy()
-```
-
-Status and errors are logged with the `[Korean Translator]` prefix.
+- Result: The new caption code runs when playback starts.
 
 ## Build a Release
 
@@ -35,7 +23,7 @@ python tools/build-release.py
 
 The build creates a ZIP and a SHA-256 checksum in `dist/`. It verifies the archive against the runtime source files after normalizing text line endings. Extract the ZIP and load the folder in Chrome for testing.
 
-- **Input** — A checkout whose manifest version is 3.1.3.
+- **Input** — A checkout whose manifest version is 3.1.4.
 - **Steps** — Run the tests and build command, then open the ZIP.
 - **Result** — The manifest is at the archive root and the archive contains the runtime files only.
 

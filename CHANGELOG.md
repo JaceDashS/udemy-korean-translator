@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 3.1.4
+
+- Simplify caption controls to the Korean captions toggle and the original-text option. Source language detection runs automatically.
+- Remove caption diagnostics and development-only quiz controls and traces from the extension runtime.
+
 ## Version 3.1.3
 
 - Caption translation looks ahead using the selected track or loaded transcript and keeps the translation visible across the corresponding cues. Live captions without punctuation fall back to a length limit at cue boundaries.

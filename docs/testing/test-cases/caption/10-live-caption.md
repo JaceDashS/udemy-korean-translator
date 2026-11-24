@@ -16,16 +16,16 @@
 - **Result** — A unique current cue selects its complete sentence. A repeated cue without a known position waits for a unique match.
 - **Test** — `tests/caption-sentences.test.js`.
 
-## View a Caption Diagnostic
+## Release Caption Controls
 
-- **Input** — A playing lecture with three transcript cues for a single sentence.
-- **Steps** — Start caption diagnostics, play through all cues, then stop the diagnostic.
-- **Result** — The extension shows the playback time, source language, cue matching, translation state and displayed sentence IDs. The view has no transcript text.
+- **Input** — A lecture with an available video player.
+- **Steps** — Inspect the caption controls and play with supported source captions.
+- **Result** — The controls contain the Korean caption toggle and the original-text checkbox. Captions continue to translate.
 - **Test** — `tests/caption-sentences.test.js`.
 
 ## Automatic Captions in Another Language
 
 - **Input** — Japanese automatic captions with Japanese sentence punctuation and a separate unpunctuated passage.
-- **Steps** — Play the captions with automatic language selection. Repeat with a manually selected Spanish source.
+- **Steps** — Play the Japanese captions without metadata. Repeat with the caption element's language set to Spanish.
 - **Result** — The appropriate source model translates to Korean. Complete sentences use their punctuation and long unpunctuated input splits at a caption boundary.
 - **Test** — `tests/caption-sentences.test.js` uses simulated translation models.

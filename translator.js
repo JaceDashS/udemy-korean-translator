@@ -89,7 +89,6 @@
           monitor(m) {
             m.addEventListener("downloadprogress", e => {
               const percent = Math.round(e.loaded * 100);
-              console.info(LOG, `Model download ${percent}%`);
               for (const callback of progressCallbacks) callback(percent);
             });
           }
@@ -115,7 +114,6 @@
     };
     document.addEventListener("pointerdown", begin, true);
     document.addEventListener("keydown", begin, true);
-    console.info(LOG, "Waiting for a page click to download the translation model.");
   }
 
   async function autoStart() {
@@ -155,7 +153,6 @@
     const restored = dictionary.restore(await translator.translate(text), terms, meanings);
     if (restored !== null) return restored;
 
-    console.debug(LOG, "Dictionary placeholder lost; using plain translation.", source);
     return translator.translate(source);
   }
 
@@ -197,17 +194,14 @@
   window[KEY] = {
     isReady: () => Boolean(translator),
     dictionaryVersion: () => dictionaryVersion,
-    start,
     startCaption,
     // Calls back once the translator is ready (at once if it already is).
-    // Returns a function that removes the callback.
     onReady(callback) {
       if (translator) {
         callback();
-        return () => {};
+        return;
       }
       readyCallbacks.add(callback);
-      return () => readyCallbacks.delete(callback);
     },
     translate
   };
