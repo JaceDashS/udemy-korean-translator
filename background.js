@@ -7,6 +7,7 @@ let stateQueue = Promise.resolve();
 let downloading;
 let uploading;
 let lastCheck = 0;
+let authorizationCheck;
 
 const boot = (async () => {
   await chrome.storage.local.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" });
@@ -78,36 +79,55 @@ async function download(force = false) {
 }
 
 async function uploadOne(draft, credentials) {
-  if (draft.resolution) {
-    if (draft.conflict.ownerId !== credentials.user.id) return;
-    const result = await call(`/conflicts/${draft.conflict.id}/resolve`, draft.resolution, credentials);
-    await mutate(next => Sync.resolved(next, draft, result));
-    return;
-  }
   const result = await call("/upload", Sync.request(draft), credentials);
   await mutate(next => Sync.accept(next, draft, result, credentials.user.id));
-}
-
-async function runUpload(manual) {
-  const credentials = await auth();
-  if (!credentials) return;
-  const session = await call("/session", undefined, credentials);
-  credentials.canUpload = session.canUpload;
-  await chrome.storage.session.set({ translatorAuth: credentials });
-  if (!session.canUpload) return;
-  const snapshot = await readState();
-  for (const draft of snapshot.drafts) {
-    const latest = await readState();
-    const current = latest.drafts.find(row => row.word === draft.word);
-    if (!current || current.localRevision !== draft.localRevision) continue;
-    if (current.resolution || ((manual || latest.autoUpload) && current.mode === "pending")) await uploadOne(current, credentials);
+  if (result.status === "conflict") {
+    try { await fetchConflict(draft.word, result.conflict.id); } catch { /* The editor offers a retry. */ }
   }
+  return result.status;
 }
 
-async function flush(manual = false) {
-  if (uploading) { await uploading; if (manual) return flush(true); return; }
-  uploading = runUpload(manual);
-  try { await uploading; } finally { uploading = null; }
+async function fetchConflict(word, id) {
+  const latest = await call(`/dictionary/item?${new URLSearchParams({ word })}`);
+  await mutate(next => Sync.syncConflict(next, word, id, latest));
+}
+
+async function verifiedCredentials() {
+  const credentials = await auth();
+  if (!credentials) return null;
+  const session = await call("/session", undefined, credentials);
+  if ((await auth())?.token !== credentials.token) return null;
+  if (credentials.canUpload !== session.canUpload) {
+    credentials.canUpload = session.canUpload;
+    await chrome.storage.session.set({ translatorAuth: credentials });
+  }
+  return credentials;
+}
+
+async function authorizedUpload() {
+  const credentials = await verifiedCredentials();
+  if (!credentials) throw new Error("UNAUTHENTICATED");
+  if (!credentials.canUpload) throw new Error("FORBIDDEN");
+  return credentials;
+}
+
+async function upload(selections) {
+  if (!Array.isArray(selections) || selections.length > 10000 || selections.some(selection =>
+    typeof selection?.word !== "string" || typeof selection?.localRevision !== "string")) throw new Error("INVALID_SELECTION");
+  if (uploading) throw new Error("UPLOAD_IN_PROGRESS");
+  uploading = true;
+  try {
+    const credentials = await authorizedUpload();
+    const counts = { published: 0, conflicts: 0, skipped: 0 };
+    for (const selection of selections) {
+      if ((await auth())?.token !== credentials.token) throw new Error("UNAUTHENTICATED");
+      const [draft] = Sync.selectedDrafts(await readState(), [selection]);
+      if (!draft) { counts.skipped++; continue; }
+      if (await uploadOne(draft, credentials) === "conflict") counts.conflicts++;
+      else counts.published++;
+    }
+    return counts;
+  } finally { uploading = false; }
 }
 
 async function view() {
@@ -139,7 +159,6 @@ async function finishConnection(message, sender) {
   const verified = await call('/session', undefined, credentials);
   await chrome.storage.session.set({ translatorAuth: { ...credentials, ...verified } });
   await chrome.storage.session.remove('translatorConnection');
-  void flush().catch(() => {});
   return pending.tabId;
 }
 
@@ -153,20 +172,33 @@ chrome.runtime.onMessageExternal.addListener((message, sender, respond) => {
 });
 
 async function resolve(message) {
-  const credentials = await auth();
-  if (!credentials) throw new Error("UNAUTHENTICATED");
-  await mutate(next => {
+  const credentials = await authorizedUpload();
+  const sent = await mutate(next => {
     const draft = next.drafts.find(row => row.word === message.word && row.conflict?.id === message.conflictId);
     if (!draft || draft.conflict.ownerId !== credentials.user.id) throw new Error("CONFLICT_NOT_FOUND");
-    if (!["mine", "server", "local", "later"].includes(message.choice)) throw new Error("INVALID_RESOLUTION");
+    if (!["review", "local"].includes(message.choice)) throw new Error("INVALID_RESOLUTION");
+    if (message.choice === "review" && !draft.conflict.synced) throw new Error("FETCH_LATEST_FIRST");
+    if (draft.resolution?.choice === message.choice && draft.resolution.baseRevision === draft.conflict.server.revision) return draft;
     draft.resolution = { choice: message.choice, baseRevision: draft.conflict.server.revision, requestId: crypto.randomUUID() };
+    return draft;
   });
-  await flush();
+  const result = await call(`/conflicts/${sent.conflict.id}/resolve`, sent.resolution, credentials);
+  await mutate(next => Sync.resolved(next, sent, result));
+  if (result.status === "conflict") {
+    try { await fetchConflict(sent.word, result.conflict.id); } catch { /* The editor offers a retry. */ }
+  }
   return view();
 }
 
 async function editorAction(message) {
-  if (message.action === "view") return view();
+  if (message.action === "view") {
+    const credentials = await auth();
+    if (credentials && (credentials.token !== authorizationCheck?.token || Date.now() - authorizationCheck.at > 15000)) {
+      authorizationCheck = { token: credentials.token, at: Date.now() };
+      try { await verifiedCredentials(); } catch { /* Local editing is also available offline. */ }
+    }
+    return view();
+  }
   if (message.action === "login") return login();
   if (message.action === "logout") {
     const credentials = await auth();
@@ -176,22 +208,25 @@ async function editorAction(message) {
   }
   if (message.action === "edit") {
     await mutate(next => Sync.edit(next, message.word, message.value));
-    void flush().catch(() => {});
   } else if (message.action === "queueLocal") {
     await mutate(next => {
       const draft = next.drafts.find(row => row.word === message.word && row.mode === "local");
       if (!draft) throw new Error("LOCAL_EDIT_NOT_FOUND");
       draft.mode = "pending";
       draft.requestId = crypto.randomUUID();
+      delete draft.reviewRequested;
     });
-    void flush().catch(() => {});
-  } else if (message.action === "automatic") {
-    await mutate(next => { next.autoUpload = message.enabled === true; });
-    if (message.enabled) void flush().catch(() => {});
   } else if (message.action === "download") {
     await download(true);
-    void flush().catch(() => {});
-  } else if (message.action === "upload") await flush(true);
+  } else if (message.action === "fetchConflict") {
+    const { word, conflictId } = message;
+    if (!(await readState()).drafts.some(draft => draft.word === word && draft.conflict?.id === conflictId)) throw new Error("CONFLICT_NOT_FOUND");
+    await fetchConflict(word, conflictId);
+  } else if (message.action === "upload") {
+    if (!(await readState()).initialized) throw new Error("DICTIONARY_NOT_INITIALIZED");
+    const counts = await upload(message.selections);
+    return { ...(await view()), counts };
+  }
   else if (message.action === "resolve") return resolve(message);
   else throw new Error("UNKNOWN_ACTION");
   return view();
@@ -204,7 +239,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "read") {
       let current = await readState();
       if (!current.initialized) { await download(); current = await readState(); }
-      else void download().then(() => flush()).catch(() => {});
+      else void download().catch(() => {});
       return { initialized: current.initialized, terms: Sync.effective(current), revision: current.revision };
     }
     if (!editor) throw new Error("FORBIDDEN");
@@ -217,8 +252,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 function start() {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
   chrome.alarms.create("dictionary-upload", { periodInMinutes: 1 });
-  void download(true).then(() => flush()).catch(() => {});
+  void download(true).catch(() => {});
 }
 chrome.runtime.onInstalled.addListener(start);
 chrome.runtime.onStartup.addListener(start);
-chrome.alarms.onAlarm.addListener(alarm => { if (alarm.name === "dictionary-upload") void flush().catch(() => {}); });
+chrome.alarms.onAlarm.addListener(alarm => { if (alarm.name === "dictionary-upload") void download().catch(() => {}); });

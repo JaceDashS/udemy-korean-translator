@@ -187,7 +187,6 @@
   </div>
   <div class="row">
     <span id="account"></span><button id="logout" type="button" hidden>로그아웃</button>
-    <label><input id="autoUpload" type="checkbox" checked> 자동 업로드</label>
   </div>
 
   <div class="row">
@@ -204,10 +203,18 @@
   </div>
 
   <div class="row">
-    <button id="register" class="primary" type="button" disabled>지금 업로드</button>
+    <button id="register" class="primary" type="button" disabled>업로드</button>
     <span class="muted" id="changes"></span>
   </div>
   <div class="status" id="status" role="status"></div>
+  <dialog id="uploadDialog" aria-labelledby="uploadTitle">
+    <h2 id="uploadTitle">업로드할 단어</h2>
+    <div><label><input id="selectAll" type="checkbox" checked> 모두 선택</label></div>
+    <div id="uploadItems" style="max-height:45vh;overflow:auto"></div>
+    <p>선택 해제한 단어는 로컬에 남습니다.</p>
+    <button id="confirmUpload" class="primary" type="button">선택한 단어 업로드</button>
+    <form method="dialog" style="display:inline"><button type="submit">취소</button></form>
+  </dialog>
   <section aria-labelledby="conflictTitle"><h2 id="conflictTitle">충돌 <span id="conflictCount">0</span>개</h2><div id="conflicts"></div></section>
   <details><summary>로컬에만 유지한 항목</summary><div id="localOnly"></div></details>
   <p class="muted">

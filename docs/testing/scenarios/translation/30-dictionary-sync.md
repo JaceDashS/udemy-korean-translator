@@ -33,15 +33,15 @@
 ## Resolution Choices
 
 - Input: A paused conflict with the server version shown.
-- Steps: Choose mine, server, local only or later in separate runs.
-- Expected result: Mine repeats version checking, server replaces the local overlay, local only excludes uploads and later remains paused without a permanently queued resolution.
+- Steps: Fetch the current public entry, then request review or keep the term local.
+- Expected result: Review preserves the local edit and the current public value. Keeping the term local excludes it from the upload list.
 - Test: tests/sync-core.test.js; platform test:translator stale resolution and owner checks.
 
 ## Browser Editor
 
 - Input: Isolated local API and actual worker code with browser API adapters.
-- Steps: Log in, turn automatic upload off, edit course, change the server through another client, manually upload and select local only.
-- Expected result: The UI exposes all four choices, clears the resolved conflict count, retains the local meaning and records the choice on the server.
+- Steps: Log in, edit course, change the server through another client, select the word for upload and choose local only after a conflict.
+- Expected result: The UI clears the resolved conflict count, retains the local meaning and records the choice on the server.
 - Verification: Browser preview validates editor controls and layout, not a real Chrome extension installation or the Udemy translation model.
 
 ## Legacy Import

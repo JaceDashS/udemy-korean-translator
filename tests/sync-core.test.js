@@ -7,7 +7,7 @@ const initialized = () => Sync.download(Sync.initial(), snapshot(1, "강의"));
 
 test("first synchronization is mandatory and invalid downloads never initialize", () => {
   const state = Sync.initial();
-  assert.equal(state.autoUpload, true);
+  assert.equal(state.autoUpload, undefined);
   Sync.edit(state, "new", { word: "new" });
   assert.equal(Sync.effective(state)[0].word, 'new');
   assert.throws(() => Sync.download(state, { version: 2, revision: 2, items: [{ word: "course", revision: 3, value: term("과정") }] }), /INVALID_DICTIONARY/);
@@ -84,4 +84,31 @@ test("request retries preserve IDs and word identity safely includes prototype n
   assert.deepEqual(Sync.request(state.drafts[0]), Sync.request(restarted.drafts[0]));
   assert.equal(Sync.effective(state).length, 4);
   assert.throws(() => Sync.edit(state, "bad", { word: "bad", executable: "code" }), /INVALID_TERM/);
+});
+
+test("upload selection matches the exact checked local revision", () => {
+  const state = initialized();
+  Sync.edit(state, "course", term("과정"));
+  Sync.edit(state, "excluded", { word: "excluded" });
+  const selection = { word: "course", localRevision: state.drafts[0].localRevision };
+  assert.deepEqual(Sync.selectedDrafts(state, [selection]).map(draft => draft.word), ["course"]);
+  Sync.edit(state, "course", term("수업"));
+  assert.deepEqual(Sync.selectedDrafts(state, [selection]), []);
+});
+
+test("fetching a conflict and requesting review preserves the local value", () => {
+  const state = initialized();
+  Sync.edit(state, "course", term("과정"));
+  const sent = Sync.clone(state.drafts[0]);
+  const server = { word: "course", revision: 2, value: term("강좌") };
+  Sync.accept(state, sent, { status: "conflict", item: server, conflict: { id: 7, word: "course", server } }, "owner");
+  Sync.syncConflict(state, "course", 7, { word: "course", revision: 3, value: term("수업") });
+  const conflict = state.drafts[0];
+  assert.equal(conflict.conflict.synced, true);
+  assert.equal(conflict.conflict.server.revision, 3);
+  Sync.resolved(state, Sync.clone(conflict), { status: "resolved", choice: "review", item: Sync.item(state, "course") });
+  assert.equal(state.drafts[0].reviewRequested, true);
+  assert.equal(Sync.effective(state)[0].meaning, "과정");
+  Sync.download(state, snapshot(2, "이전 버전"));
+  assert.equal(Sync.item(state, "course").revision, 3);
 });

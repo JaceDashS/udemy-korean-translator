@@ -9,22 +9,19 @@
 
 ## Connection And Authorization
 
-The client uses https://api.jace-s.com/udemy-translator with dictionary, connect, session, logout, upload and conflicts routes. Production paths do not include the legacy api prefix. JSON data only is downloaded; JavaScript is packaged locally.
+The client uses https://api.jace-s.com/udemy-translator with dictionary, dictionary item lookup, connect, session, logout, upload and conflict routes. The extension packages its JavaScript locally and downloads dictionary data as JSON.
 
-The user selected existing website login from any supported provider, including Google. A challenge checked first party page obtains a connection envelope with session token, CSRF token, expiry, user and upload permission, then delivers it directly to the requesting extension. Uploads require admin:write on admin:translator. Developer inspection uses the website session and translator read permission. A client supplied name never determines server authority.
+A challenge-checked first-party page obtains a connection envelope and delivers it to the requesting extension. Uploads require the new-word upload grant or dictionary management access. Management uses the admin website session. The server records the authenticated actor.
 
 Configure UDEMY_TRANSLATOR_EXTENSION_IDS on the API with the actual installed IDs before release. The existing development manifest key derives mmmljckioegeobbebbmildgebfjfbbdo; verify it in chrome://extensions. A store item ID must be registered separately if different. This origin exemption applies only to translator routes and does not change global website session policies.
 
-## Release Order
+## Production Compatibility
 
-1. Back up the existing platform database and deploy schema 32 and the new API and developer panel.
-2. Import the pinned source with an existing authorized importer; compare every entry and the normalized digest. An uninitialized API returns 503 DICTIONARY_NOT_INITIALIZED instead of a misleading empty dictionary.
-3. Configure allowed extension IDs and verify website session connection, including Google only accounts, upload permission, conflicts and history against the deployed revision.
-4. Release version 3 only after those checks. New clients require an initial successful server dictionary download. Do not replace a working installed release before its API is available.
+Version 3.1.3 uses the dictionary management API deployed on 2026-11-24 with SQLite schema 48. The existing 1,590 entries and change history were checked during deployment. New installations require one successful dictionary download.
 
 ## Verification
 
-The platform command npm run test:translator with this checkout path runs actual worker code with browser API adapters against actual HTTP routes. It covers initial offline gating, website session connection, automatic and manual upload, conflict isolation, explicit resolution, lost response replay, untrusted page rejection and offline restart without credentials.
+The platform command `npm run test:translator` with this checkout path runs the worker against actual HTTP routes with browser API adapters. It covers initial offline gating, website session connection, selected uploads, conflict isolation, lost response replay, page sender rejection and offline restart.
 
 Pinned source 24ae34ebdd6dccf565f7274aff39eb3fb12e033c has 1590 entries. Complete normalized comparison and idempotent trial import passed with digest fa78eaab4a606a376d99116dcf27f77f3720f18efb70d59ac4356dbfb20c0b12. The extension has 36 passing Node tests.
 

@@ -39,18 +39,19 @@
     $("account").textContent = user ? `${user.username} · ${canUpload ? "등록 권한 있음" : "서버 등록 권한 없음"}` : "서버 업로드는 로그인 후 가능합니다. 로컬 편집은 로그인 없이 가능합니다.";
     $("loginForm").hidden = !!user;
     $("logout").hidden = !user;
-    $("autoUpload").checked = state.autoUpload;
-    $("register").disabled = !state.initialized || !canUpload;
     $("addTerm").disabled = false;
     $("login").textContent = model.loginPending ? '로그인 창 다시 열기' : '사이트 계정으로 로그인';
     $("syncInfo").textContent = state.initialized ? `마지막 수신 ${state.downloadedAt ? new Date(state.downloadedAt).toLocaleString() : ""}` : "최초 서버 동기화가 필요합니다.";
     const pending = state.drafts.filter(draft => draft.mode === "pending").length;
+    $("register").disabled = !state.initialized || !canUpload || !pending;
     $("changes").textContent = `업로드 대기 ${pending}개 · 로컬 저장됨`;
     conflicts();
   }
 
   function conflicts() {
-    const signature = JSON.stringify({ drafts: model.state.drafts.filter(draft => draft.mode !== "pending"), user: model.user?.id, canUpload: model.canUpload });
+    const conflictWords = new Set(model.state.drafts.filter(draft => draft.conflict).map(draft => draft.word));
+    const signature = JSON.stringify({ drafts: model.state.drafts.filter(draft => draft.mode !== "pending"),
+      latest: model.state.items.filter(item => conflictWords.has(item.word)), user: model.user?.id, canUpload: model.canUpload });
     if (signature === conflictSignature) return;
     conflictSignature = signature;
     const list = model.state.drafts.filter(draft => draft.mode === "conflict");
@@ -65,23 +66,66 @@
       summary.textContent = draft.word;
       const values = document.createElement("pre");
       values.style.whiteSpace = "pre-wrap";
-      values.textContent = `내 값: ${JSON.stringify(draft.value)}\n서버 값: ${JSON.stringify(draft.conflict.server.value)}`;
-      if (draft.conflict.server.updatedBy) values.textContent += `\n서버 수정자: ${draft.conflict.server.updatedBy.username}`;
-      if (draft.conflict.server.updatedAt) values.textContent += `\n서버 수정 시각: ${new Date(draft.conflict.server.updatedAt).toLocaleString()}`;
+      const latest = model.state.items.find(item => item.word === draft.word) || draft.conflict.server;
+      values.textContent = `내 로컬 번역: ${formatTerm(draft.value)}\n현재 공개 번역: ${formatTerm(latest.value)}`;
+      if (latest.revision === draft.conflict.server.revision && draft.conflict.server.updatedBy) {
+        values.textContent += `\n서버 수정자: ${draft.conflict.server.updatedBy.username}`;
+      }
       section.append(summary, values);
+      const identify = { word: draft.word, conflictId: draft.conflict.id };
+      if (draft.conflict.synced) section.append("최신 공개본을 가져왔습니다. 로컬 번역은 계속 적용됩니다.");
+      else section.append("최신 공개본을 가져와 비교해 주세요.");
+      section.append(button("최신 공개본 가져오기", () => send("fetchConflict", identify)));
       if (draft.conflict.ownerId === model.user?.id && model.canUpload) {
-        for (const [choice, label] of [["mine", "내 번역 업로드"], ["server", "서버 번역 사용"], ["local", "로컬만 유지"], ["later", "나중에 결정"]]) {
-          section.append(button(label, () => send("resolve", { word: draft.word, conflictId: draft.conflict.id, choice })));
-        }
+        const review = button("공개본 수정 검토 요청", () => send("resolve", { ...identify, choice: "review" }));
+        review.disabled = !draft.conflict.synced || latest.revision !== draft.conflict.server.revision;
+        section.append(review, button("로컬만 유지", () => send("resolve", { ...identify, choice: "local" })));
       } else section.append("이 충돌을 발생시킨 계정으로 로그인해 해결하세요.");
       $("conflicts").append(section);
     }
     $("localOnly").replaceChildren();
     for (const draft of model.state.drafts.filter(row => row.mode === "local")) {
       const row = document.createElement("p");
-      row.append(draft.word + " ", button("공유 대상으로 변경", () => send("queueLocal", { word: draft.word })));
+      row.append(draft.word + (draft.reviewRequested ? " · 검토 요청 보냄 " : " "));
+      if (!draft.reviewRequested) row.append(button("업로드 목록에 넣기", () => send("queueLocal", { word: draft.word })));
       $("localOnly").append(row);
     }
+  }
+
+  function formatTerm(term) {
+    if (!term) return "공개하지 않음";
+    return (term.meaning || "영어 그대로") + (term.exact ? " · 대소문자 구분" : "");
+  }
+
+  function updateUploadSelection() {
+    const boxes = [...$("uploadItems").querySelectorAll("input")];
+    const checked = boxes.filter(box => box.checked).length;
+    $("selectAll").checked = boxes.length === checked;
+    $("selectAll").indeterminate = checked > 0 && checked < boxes.length;
+    $("confirmUpload").disabled = checked === 0;
+  }
+
+  async function openUpload() {
+    await editQueue;
+    model = await send("view");
+    status();
+    if ($("register").disabled) return;
+    const list = document.createDocumentFragment();
+    for (const draft of model.state.drafts.filter(item => item.mode === "pending")) {
+      const line = document.createElement("div");
+      const label = document.createElement("label");
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.checked = true;
+      box.dataset.word = draft.word;
+      box.dataset.revision = draft.localRevision;
+      label.append(box, ` ${draft.word} · ${formatTerm(draft.value)}`);
+      line.append(label);
+      list.append(line);
+    }
+    $("uploadItems").replaceChildren(list);
+    updateUploadSelection();
+    $("uploadDialog").showModal();
   }
 
   async function refresh() {
@@ -193,8 +237,21 @@
   $("login").addEventListener("click", () => perform(() => send("login")));
   $("logout").addEventListener("click", () => perform(() => send("logout")));
   $("reload").addEventListener("click", () => perform(() => send("download")));
-  $("register").addEventListener("click", () => perform(() => send("upload")));
-  $("autoUpload").addEventListener("change", () => perform(() => send("automatic", { enabled: $("autoUpload").checked })));
+  $("register").addEventListener("click", () => perform(openUpload));
+  $("selectAll").addEventListener("change", () => {
+    for (const box of $("uploadItems").querySelectorAll("input")) box.checked = $("selectAll").checked;
+    updateUploadSelection();
+  });
+  $("uploadItems").addEventListener("change", updateUploadSelection);
+  $("confirmUpload").addEventListener("click", () => {
+    const selections = [...$("uploadItems").querySelectorAll("input:checked")].map(box =>
+      ({ word: box.dataset.word, localRevision: box.dataset.revision }));
+    $("uploadDialog").close();
+    void perform(async () => {
+      const { counts } = await send("upload", { selections });
+      say(`공개 반영 ${counts.published}개 · 비교 필요 ${counts.conflicts}개 · 건너뜀 ${counts.skipped}개`);
+    });
+  });
   $("addTerm").addEventListener("click", () => perform(async () => {
     const value = { word: $("newWord").value.trim(), meaning: $("newMeaning").value.trim(), exact: $("newExact").checked };
     if (!value.word || model.terms.some(term => term.word === value.word)) throw new Error("빈 단어 또는 중복된 단어입니다.");
