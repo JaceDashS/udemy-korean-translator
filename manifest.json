@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Korean Translator for Udemy",
   "short_name": "Korean for Udemy",
-  "version": "3.0.0",
+  "version": "3.1.3",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAw+qujB+izAniVxGILvKGJiL3VwId1VgLqvLH4UonzKKD1GpCzt8fzBOt+pA0xIKi6+Jn0AWzkuOLUVJodwcmmjSEdZCJZpspx1cnxic6Hdx/DlTfwRhiqJvNuQCiOlSH3yqHZmKoEHFiUNQDkLqF/tPhYhVSC1ik93Ey+K7QYrsfYRanspalFbouHBNxclgH6cVTasVSY0YKCETNBw8SvxACClGclHqvMbWmV1LoAr+WdqaGwmhG3LuftuzoUWcsqvRFBOpYVO9AhOL8e7Uy7t/DcBk397JAiCM8GnlUQkoCRESU3cj+xB1hVTlh4iATQcHsGyLt+AEu7gaZDIM2iQIDAQAB",
   "description": "Udemy 퀴즈와 영상 자막을 Chrome 내장 Translator API로 PC 안에서 한국어로 번역합니다. 아이콘을 누르면 개발자 용어 사전 편집기가 사이드 패널에 열립니다.",
   "minimum_chrome_version": "138",
@@ -56,6 +56,7 @@
         "dictionary.js",
         "translator.js",
         "content.js",
+        "sentences.js",
         "caption.js"
       ],
       "run_at": "document_idle",
