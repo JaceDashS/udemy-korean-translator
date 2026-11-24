@@ -6,9 +6,8 @@
 - Avoid: "test", "exam" when referring to a single question
 
 ## Caption
-- Definition: The English subtitle text Udemy shows over a lecture video, and the Korean overlay that replaces it
-- Code: `caption.js`, `CAPTION_SELECTOR` (`[data-purpose="captions-cue-text"]`)
-- Avoid: "subtitle track" (the extension reads the visible cue, not the track)
+- Definition: A cue from a Udemy lecture and the resulting Korean text displayed over the video.
+- Code: `caption.js`, `sentences.js`.
 
 ## Card
 - Definition: The Udemy DOM element that wraps one answer choice, including its radio/checkbox control and feedback text
@@ -16,9 +15,9 @@
 - Avoid: "option element"
 
 ## Translator
-- Definition: The Chrome built-in on-device Translator API instance (English to Korean)
+- Definition: A Chrome on-device Translator API instance for a source language and Korean output.
 - Code: `translator.js` → `start()`, `translate()`; `window.__udemyKoreanTranslator`
-- Note: One translator is shared by the quiz and the captions
+- Note: The quiz and English captions share the English model. Other caption languages use their own model when available.
 
 ## Dictionary
 - Definition: The list of developer terms kept in English in translations
@@ -49,7 +48,7 @@
 - Code: `fileName()`, `fileContent()` in `editor/term-files.js`; `tools/build-dictionary.js`
 
 ## Conflict
-- Definition: A changed server revision with a different proposed local value. The originating uploader explicitly resolves that item while others continue.
+- Definition: A shared term cannot be applied directly against the current server state. The uploader can keep a local value or request review while other selected uploads continue.
 - Code: `sync-core.js` drafts, `editor/app.js` conflicts.
 - Avoid: calling different terms changed at the same time a conflict; those merge without one
 
@@ -58,7 +57,7 @@
 - Code: `sync-core.js` effective, `background.js`.
 
 ## Local Only Revision
-- Definition: A local term deliberately excluded from automatic upload until edited or explicitly marked for sharing again.
+- Definition: A local term excluded from the upload list until edited or explicitly marked for sharing again.
 - Code: Draft mode local in `sync-core.js`.
 
 ## Placeholder

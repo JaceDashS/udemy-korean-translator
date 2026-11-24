@@ -20,11 +20,24 @@ window.udemyKoreanQuiz.start()
 window.udemyKoreanQuiz.refresh()
 window.udemyKoreanQuiz.layoutInfo()
 window.udemyKoreanQuiz.destroy()
-window.udemyKoreanCaption.start()
-window.udemyKoreanCaption.stop()
 ```
 
 Status and errors are logged with the `[Korean Translator]` prefix.
+
+## Build a Release
+
+Run the following commands from the extension repository. The build uses Python 3 and the version in `manifest.json`.
+
+```sh
+node --test tests/*.test.js
+python tools/build-release.py
+```
+
+The build creates a ZIP and a SHA-256 checksum in `dist/`. It verifies the archive against the runtime source files after normalizing text line endings. Extract the ZIP and load the folder in Chrome for testing.
+
+- **Input** — A checkout whose manifest version is 3.1.3.
+- **Steps** — Run the tests and build command, then open the ZIP.
+- **Result** — The manifest is at the archive root and the archive contains the runtime files only.
 
 ## Dictionary Matching Rules
 - Terms without a meaning stay in English in the translation; terms with a meaning are replaced by it
@@ -41,7 +54,7 @@ Status and errors are logged with the `[Korean Translator]` prefix.
 - Udemy DOM changes can break quiz or caption detection
 - Not every quiz type has been checked on a real account
 - Frames other than the main page are not supported
-- Requires desktop Chrome 138 or later and its built-in English to Korean model
+- Requires desktop Chrome 138 or later and a supported on-device language pair
 - Native video fullscreen keeps the English captions
 
 ## References

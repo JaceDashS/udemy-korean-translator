@@ -3,6 +3,7 @@
 *.private.*
 # Temporary files
 tmp/
+dist/
 # Debugging scripts
 scripts/debug/
 # Agent workspace
