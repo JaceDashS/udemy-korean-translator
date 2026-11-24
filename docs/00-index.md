@@ -6,3 +6,5 @@
 - [Testing](testing/00-index.md) — Test strategy and scenarios
 - [Guides](guides/00-index.md) — Setup and usage procedures
 - [Glossary](10-glossary.md) — Project terms used in code and discussion
+
+- [Archive](archive/00-index.md) — Previous dictionary integration documents

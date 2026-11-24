@@ -1,8 +1,8 @@
 /*
  * Korean Translator for Udemy: shared translation core.
  * Used by the quiz (content.js) and the captions (caption.js).
- * - One on-device Chrome Translator (English -> Korean) for the whole page
- * - Dictionary terms from the dictionary branch (bundled list as fallback)
+ * - The shared English quiz translator and optional caption language pairs
+ * - A persistent dictionary supplied by the isolated extension bridge
  * - One translation cache
  */
 (() => {
@@ -20,16 +20,11 @@
   const readyCallbacks = new Set();
   const progressCallbacks = new Set();
   const cache = new Map();
+  const captionModels = new Map();
   const dictionary = window.__udemyQuizTranslatorDictionary;
 
   // ---- Dictionary terms ----------------------------------------------------
 
-  // Terms are loaded from the dictionary branch on each page load, so a change
-  // takes effect without reloading the extension. The bundled list in
-  // dictionary-terms.js stays in use when the download fails.
-  const GLOSSARY_URL =
-    "https://raw.githubusercontent.com/JaceDashS/udemy-korean-translator/dictionary/dictionary.json";
-  const GLOSSARY_TIMEOUT_MS = 3000;
   const GLOSSARY_LIMITS = { terms: 10000, length: 200 };
 
   // The file is data only: every row needs a short word, and may have a string
@@ -50,35 +45,27 @@
     );
   }
 
-  async function loadGlossary() {
-    if (!dictionary) return;
-
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), GLOSSARY_TIMEOUT_MS);
-
-    try {
-      const response = await fetch(GLOSSARY_URL, {
-        cache: "no-store",
-        signal: controller.signal
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-      const data = await response.json();
-      if (data?.version !== 2 || !isValidTerms(data.terms)) {
-        throw new Error("Invalid dictionary file.");
-      }
-
-      dictionary.configure(data.terms);
-      console.info(LOG, `Loaded ${data.terms.length} dictionary terms.`);
-    } catch (error) {
-      console.warn(LOG, "Using the bundled dictionary terms.", error);
-    } finally {
-      clearTimeout(timer);
+  // The page receives dictionary data only. Passwords and upload authority never cross this bridge.
+  let completeInitialLoad;
+  let glossarySignature;
+  let dictionaryVersion = 0;
+  const glossaryReady = new Promise(resolve => { completeInitialLoad = resolve; });
+  window.addEventListener("message", event => {
+    if (event.source !== window || event.origin !== window.location.origin || event.data?.source !== "udemy-dictionary-extension") return;
+    const data = event.data;
+    if (!data.ok || !data.initialized || !isValidTerms(data.terms)) {
+      console.warn(LOG, "Open the dictionary side panel and complete the initial server synchronization.");
+      return;
     }
-  }
-
-  // Every translation waits for this, so the first one already uses the terms.
-  const glossaryReady = loadGlossary();
+    const signature = JSON.stringify(data.terms);
+    if (signature === glossarySignature) return;
+    glossarySignature = signature;
+    dictionaryVersion++;
+    dictionary?.configure(data.terms);
+    cache.clear();
+    completeInitialLoad();
+  });
+  window.postMessage({ source: "udemy-dictionary-page", action: "read" }, window.location.origin);
 
   // ---- Translator ----------------------------------------------------------
 
@@ -102,7 +89,6 @@
           monitor(m) {
             m.addEventListener("downloadprogress", e => {
               const percent = Math.round(e.loaded * 100);
-              console.info(LOG, `Model download ${percent}%`);
               for (const callback of progressCallbacks) callback(percent);
             });
           }
@@ -128,7 +114,6 @@
     };
     document.addEventListener("pointerdown", begin, true);
     document.addEventListener("keydown", begin, true);
-    console.info(LOG, "Waiting for a page click to download the translation model.");
   }
 
   async function autoStart() {
@@ -168,7 +153,6 @@
     const restored = dictionary.restore(await translator.translate(text), terms, meanings);
     if (restored !== null) return restored;
 
-    console.debug(LOG, "Dictionary placeholder lost; using plain translation.", source);
     return translator.translate(source);
   }
 
@@ -178,7 +162,7 @@
     if (cache.has(source)) return cache.get(source);
 
     const promise = translateWithDictionary(source).catch(error => {
-      cache.delete(source);
+      if (cache.get(source) === promise) cache.delete(source);
       throw error;
     });
 
@@ -187,18 +171,37 @@
     return promise;
   }
 
+  function startCaption(language, onProgress) {
+    if (language === "en") return start(onProgress);
+    if (language === "ko") return Promise.resolve({ translate: text => text });
+    if (captionModels.has(language)) return captionModels.get(language);
+    if (typeof Translator === "undefined") return Promise.resolve(null);
+    const attempt = Translator.create({
+      sourceLanguage: language,
+      targetLanguage: "ko",
+      monitor(monitor) {
+        if (onProgress) monitor.addEventListener("downloadprogress", event =>
+          onProgress(Math.round(event.loaded * 100)));
+      },
+    }).catch(() => {
+      captionModels.delete(language);
+      return null;
+    });
+    captionModels.set(language, attempt);
+    return attempt;
+  }
+
   window[KEY] = {
     isReady: () => Boolean(translator),
-    start,
+    dictionaryVersion: () => dictionaryVersion,
+    startCaption,
     // Calls back once the translator is ready (at once if it already is).
-    // Returns a function that removes the callback.
     onReady(callback) {
       if (translator) {
         callback();
-        return () => {};
+        return;
       }
       readyCallbacks.add(callback);
-      return () => readyCallbacks.delete(callback);
     },
     translate
   };

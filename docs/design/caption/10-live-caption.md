@@ -1,36 +1,28 @@
 # Live Caption Design
 
 ## Caption Translation
-- Input: Udemy caption cues (`[data-purpose="captions-cue-text"]`) inside the largest visible `<video>`
-- Output: A fixed overlay (`#udemy-ko-caption-overlay`) with the Korean text; `html.udemy-ko-caption-hide-source` hides the English cues
-- Code: `caption.js` → `detectCaptions()`, `drain()`, `setKorean()`, `positionUI()`, `start()`, `stop()`; `translator.js` → `translate()`
-- Spec: [Live Caption](../../specs/caption/10-live-caption.md#requirements)
-- Architecture: [Overview](../../architecture/10-overview.md#caption-flow)
 
-Steps:
-1. Every 150 ms, `detectCaptions()` joins the visible cues into one source text (`desired`)
-2. A new source clears the Korean text (English shows again) and starts `drain()`, unless it is cached or failed before
-3. `drain()` translates one text at a time through the shared core (dictionary applied) and keeps going while `desired` changes; an outdated result is cached but not shown
-4. `setKorean()` shows the Korean text, then hides the English cues
-5. `positionUI()` keeps the button at the video's top right and the overlay at the cue position, with Udemy's caption font size (15-28 px)
+- **Input** — English caption cues from the video track, or the transcript panel and current captions on the page.
+- **Output** — A Korean sentence overlay, with the corresponding complete English sentence above it when enabled.
+- **Code** — `sentences.js` splits text and maps sentences back to cues. `caption.js` selects the active sentence and prepares the following three. The shared `translator.js` applies the dictionary.
+- [Live Caption Spec](../../specs/caption/10-live-caption.md)
+- [Architecture](../../architecture/10-overview.md#caption-flow)
+- [Live Caption Test Cases](../../testing/test-cases/caption/10-live-caption.md)
+
+The extension prefers the selected video text track. Source detection uses language metadata first, recognizable script or Chrome's Language Detector when available, and English as a fallback. The caption toggle and original-text checkbox are the user controls. For Udemy players that expose captions through page elements, it reads the loaded transcript and matches the current caption to one of its rows. The matching row selects the same sentence for every cue from its first to its last row. The last row leaving the video clears the overlay if no new caption has appeared. Without a matching transcript, the extension collects live captions until it sees a complete sentence.
 
 ```mermaid
 flowchart LR
-    A[150 ms timer] --> B[detectCaptions]
-    B -- new text --> C{cached?}
-    C -- yes --> E[setKorean]
-    C -- no --> D[drain: core.translate] --> E
-    E --> F[hide English, show overlay]
+    A[Selected caption track] --> B[Match playback time to sentence]
+    C[Loaded transcript and current cue] --> D[Match cue to sentence]
+    B --> E[Show translation for the active sentence]
+    D --> E
+    F[Live cues only] --> G[Accumulate a complete sentence]
+    G --> E
 ```
 
-- Start: `core.onReady()` calls `start()` unless `localStorage.udemyKoreanCaptionOff` is "1". The button click also calls `start()`; it passes a progress callback so the button shows the model download percent
-- Stop: hides the overlay and shows the English cues again. The translator stays, because the quiz shares it
-- Fullscreen: the button and overlay move into the fullscreen element; native video fullscreen keeps the English captions
-- The resolved texts are kept in a local map (250 entries) so a repeated cue shows at once; failed texts are not retried until the captions are restarted
-- Console helpers: `window.udemyKoreanCaption.start()`, `stop()`, `destroy()`
+### Representative Scenario
 
-Scenario:
-- Input: Lecture "Final Exam Tips" with English CC, model installed
-- Steps: Page load → core ready → `start()` → cue "You can make sure..." → `drain()` → `setKorean()`
-- Result: Korean overlay over the video, English cue hidden, button reads 한국어 CC 끄기 ×
-- All scenarios: [Live Caption Scenarios](../../testing/scenarios/caption/10-live-caption.md#live-caption-scenarios)
+- **Input** — A transcript sentence spans cues A, B and C, with cue B active.
+- **Steps** — Match B against the transcript and translate the sentence containing it.
+- **Result** — The full A–C translation is visible through C. If translation finishes sooner on a replay, the same translation appears from A.
